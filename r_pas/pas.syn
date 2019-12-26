@@ -1,0 +1,758 @@
+/*   Syntax definition for Apollo PASCAL.
+/*
+.symbol pad [sst_r_pas_syn_pad] external /* this routine is external
+.symbol space
+.symbol name_char                      /* all but first character in a identifier name
+.symbol name
+.symbol unsigned_lit_integer
+.symbol unsigned_lit_real
+.symbol quoted_string_chars            /* characters inside a quoted string
+.symbol lit_string                     /* literal string constant
+.symbol label                          /* GOTO target label
+.symbol function_arguments             /* subroutine/function args within ()
+.symbol array_subscripts               /* array subscripts within []
+.symbol item                           /* one "simple" term in an expression
+.symbol set_value                      /* SET expression within []
+.symbol set_value_range                /* value of one set element or elements range
+.symbol expression                     /* full arbitrary expression of a value
+.symbol expression2
+.symbol expression3
+.symbol expression4
+.symbol expression5
+.symbol expression6
+.symbol enumerated_data_type           /* enumerated type definition within ()
+.symbol subrange_data_type             /* subrange type definition
+.symbol simple_data_type               /* base data type, can be used in sets, etc.
+.symbol set_data_type                  /* "SET OF . . ." data type definition
+.symbol record_data_type               /* RECORD data type definition
+.symbol record_fields                  /* consecutive fields in RECORD data type
+.symbol record_field                   /* RECORD fields with same type, without ';'
+.symbol array_index_range              /* one subscript range in TYPE or VAR
+.symbol array_data_type                /* "ARRAY [...] OF ..." data type definition
+.symbol data_type_attribute            /* attribute within [] in data type declaration
+.symbol data_type                      /* full feature data type definition
+.symbol routine_type                   /* data type for pointer to a routine
+.symbol program_statement
+.symbol module_statement
+.symbol const_statement
+.symbol type_statement
+.symbol type_substatement [sst_r_pas_syn_type]
+.symbol var_statement
+.symbol var_substatement [sst_r_pas_syn_var]
+.symbol var_initializer                /* stuff after ":=" to init static variables
+.symbol var_init_field                 /* one field of initial values in VAR
+.symbol label_statement
+.symbol define_statement
+.symbol param_decl_group               /* func param declarations with one data type
+.symbol parameter_declaration          /* optional proc args declaration within ()
+.symbol routine_option                 /* option after routine declaration
+.symbol routine_heading                /* procedure or function declaration
+.symbol statement [toplev]             /* any one statement
+.symbol executable_block               /* executable block of whole procedure
+.symbol statements                     /* executable statements separated by ";"
+.symbol raw_statement
+.symbol with_abbrev                    /* 1 abbreviation descriptor in WITH statement
+.symbol variable                       /* variable that can be whole record
+.symbol writeln_arg                    /* WRITELN argument, can have field widths
+
+.define space .as
+  (' ' .or .eol)
+  pad
+
+.define name_char .as                  /* all but first character in a identifier name
+  .range ['a' thru 'z']
+  .or .range ['0' thru '9']
+  .or '_'
+  .or '$'
+
+.define name .as
+  (.range ['a' thru 'z'] .or '_')      /* first character must be letter or "_"
+  .occurs [0 to 4095] (
+    .range ['a' thru 'z']
+    .or .range ['0' thru '9']
+    .or '_'
+    .or '$')
+
+.define unsigned_lit_integer .as
+  (.occurs [1 to inf]
+    .range ['0' thru '9'])[1]          /* base ten number, or optional base
+  ( ( '#'
+      ( .occurs [1 to inf] (
+          .range ['0' thru '9']
+          .or .range ['a' thru 'z'])
+        )[1]                           /* number if optional base used earlier
+      )
+    .or .null)
+
+.define unsigned_lit_real .as
+  (.occurs [1 to inf]
+    .range ['0' thru '9'])             /* digits to left of decimal point
+  '.'
+  .occurs [1 to inf] (
+    .range ['0' thru '9']              /* digits to right of decimal point
+    )
+  ( ( 'e'
+      ('+' .or '-' .or .null)          /* optional sign on exponent
+      .occurs [1 to inf] (
+        .range ['0' thru '9']
+        )                              /* exponent digits
+      )
+    .or .null)
+
+.define quoted_string_chars .as        /* characters inside a quoted string
+  .occurs [0 to inf] (
+    ( .occurs [1 to inf] (
+        .range [' ' thru '&'] .or .range ['(' thru '~']) /* raw printable characters
+      )[1]
+    .or "''"[2]                        /* double apostrophy, resolve to single "'"
+    )
+
+.define lit_string .as                 /* literal string constant
+  "'" quoted_string_chars[1] "'"       /* starts with mandatory quoted string
+  .occurs [0 to inf] (
+    .occurs [0 to inf] ' '
+    ("'" quoted_string_chars[1] "'")   /* additional quoted string
+    .or '(' pad expression[2] pad ')'  /* value of ASCII character
+    )
+
+.define label .as                      /* GOTO target label
+  name[1]                              /* normal symbol
+  .or .occurs [1 to inf] (.range ['0' thru '9'])[2] /* unsigned integer constant
+
+.define function_arguments .as         /* subroutine/function args within ()
+  '(' pad
+  expression[1] pad                    /* first function argument
+  .occurs [0 to inf] (
+    ',' pad expression[1] pad)         /* subsequent function arguments
+  ')'
+
+.define array_subscripts .as           /* array subscripts within []
+  '[' pad
+  expression[1] pad                    /* first array subscript
+  .occurs [0 to inf] (
+    ',' pad expression[1] pad)         /* subsequent array arguments
+  ']'
+
+.define item .as                       /* one "simple" term in an expression
+  (                                    /* preceeding unadic operator
+    '+'[2]
+    .or '-'[3]
+    .or ('not'[4] space)
+    .or '~'[5]
+    .or .null[1]
+    )
+  ( unsigned_lit_real[1]               /* literal floating point value
+    .or unsigned_lit_integer[2]        /* literal integer value
+    .or lit_string[3]                  /* literal string
+    .or ('(' pad expression[4] ')')    /* nested expression in parenthesis
+    .or set_value[5]                   /* set expression
+    .or (                              /* intrinsic constants
+      (
+        'true'[7]                      /* boolean TRUE constant
+        .or 'false'[8]                 /* boolean FALSE constant
+        .or 'nil'[9]                   /* NIL pointer value
+        )
+      .not .upto name_char
+      )
+    .or (variable[6] pad               /* function, variable, or CONST name
+      function_arguments[2]            /* function reference with arguments
+      .or .null[1]                     /* was func without args or simple variable
+      )
+    )
+  pad
+
+.define set_value .as                  /* SET expression within []
+  '[' pad
+  (                                    /* all the element/range value expressions
+    (
+      set_value_range[1]
+      .occurs [0 to inf] (
+        ',' pad set_value_range[1])
+      ) .or .null
+    )
+  ']'
+
+.define set_value_range .as            /* value for one set element or elements range
+  expression[1]                        /* value for element or start of range
+  (('..' pad expression[1]) .or .null)
+
+
+.define expression .as                 /* full arbitrary expression of a value
+  expression2[1]
+  .occurs [0 to inf] (
+    ( 'and' pad 'then'[19] space
+      ) pad
+    expression2[1]
+    )
+
+.define expression2 .as
+  expression3[1]
+  .occurs [0 to inf] (
+    ( 'or' pad 'else'[20] space
+      ) pad
+    expression3[1]
+    )
+
+.define expression3 .as
+  expression4[1]
+  .occurs [0 to inf] (
+    ( '='[10]
+      .or '<>'[11]
+      .or '>='[12]
+      .or '>'[13]
+      .or '<='[14]
+      .or '<'[15]
+      .or ('in'[18] space)
+      ) pad
+    expression4[1]
+    )
+
+.define expression4 .as
+  expression5[1]
+  .occurs [0 to inf] (
+    ( '+'[1]
+      .or '-'[2]
+      .or '!'[9]
+      .or ('or'[17] space .not .upto ('else' .not .upto name_char))
+      ) pad
+    expression5[1]
+    )
+
+.define expression5 .as
+  expression6[1]
+  .occurs [0 to inf] (
+    ( '*'[4]
+      .or '/'[5]
+      .or '&'[8]
+      .or ('div'[6] space)
+      .or ('mod'[7] space)
+      .or ('and'[16] space .not .upto ('then' .not .upto name_char))
+      ) pad
+    expression6[1]
+    )
+
+.define expression6 .as
+  item[2]
+  .occurs [0 to inf] (
+    '**'[3] pad
+    item[2]
+    )
+
+.define enumerated_data_type .as       /* enumerated type definition within ()
+  '(' pad
+  name[1] pad
+  (('=' pad expression[1] pad) .or .null[2])
+  .occurs [0 to inf] (
+    ',' pad
+    name[1] pad
+    (('=' pad expression[1] pad) .or .null[2])
+    )
+  ')'
+
+.define subrange_data_type .as         /* subrange type definition
+  expression[1] pad
+  '..' pad
+  expression[1]
+
+.define simple_data_type .as           /* base data type, can be used in sets, etc.
+  (
+    (
+      (                                /* pre-defined data type names
+        (
+          ( 'integer'
+            ('16'[1] .or '32'[2] .or .null[1])
+            )
+          .or 'real'[12]
+          .or 'single'[3]
+          .or 'double'[4]
+          .or 'boolean'[5]
+          .or 'char'[6]
+          .or 'univ_ptr'[7]
+          .or 'string'[8]
+          )
+        .not .upto name_char            /* make sure really got to end of name
+        )
+      .or subrange_data_type[10]
+      .or name[11]
+      )
+    pad
+    (enumerated_data_type[9] .or .null)
+    )
+  .or enumerated_data_type[9]
+
+.define set_data_type .as              /* "SET OF . . ." data type definition
+  'set' pad 'of' space
+  (
+    ('bitsize' space expression[1] pad 'eletype' space)
+    .or .null[2]
+    )
+  data_type[1]
+
+.define record_data_type .as           /* RECORD data type definition
+  ( ('aligned'[1] space)
+    .or ('unaligned'[2] space)
+    .or ('packed'[3] space)
+    .or .null[4]
+    )
+  'record' space
+  record_fields[1]
+  'end'
+
+.define record_fields .as              /* consecutive fields in RECORD data type
+  .occurs [0 to 1] (                   /* invarient fields without trailing ';'
+    record_field[1] pad                /* first data type
+    .occurs [0 to inf]
+      (';' pad record_field[1] pad)    /* subsequent data types
+    (';' pad .not .upto ')') .or .null  /* last ';' if not ending a varient case
+    )
+  .occurs [0 to 1] (                   /* varient part of record
+    'case' space
+    data_type[2] pad
+    'of' space
+    .occurs [0 to inf] (               /* once for each case
+      expression[3] pad                /* first case label for this case
+      .occurs [0 to inf]
+        (',' pad expression[3] pad)    /* subsequent case labels for this case
+      ':' pad '(' pad
+      record_fields[4] pad             /* fields for this case
+      ')' pad ';' pad
+      )
+    )
+
+.define record_field .as               /* RECORD fields with same type, without ';'
+  .occurs [0 to 1] (
+    name[1] pad                        /* first field name
+    .occurs [0 to inf]
+      (',' pad name[1] pad)            /* subsequent field names
+    ':' pad
+    data_type[2] pad                   /* data type for all the above fields
+    )
+
+.define array_index_range .as          /* one subscript range in TYPE or VAR
+  expression[1] pad
+  '..' pad
+  (expression[1] .or '*'[2])
+
+.define array_data_type .as            /* "ARRAY [...] OF ..." data type definition
+  (('packed'[2] pad) .or .null[1])
+  'array' pad '[' pad
+  array_index_range[1] pad
+  .occurs [0 to inf] (
+    ',' pad array_index_range[1] pad)
+  ']' pad 'of' pad
+  data_type[2]
+
+.define data_type_attribute .as        /* attribute within [] in data type declaration
+  'natural'[1] .or
+  'atomic'[2] .or
+  ( 'aligned' pad
+    (
+     '(' pad (
+        '0'[3] .or
+        '1'[4] .or
+        '2'[5] .or
+        '3'[6]) pad
+      ')'
+      ) .or .null[3]                   /* default ALIGNED is same as ALIGNED(0)
+    ) .or
+  .null
+
+.define data_type .as                  /* full feature data type definition
+  (
+    (                                  /* attribute within []
+      '[' pad
+      data_type_attribute[3] pad
+      .occurs [0 to inf] (
+        ',' pad data_type_attribute[3] pad)
+      ']' pad
+      ) .or .null                      /* no [...] found here
+    )
+  ('^'[2] .or .null[1])                /* optional "pointer to"
+  set_data_type[2]
+  .or record_data_type[3]
+  .or array_data_type[4]
+  .or routine_type[5]                  /* only allowed if "^", above
+  .or simple_data_type[1]
+
+.define routine_type .as               /* data type for pointer to a routine
+  ('procedure'[1] .or 'function'[2]) pad
+  parameter_declaration[1] pad         /* optional call argument declarations
+  ((':' pad data_type[2] pad) .or .null[1]) /* data type for function value
+  ((';' pad 'val_param'[1] pad) .or .null) /* default passing method is by value
+/*
+/*   Statements.
+/*
+.define program_statement .as
+  'program' space name[1] pad ';'
+
+.define module_statement .as
+  'module' space name[1] pad ';'
+
+.define const_statement .as
+  'const' space
+  .occurs [0 to inf] (
+    pad name[1] pad '=' pad expression[1] pad ';')
+
+.define type_statement .as
+  'type' space
+
+.define type_substatement .as
+  .charcase [lower]
+  pad
+  name[1] pad
+  .occurs [0 to inf] (
+    ',' pad name[1] pad)
+  '=' pad
+  data_type[2] pad
+  ';'
+
+.define var_statement .as
+  'var'
+  (
+    (
+      pad '(' pad
+      name[2] pad                      /* optional common block name
+      ')'
+      ) .or .null[1]
+    )
+  space
+
+.define var_substatement .as
+  .charcase [lower]
+  pad
+  name[1] pad                          /* name of first var with same data type
+  .occurs [0 to inf] (
+    ',' pad name[1] pad)               /* subsequent var names with same data type
+  ':' pad
+  (                                    /* optional qualifiers
+    ('extern'[2] space)
+
+    .or ('static'[5] space)
+    .or .null
+    )
+  data_type[3] pad
+  (                                    /* optional initializers
+    (':=' pad var_initializer[4] pad)
+    .or .null
+    )
+  ';'
+
+.define var_initializer .as            /* stuff after ":=" to init static variables
+  (                                    /* list of vals for RECORD, ARRAY, or SET
+    '[' pad
+    var_init_field[1] pad              /* first field
+    .occurs [0 to inf]
+      (',' pad (var_init_field[1] .or .null) pad)  /* subsequent fields
+    ']'
+    )[1]
+  .or expression[2]                    /* direct value
+
+.define var_init_field .as             /* one field of initial values in VAR
+  ( (name[1] pad ':=' pad)
+    .or .null
+    )
+  var_initializer[2] pad
+
+.define label_statement .as
+  'label' space
+  label[1] pad
+  .occurs [0 to inf] (',' pad label[1] pad)
+  ';'
+
+.define define_statement .as
+  'define' space
+  name[1] pad
+  ( (':=' pad var_initializer[2] pad)
+    .or .null
+    )
+  ';'
+
+.define param_decl_group .as           /* func param declarations with one data type
+  .occurs [0 to inf] (
+    ('in'[1] space)
+    .or ('out'[2] space)
+    .or ('var'[3] space)               /* explicitly indicate pass by reference
+    .or ('val'[7] space)               /* explicitly indicate pass by value
+    )
+  name[4] pad
+  .occurs [0 to inf] (
+    ',' pad name[4] pad )
+  ':' pad
+  (('univ'[5] space) .or .null)
+  data_type[6]
+
+.define parameter_declaration .as      /* optional proc args declaration within ()
+  (
+    '(' pad
+    param_decl_group[1] pad
+    .occurs [0 to inf] (
+      ';' pad param_decl_group[1] pad)
+    ')'
+    )
+  .or .null
+
+.define routine_option .as             /* option after routine declaration
+  'forward'[1]
+  .or 'extern'[2]
+  .or 'internal'[3]
+  .or 'val_param'[4]
+  .or 'noreturn'[5]
+
+.define routine_heading .as            /* procedure or function declaration
+  ('procedure'[1] .or 'function'[2]) space
+  name[1] pad                          /* procedure or function name
+  parameter_declaration[1] pad         /* optional call argument declarations
+  ((':' pad data_type[2] pad) .or .null[1]) /* data type for function value
+  ';' pad
+  ( 'options' pad                      /* routine options with explicit "options"
+    '(' pad
+    routine_option[1] pad
+    .occurs [0 to inf] (
+      ',' pad routine_option[1] pad)
+    ')' pad ';'
+    )
+  .or .occurs [0 to inf] (             /* routine options separated with ";"
+    routine_option[1] pad ';' pad
+    )
+
+.define statement .as                  /* any one statement
+  .charcase[lower]
+  pad
+  const_statement[1]
+  .or type_statement[2]
+  .or var_statement[3]
+  .or label_statement[4]
+  .or define_statement[5]
+  .or routine_heading[6]
+  .or executable_block[7]
+  .or program_statement[8]
+  .or module_statement[9]
+  .or .eod[10]
+/*
+/*   Executable code.
+/*
+.define executable_block .as           /* executable block of whole procedure
+  'begin' space
+  statements[1] pad
+  'end' pad
+  ';'[1] .or '.'[2]
+/*
+/*   Consecutive statements
+/*
+.define statements .as                 /* executable statements separated by ";"
+  raw_statement[1]                     /* first statement in list
+  .occurs [0 to inf] (
+    pad ';' pad raw_statement[1]       /* subsequent statements
+    )
+/*
+/*********************************************************************************
+/*
+/*   All the executable statements.  These are defined inside "RAW_STATEMENT".
+/*   The statements here are all defined without any trailing semicolon.
+/*
+.define raw_statement .as
+/*
+/*   Optional leading labels.  These are targets for GOTO statements.
+/*
+  .occurs [0 to inf] (
+    label[14] pad
+    .occurs [0 to inf] (
+       ',' pad label[14] pad)
+    ':' pad
+    .not .upto '='
+    )
+/*
+/*   Make sure we don't think END is a "raw_statement".
+/*
+  .upto ('end' .not .upto name_char)
+/*
+/*   BEGIN ... END block
+/*
+  .or ( 'begin' space
+    statements[13] pad
+    'end'
+    )
+/*
+/*   GOTO
+/*
+  .or ('goto' space
+    label[2] pad
+    )
+/*
+/*   IF ... THEN [... ELSE]
+/*
+  .or ('if' space
+    expression[3] pad
+    'then' space
+    raw_statement[1] pad
+    ( 'else' space
+      raw_statement[2] pad)
+    .or .null
+    )
+/*
+/*   CASE
+/*
+  .or ('case' space
+    expression[1] pad
+    'of' space
+    .occurs [0 to inf] (               /* once for each CASE
+      expression[1] pad                /* first case label in list
+      .occurs [0 to inf] (
+        ',' pad expression[1] pad)     /* subsequent case labels in list
+      ':' pad
+      raw_statement[2] pad             /* code for this case
+      ';' pad
+      )[1]
+    ( ( 'otherwise' space              /* optional OTHERWISE clause
+        statements[2] pad
+        )
+      .or .null[3]
+      )
+    'end' pad                          /* END of CASE statement
+    )[4]
+/*
+/*   FOR loop.
+/*
+  .or ('for' space
+    variable[1] pad                    /* index variable
+    ':=' pad
+    expression[1] pad                  /* starting index value
+    ( ('to'[1] space)
+      .or ('downto'[2] space)
+      )
+    expression[1] pad                  /* limit index value
+    ( ( 'by' space
+        expression[2]                  /* optional index increment value
+        ) .or .null[1]
+      )
+    'do' space
+    raw_statement[1]                   /* the repeated statement
+    )[5]
+/*
+/*   REPEAT ... UNTIL loop.
+/*
+  .or ('repeat' space
+    raw_statement[1] pad               /* first repeated statement
+    .occurs [0 to inf] (
+      ';' pad
+      .not .upto ('until' space)
+      raw_statement[1] pad             /* subsequent repeated statements
+      )
+    ((';' pad) .or .null)
+    'until' space
+    expression[2]                      /* boolean conditional expression
+    )[6]
+/*
+/*   WHILE loop.
+/*
+  .or ('while' space
+    expression[1] pad                  /* boolean conditional expression
+    'do' space
+    raw_statement[1]                   /* the repeated statement
+    )[7]
+/*
+/*   WITH
+/*
+  .or ('with' space
+    with_abbrev[1] pad                 /* first abbreviation in list
+    .occurs [0 to inf] (
+      ',' pad with_abbrev[1] pad)      /* subsequent abbreviations in list
+    'do' space
+    raw_statement[2]                   /* statement effected by abbreviations
+    )[8]
+/*
+/*   WRITELN or WRITE intrisic procedures.  These are syntactically different
+/*   from general procedures because of the width fields.
+/*
+  .or ('write' ('ln'[2] .or .null[1]) .not .upto name_char pad
+    (
+      ( '(' pad
+        writeln_arg[1] pad
+        .occurs [0 to inf] (
+          ',' pad writeln_arg[1] pad)
+        ')'
+        )
+      .or .null
+      )
+    )[15]
+/*
+/*   DISCARD intrinsic procedure.
+/*
+  .or ('discard' pad
+    '(' pad
+    expression[1] pad                  /* must be a function reference
+    ')'
+    )[16]
+/*
+/*   EXIT
+/*
+  .or ('exit'[9] .not .upto name_char)
+/*
+/*   NEXT
+/*
+  .or ('next'[10] .not .upto name_char)
+/*
+/*   RETURN
+/*
+  .or ('return'[11] .not .upto name_char)
+/*
+/*   CALL statement.  This is an extension to Domain Pascal, and allows
+/*   calling external routines that have the same name as special keywords
+/*   defined here.  For example, this is the only way to call the unix
+/*   EXIT routine.  The stuff put onto the syntax tree must look just like
+/*   what happens for a regular call, below.  The application routine does
+/*   not know which syntax path was used.
+/*
+  .or ('call' space
+    variable[12] pad
+    (function_arguments[1] .or .null)
+    )
+/*
+/*   Assignment statement or procedure call statements.
+/*   These statement types are grouped together because they have common starting
+/*   syntaxes.
+/*
+  .or (
+    variable[12] pad                   /* variable or procedure name
+    (
+      /*
+      /*   Assignment statement.
+      /*
+      (':=' pad expression[2])         /* expression for assignment value
+      /*
+      /*   Subroutine call statement.
+      /*
+      .or (function_arguments[1] pad)  /* arguments to procedure
+      .or .null                        /* indicates procedure without arguments
+      )
+    )
+/*
+/*   Null statement.  This is how we allow consecutive ';', or labels immediately
+/*   before END, etc.
+/*
+  .or .null[1]
+/*
+/*   End of RAW_STATEMENT construction.
+/*
+/***********************************************************************************
+/*
+.define with_abbrev .as                /* 1 abbreviation descriptor in WITH statement
+  variable[1] pad                      /* name of a record
+  ':' pad
+  name[1]                              /* abbreviation name
+
+.define variable .as                   /* arbitrary variable reference
+  name[1] pad                          /* mandatory name of top level structure
+  .occurs [0 to inf] (
+    (
+      '^'[2]                           /* pointer dereference
+      .or ('.' name[1])                /* specific field in record
+      .or array_subscripts[3]          /* one set of subscripts within []
+      )
+    pad
+    )
+
+.define writeln_arg .as                /* WRITELN argument, can have field widths
+  expression[1] pad
+  .occurs [0 to inf] (
+    ':' pad expression[1] pad)

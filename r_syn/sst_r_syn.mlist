@@ -1,0 +1,17 @@
+sst_r_syn_comblock.obj
+sst_r_syn_command.obj
+sst_r_syn_compare.obj
+sst_r_syn_declare.obj
+sst_r_syn_define.obj
+sst_r_syn_doit.obj
+sst_r_syn_expression.obj
+sst_r_syn_goto.obj
+sst_r_syn_init.obj
+sst_r_syn_int.obj
+sst_r_syn_item.obj
+sst_r_syn_jtargets_done.obj
+sst_r_syn_jtargets_make.obj
+sst_r_syn_jtarget_sym.obj
+sst_r_syn_opc.obj
+sst_r_syn_utitem.obj
+syn.obj
