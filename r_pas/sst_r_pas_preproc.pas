@@ -623,7 +623,7 @@ mode_token_incl2_k: begin
   f_p^.line_p := nil;                  {init to no partial line read in new file}
   if sst_local_ins then begin          {look for include file in local directory ?}
     string_generic_fnam (parm, '', fnam); {make leafname of include file in FNAM}
-    syn_infile_push (fnam, '', stat);  {try for include file in current directory}
+    syn_infile_push_sext (fnam, '', stat); {try for include file in current directory}
     if file_not_found(stat) then goto include_not_local;
     if not sys_error(stat) then goto include_open_ok;
     sys_msg_parm_vstr (msg_parm[1], parm);
@@ -633,7 +633,7 @@ mode_token_incl2_k: begin
     sys_error_abort (stat, 'sst_pas_read', 'directive_include_open_local', msg_parm, 4);
     end;                               {done handling LOCAL_INS switch ON}
 include_not_local:                     {open include file name exactly as given}
-  syn_infile_push (parm, '', stat);    {save state and switch input to new file}
+  syn_infile_push_sext (parm, '', stat); {save state and switch input to new file}
   if sys_error(stat) then begin        {error opening include file ?}
     sys_msg_parm_vstr (msg_parm[1], parm);
     sys_msg_parm_int (msg_parm[2], line_p^.line_n);
