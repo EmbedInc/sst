@@ -76,11 +76,11 @@ type
     sst_symflag_created_k,             {symbol was created by translator}
     sst_symflag_intrinsic_in_k,        {symbol is intrinsic to input language}
     sst_symflag_intrinsic_out_k,       {symbol is intrinsic to output language}
-    sst_symflag_global_k,              {symbol will be globally known to binder}
+    sst_symflag_global_k,              {symbol will be globally known to linker}
     sst_symflag_extern_k,              {symbol lives externally to this module}
     sst_symflag_defnow_k,              {will be defined now, used by back end}
     sst_symflag_ok_sname_k,            {OK if other out symbol is given same name}
-    sst_symflag_static_k);             {symbol represent storage that is static}
+    sst_symflag_static_k);             {symbol represents storage that is static}
 
   sst_ifunc_k_t = (                    {list of functions intrinsic to translator}
     sst_ifunc_abs_k,                   {absolute value}
@@ -149,7 +149,7 @@ type
     sst_vtype_const_k,                 {a named constant reference}
     sst_vtype_com_k);                  {a common block reference}
 
-  sst_rename_k_t = (                   {what kind of re-nameing is allowed for sym}
+  sst_rename_k_t = (                   {what kind of re-naming is allowed for sym}
     sst_rename_ncheck_k,               {use rename rules, no check for uniquness}
     sst_rename_none_k,                 {use rename rules, must be unique in curr scope}
     sst_rename_scope_k,                {re-name to make unique in current scope}
@@ -219,7 +219,9 @@ type
     sst_opc_prog_k,                    {start of top level program}
     sst_opc_rout_k,                    {start of a routine}
     sst_opc_exec_k,                    {points to chain of executable code}
-
+    {
+    *   Opcodes only used within executable code.
+    }
     sst_opc_label_k,                   {indicate handle for a label}
     sst_opc_call_k,                    {subroutine call}
     sst_opc_assign_k,                  {assignment statement}
@@ -332,18 +334,18 @@ type
     dtype_func_p: sst_dtype_p_t;       {points to function val data type, if any}
     n_args: sys_int_machine_t;         {total number of call arguments}
     flags: sst_procflag_t;             {set of one-bit flags}
-    first_arg_p: sst_proc_arg_p_t;     {points to data about first call arg}
+    first_arg_p: sst_proc_arg_p_t;     {points to list of call arguments}
     end;
 
   sst_proc_arg_t = record              {data about one procedure call argument}
     next_p: sst_proc_arg_p_t;          {points to data about next call arg}
-    sym_p: sst_symbol_p_t;             {point to arg symbol if actual routine}
+    sym_p: sst_symbol_p_t;             {point to arg symbol in actual routine}
     name_p: string_var_p_t;            {pnt to arg name if routine template}
     exp_p: sst_exp_p_t;                {pnt to arg value expression if called}
     dtype_p: sst_dtype_p_t;            {points to data type for this call arg}
     pass: sst_pass_k_t;                {how is this argument passed}
     rwflag_int: sst_rwflag_t;          {arg read/write permission from inside proc}
-    rwflag_ext: sst_rwflag_t;          {interal read/write flag as seen by caller}
+    rwflag_ext: sst_rwflag_t;          {internal read/write flag as seen by caller}
     univ: boolean;                     {TRUE if allowed to match any data type}
     end;
 
@@ -408,7 +410,7 @@ sst_dtype_undef_k: (                   {data type is undefined, declared later}
     end;
 
   sst_var_value_t = record             {data describing a known constant value}
-    dtype: sst_dtype_k_t;              {what kind of constant is this ?}
+    dtype: sst_dtype_k_t;              {data type of the constant}
     case sst_dtype_k_t of              {different data for each data type}
 sst_dtype_int_k: (                     {data type is an integer}
       int_val: sys_int_max_t;
@@ -812,18 +814,18 @@ sst_opc_write_eol_k: (                 {write end of line to standard output}
     config: string_var8192_t;          {config info specific to particular back end}
     end;
 {
-*   Call table for front end routines.
+*   Call table for use by built-in front end routines.
 }
   sst_r_t = record
 
-doit: ^procedure (                     {do the whole back end phase}
+doit: ^procedure (                     {do the whole front end phase}
   in      fnam: univ string_var_arg_t; {raw input file name}
   in out  gnam: univ string_var_arg_t; {returned as generic name of input file}
   out     stat: sys_err_t);            {completion status code}
 
   end;
 {
-*   Call table for back end routines.
+*   Call table for use by built-in back end routines.
 }
   sst_w_t = record
 
