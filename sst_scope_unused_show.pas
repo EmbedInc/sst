@@ -56,7 +56,7 @@ begin
         (not (sst_symflag_extern_k in sym_p^.var_com_p^.flags)) {com defined here ?}
       then goto next_sym;
     if sst_level_unused <> sst_level_unused_all_k then begin {don't list some syms ?}
-      syn_get_char_flevel (sym_p^.char_h, level); {get source file nesting level}
+      syo_get_char_flevel (sym_p^.char_h, level); {get source file nesting level}
       if level >= sst_level_unused     {symbol declared too deep in nested files ?}
         then goto next_sym;
       end;

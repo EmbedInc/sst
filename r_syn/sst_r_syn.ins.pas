@@ -5,7 +5,7 @@
 %include 'util.ins.pas';
 %include 'string.ins.pas';
 %include 'file.ins.pas';
-%include 'syn.ins.pas';
+%include 'syo.ins.pas';
 %include 'sst.ins.pas';
 
 type
@@ -67,40 +67,40 @@ var (sst_r_syn)
   lab_fall_k: sst_symbol_p_t;          {"constant" for fall thru jump target}
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
   prefix: string_var32_t;              {prefix for default subroutine names}
-  def_syn_p: symbol_data_p_t;          {points to data about symbol curr defining}
+  def_syo_p: symbol_data_p_t;          {points to data about symbol curr defining}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
-  sym_start_routine_p: sst_symbol_p_t; {pnt to SYN_P_START_ROUTINE symbol}
-  sym_end_routine_p: sst_symbol_p_t;   {pnt to SYN_P_END_ROUTINE symbol}
-  sym_cpos_push_p: sst_symbol_p_t;     {pnt to SYN_P_CPOS_PUSH symbol}
-  sym_cpos_pop_p: sst_symbol_p_t;      {pnt to SYN_P_CPOS_POP symbol}
-  sym_tag_start_p: sst_symbol_p_t;     {pnt to SYN_P_TAG_START symbol}
-  sym_tag_end_p: sst_symbol_p_t;       {pnt to SYN_P_TAG_END symbol}
-  sym_charcase_p: sst_symbol_p_t;      {pnt to SYN_P_CHARCASE symbol}
-  sym_get_ichar_p: sst_symbol_p_t;     {pnt to SYN_P_GET_ICHAR symbol}
-  sym_test_eod_p: sst_symbol_p_t;      {pnt to SYN_P_TEST_EOD symbol}
-  sym_test_eof_p: sst_symbol_p_t;      {pnt to SYN_P_TEST_EOF symbol}
-  sym_test_string_p: sst_symbol_p_t;   {pnt to SYN_P_TEST_STRING symbol}
+  sym_start_routine_p: sst_symbol_p_t; {pnt to SYO_P_START_ROUTINE symbol}
+  sym_end_routine_p: sst_symbol_p_t;   {pnt to SYO_P_END_ROUTINE symbol}
+  sym_cpos_push_p: sst_symbol_p_t;     {pnt to SYO_P_CPOS_PUSH symbol}
+  sym_cpos_pop_p: sst_symbol_p_t;      {pnt to SYO_P_CPOS_POP symbol}
+  sym_tag_start_p: sst_symbol_p_t;     {pnt to SYO_P_TAG_START symbol}
+  sym_tag_end_p: sst_symbol_p_t;       {pnt to SYO_P_TAG_END symbol}
+  sym_charcase_p: sst_symbol_p_t;      {pnt to SYO_P_CHARCASE symbol}
+  sym_get_ichar_p: sst_symbol_p_t;     {pnt to SYO_P_GET_ICHAR symbol}
+  sym_test_eod_p: sst_symbol_p_t;      {pnt to SYO_P_TEST_EOD symbol}
+  sym_test_eof_p: sst_symbol_p_t;      {pnt to SYO_P_TEST_EOF symbol}
+  sym_test_string_p: sst_symbol_p_t;   {pnt to SYO_P_TEST_STRING symbol}
 {
 *   Pointers to pre-defined data types we may want to reference.
 }
   sym_int_machine_t_p: sst_symbol_p_t; {pnt to SYS_INT_MACHINE_T symbol}
-  sym_mflag_t_p: sst_symbol_p_t;       {pnt to SYN_MFLAG_K_T symbol}
-  sym_charcase_t_p: sst_symbol_p_t;    {pnt to SYN_CHARCASE_K_T symbol}
+  sym_mflag_t_p: sst_symbol_p_t;       {pnt to SYO_MFLAG_K_T symbol}
+  sym_charcase_t_p: sst_symbol_p_t;    {pnt to SYO_CHARCASE_K_T symbol}
 {
 *   Pointers to pre-defined constants we may want to use.
 }
-  sym_mflag_yes_p: sst_symbol_p_t;     {pnt to SYN_MFLAG_YES_K symbol}
-  sym_mflag_no_p: sst_symbol_p_t;      {pnt to SYN_MFLAG_NO_K symbol}
+  sym_mflag_yes_p: sst_symbol_p_t;     {pnt to SYO_MFLAG_YES_K symbol}
+  sym_mflag_no_p: sst_symbol_p_t;      {pnt to SYO_MFLAG_NO_K symbol}
 
-  sym_charcase_down_p: sst_symbol_p_t; {pnt to SYN_CHARCASE_DOWN_K symbol}
-  sym_charcase_up_p: sst_symbol_p_t;   {pnt to SYN_CHARCASE_UP_K symbol}
-  sym_charcase_asis_p: sst_symbol_p_t; {pnt to SYN_CHARCASE_ASIS_K symbol}
+  sym_charcase_down_p: sst_symbol_p_t; {pnt to SYO_CHARCASE_DOWN_K symbol}
+  sym_charcase_up_p: sst_symbol_p_t;   {pnt to SYO_CHARCASE_UP_K symbol}
+  sym_charcase_asis_p: sst_symbol_p_t; {pnt to SYO_CHARCASE_ASIS_K symbol}
 
-  sym_ichar_eol_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOL_K symbol}
-  sym_ichar_eof_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOF_K symbol}
-  sym_ichar_eod_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOD_K symbol}
+  sym_ichar_eol_p: sst_symbol_p_t;     {pnt to SYO_ICHAR_EOL_K symbol}
+  sym_ichar_eof_p: sst_symbol_p_t;     {pnt to SYO_ICHAR_EOF_K symbol}
+  sym_ichar_eod_p: sst_symbol_p_t;     {pnt to SYO_ICHAR_EOD_K symbol}
 {
 *   Pointers to pre-defined variables we may want to use.
 }
@@ -202,5 +202,5 @@ procedure sst_r_syn_utitem (           {process UTITEM syntax}
 *   call explicitly.
 }
 procedure sst_r_syn_sy_command (       {process top level SYN file command}
-  out     mflag: syn_mflag_k_t);       {syntax matched yes/no, use SYN_MFLAG_xxx_K}
+  out     mflag: syo_mflag_k_t);       {syntax matched yes/no, use SYO_MFLAG_xxx_K}
   extern;

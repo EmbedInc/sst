@@ -9,11 +9,11 @@ define sst_r_pas_sment_module;
 %include 'sst_r_pas.ins.pas';
 
 procedure sst_r_pas_sment_module (     {proces MODULE_STATEMENT syntax}
-  in      str_mod_h: syn_string_t);    {string handle to MODULE_STATEMENT syntax}
+  in      str_mod_h: syo_string_t);    {string handle to MODULE_STATEMENT syntax}
 
 var
   tag: sys_int_machine_t;              {syntax tag from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   sym_p: sst_symbol_p_t;               {pointer to module name symbol descriptor}
   stat: sys_err_t;
 
@@ -26,23 +26,23 @@ begin
       nest_level := nest_level - 1;    {should now be above any top block}
       end;
 otherwise
-    syn_error (str_mod_h, 'sst_pas_read', 'module_not_allowed_here', nil, 0);
+    syo_error (str_mod_h, 'sst_pas_read', 'module_not_allowed_here', nil, 0);
     end;
   nest_level := nest_level + 1;        {down into this MODULE block}
   top_block := top_block_module_k;     {indicate top block is a MODULE}
 
-  syn_level_down;                      {down into MODULE_STATEMENT syntax level}
-  syn_get_tag_msg (                    {get tag for module name}
+  syo_level_down;                      {down into MODULE_STATEMENT syntax level}
+  syo_get_tag_msg (                    {get tag for module name}
     tag, str_h, 'sst_pas_read', 'statement_module_bad', nil, 0);
   if tag <> 1 then begin               {unexpected TAG value}
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
   sst_symbol_new (                     {add module name to symbol table}
-    str_h, syn_charcase_down_k, sym_p, stat);
+    str_h, syo_charcase_down_k, sym_p, stat);
   sst_scope_new;                       {make new scope level for this module}
   sym_p^.module_scope_p := sst_scope_p; {point symbol to module's scope}
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   sym_p^.symtype := sst_symtype_module_k; {this symbol is a module name}
   sym_p^.flags := sym_p^.flags +
     [sst_symflag_def_k, sst_symflag_used_k];
@@ -54,10 +54,10 @@ otherwise
   sst_opc_p^.module_sym_p := sym_p;    {point opcode to module symbol}
   sst_opcode_pos_push (sst_opc_p^.module_p); {new opcodes are for this module}
 
-  syn_get_tag_msg (                    {get next tag in MODULE_STATEMENT}
+  syo_get_tag_msg (                    {get next tag in MODULE_STATEMENT}
     tag, str_h, 'sst_pas_read', 'statement_module_bad', nil, 0);
-  if tag <> syn_tag_end_k then begin   {there should be no tag here}
-    syn_error_tag_unexp (tag, str_h);
+  if tag <> syo_tag_end_k then begin   {there should be no tag here}
+    syo_error_tag_unexp (tag, str_h);
     end;
-  syn_level_up;                        {back up from MODULE_STATEMENT syntax}
+  syo_level_up;                        {back up from MODULE_STATEMENT syntax}
   end;

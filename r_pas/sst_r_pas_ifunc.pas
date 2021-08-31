@@ -25,7 +25,7 @@ const
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   n_args: sys_int_machine_t;           {number of function arguments found}
   exp_chain_p: sst_exp_chain_p_t;      {points to one link in func args chain}
   exp_chain_pp: sst_exp_chain_pp_t;    {points to current end of func args chain}
@@ -52,7 +52,7 @@ procedure check_args_n (
 begin
   if n_args = n then return;           {no problems ?}
   sys_msg_parm_int (msg_parm[1], n);
-  syn_error (str_h, 'sst', 'func_intrinsic_args_n_bad', msg_parm, 1);
+  syo_error (str_h, 'sst', 'func_intrinsic_args_n_bad', msg_parm, 1);
   end;
 {
 *************************************************************
@@ -89,7 +89,7 @@ begin
 }
   term.ttype := sst_term_ifunc_k;      {init to term is an intrinsic function}
   n_args := 0;                         {init number of function arguments found}
-  syn_get_tag_msg (                    {get function arguments tag}
+  syo_get_tag_msg (                    {get function arguments tag}
     tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
   case tag of
 
@@ -98,10 +98,10 @@ begin
       end;
 
 2: begin                               {function arguments exist within ()}
-      syn_level_down;                  {down into FUNCTION_ARGUMENTS syntax}
+      syo_level_down;                  {down into FUNCTION_ARGUMENTS syntax}
       exp_chain_pp := addr(term.ifunc_args_p); {init pointer to end of args chain}
 loop_arg:                              {back here each new function argument}
-      syn_get_tag_msg (                {get tag for argument expression}
+      syo_get_tag_msg (                {get tag for argument expression}
         tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
       case tag of
 1:      begin                          {TAG is for new function argument expression}
@@ -120,16 +120,16 @@ loop_arg:                              {back here each new function argument}
           n_args := n_args + 1;        {count one more function argument}
           goto loop_arg;               {back for next function argument}
           end;
-syn_tag_end_k: begin
-          syn_level_up;                {back up from FUNCTION_ARGUMENTS syntax}
+syo_tag_end_k: begin
+          syo_level_up;                {back up from FUNCTION_ARGUMENTS syntax}
           end;
 otherwise                              {unexpected tag value in FUNCTION_ARGUMENTS}
-        syn_error_tag_unexp (tag, str_h);
+        syo_error_tag_unexp (tag, str_h);
         end;
       end;                             {end of function args exist case}
 
 otherwise                              {unexpected tag value in ITEM syntax}
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 {
 *   TERM has been initialized as an intrinsic function with the function arguments
@@ -398,7 +398,7 @@ ifunc_szmin_k: begin
 ifunc_val_k: begin
   check_args_n (1);                    {must have exatly one argument}
   if not term.ifunc_args_p^.exp_p^.val_fnd then begin {argument not a known const ?}
-    syn_error (term.ifunc_args_p^.exp_p^.str_h, 'sst', 'exp_not_const_val', nil, 0);
+    syo_error (term.ifunc_args_p^.exp_p^.str_h, 'sst', 'exp_not_const_val', nil, 0);
     end;
   term.val := term.ifunc_args_p^.exp_p^.val;
   term.ttype := sst_term_const_k;
@@ -412,18 +412,18 @@ ifunc_val_k: begin
 ifunc_setof_k: begin
   exp_chain_p := term.ifunc_args_p;    {init pointer to first SETOF argument}
   if exp_chain_p = nil then begin
-    syn_error (term.str_h, 'sst_pas_read', 'setof_arg1_missing', nil, 0);
+    syo_error (term.str_h, 'sst_pas_read', 'setof_arg1_missing', nil, 0);
     end;
   term.dtype_p := exp_chain_p^.exp_p^.dtype_p; {init function's data type}
   while term.dtype_p^.dtype = sst_dtype_copy_k {resolve base data type}
     do term.dtype_p := term.dtype_p^.copy_dtype_p;
   if term.dtype_p^.dtype <> sst_dtype_set_k then begin
-    syn_error (term.str_h, 'sst_pas_read', 'setof_dtype_bad', nil, 0);
+    syo_error (term.str_h, 'sst_pas_read', 'setof_dtype_bad', nil, 0);
     end;
   if                                   {specified data type is ambiguous ?}
       (not exp_chain_p^.exp_p^.dtype_hard) or
       (not term.dtype_p^.set_dtype_final) then begin
-    syn_error (term.str_h, 'sst_pas_read', 'setof_dtype_ambiguous', nil, 0);
+    syo_error (term.str_h, 'sst_pas_read', 'setof_dtype_ambiguous', nil, 0);
     end;
   dt_p := term.dtype_p^.set_dtype_p;   {resolve base data type of set elements}
   while dt_p^.dtype = sst_dtype_copy_k do dt_p := dt_p^.copy_dtype_p;
@@ -459,6 +459,6 @@ ifunc_setof_k: begin
 }
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(sym.front_p^.ifunc));
-    syn_error (term.str_h, 'sst_pas_read', 'ifunc_unexpected', msg_parm, 1);
+    syo_error (term.str_h, 'sst_pas_read', 'ifunc_unexpected', msg_parm, 1);
     end;
   end;

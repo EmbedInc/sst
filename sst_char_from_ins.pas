@@ -10,12 +10,12 @@ define sst_char_from_ins;
 %include 'sst2.ins.pas';
 
 function sst_char_from_ins (           {check for char is from special include file}
-  in      char_h: syn_char_t)          {handle to source character to check}
+  in      char_h: syo_char_t)          {handle to source character to check}
   :boolean;                            {TRUE is character is from the include file}
   val_param;
 
 var
-  file_p: syn_file_p_t;                {points to descriptor for one input file}
+  file_p: syo_file_p_t;                {points to descriptor for one input file}
 
 begin
   sst_char_from_ins := false;          {init to char is not from the include file}

@@ -50,7 +50,7 @@ type
 
   frame_file_t = record                {stack frame for state per input file}
     prev_p: frame_file_p_t;            {points to previous stack frame}
-    line_p: syn_line_p_t;              {points to partially unsed line, if any}
+    line_p: syo_line_p_t;              {points to partially unsed line, if any}
     start_char: sys_int_machine_t;     {first unused character in the line}
     end;
 
@@ -126,17 +126,17 @@ begin
   directive.max := sizeof(directive.str);
   parm.max := sizeof(parm.str);
 
-  syn_stack_alloc (stack_file);        {create our stack for nested include state}
+  syo_stack_alloc (stack_file);        {create our stack for nested include state}
   stack_file^.stack_len := stack_file_block_size; {we won't be using much stack space}
   util_stack_push                      {create stack frame for top level state}
     (stack_file, sizeof(f_p^), f_p);
   f_p^.prev_p := nil;                  {indicate this is the top stack frame}
   f_p^.line_p := nil;                  {indicate no unfinished line is waiting}
 
-  syn_stack_alloc (stack_mode);        {create our stack for nested parse modes}
+  syo_stack_alloc (stack_mode);        {create our stack for nested parse modes}
   stack_mode^.stack_len := stack_mode_block_size; {we won't be using much stack space}
 
-  syn_stack_alloc (stack_align);       {create our stack for nested align rules}
+  syo_stack_alloc (stack_align);       {create our stack for nested align rules}
   stack_align^.stack_len := stack_align_block_size; {we won't be using much stack space}
 
   mode := mode_open_k;                 {init mode for first char in first file}
@@ -150,7 +150,7 @@ begin
 *   Specific pre-processor for the SYN program.
 }
 procedure sst_r_pas_preproc (          {pre-processor before syntaxer interpretation}
-  out     line_p: syn_line_p_t;        {points to descriptor for line chars are from}
+  out     line_p: syo_line_p_t;        {points to descriptor for line chars are from}
   out     start_char: sys_int_machine_t; {starting char within line, first = 1}
   out     n_chars: sys_int_machine_t); {number of characters returned by this call}
 
@@ -247,7 +247,7 @@ loop_line_in:                          {back here for next input line}
         util_stack_pop (stack_file, sizeof(f_p^)); {remove old stack frame from stack}
         goto loop_line_in;             {re-try with popped state}
         end;
-      syn_infile_read (line_p, stat);  {read next line from input file}
+      syo_infile_read (line_p, stat);  {read next line from input file}
       if file_eof(stat) then begin     {this is last "line" from this file ?}
         pop_when_empty :=              {pop stack after this line if not top file}
           f_p^.prev_p <> nil;
@@ -449,7 +449,7 @@ not_comment_end:                       {jump here if definately still in a comme
     end;
 not_comment_start:                     {jump here if not hit illegal start of comm}
 
-  if cval = syn_ichar_eof_k then begin {hit end of file within a comment ?}
+  if cval = syo_ichar_eof_k then begin {hit end of file within a comment ?}
     sys_msg_parm_vstr (msg_parm[1], line_p^.file_p^.conn_p^.tnam);
     sys_message_bomb ('sst_pas_read', 'comment_eof', msg_parm, 1);
     end;
@@ -474,7 +474,7 @@ mode_directive_k: begin
 mode_directive_end_k: begin
   pass_char := false;                  {definately don't pass on this character}
   case cval of
-ord(' '), syn_ichar_eol_k: ;           {skip over blanks and end of lines}
+ord(' '), syo_ichar_eol_k: ;           {skip over blanks and end of lines}
 ord(';'): begin                        {this is what we are looking for}
       mode_pop;                        {pop back to previous parse state}
       end;
@@ -590,7 +590,7 @@ directive_end:                         {jump here for common code to eat ";"}
 *   INFILE_POP
 }
 29: begin
-  syn_infile_name_pop;
+  syo_infile_name_pop;
   goto directive_end;
   end;
 {
@@ -623,7 +623,7 @@ mode_token_incl2_k: begin
   f_p^.line_p := nil;                  {init to no partial line read in new file}
   if sst_local_ins then begin          {look for include file in local directory ?}
     string_generic_fnam (parm, '', fnam); {make leafname of include file in FNAM}
-    syn_infile_push_sext (fnam, '', stat); {try for include file in current directory}
+    syo_infile_push_sext (fnam, '', stat); {try for include file in current directory}
     if file_not_found(stat) then goto include_not_local;
     if not sys_error(stat) then goto include_open_ok;
     sys_msg_parm_vstr (msg_parm[1], parm);
@@ -633,7 +633,7 @@ mode_token_incl2_k: begin
     sys_error_abort (stat, 'sst_pas_read', 'directive_include_open_local', msg_parm, 4);
     end;                               {done handling LOCAL_INS switch ON}
 include_not_local:                     {open include file name exactly as given}
-  syn_infile_push_sext (parm, '', stat); {save state and switch input to new file}
+  syo_infile_push_sext (parm, '', stat); {save state and switch input to new file}
   if sys_error(stat) then begin        {error opening include file ?}
     sys_msg_parm_vstr (msg_parm[1], parm);
     sys_msg_parm_int (msg_parm[2], line_p^.line_n);
@@ -680,7 +680,7 @@ mode_debug1_k: begin
   end;
 mode_debug2_k: begin                   {skip over input stream until end of line}
   pass_char := false;                  {init to not pass on this character}
-  if cval = syn_ichar_eol_k then begin {found end of this line ?}
+  if cval = syo_ichar_eol_k then begin {found end of this line ?}
     mode_pop;
     pass_char := true;
     end;
@@ -704,7 +704,7 @@ mode_token_lnum2_k: begin
     sys_msg_parm_vstr (msg_parm[4], line_p^.file_p^.conn_p^.tnam);
     sys_error_abort (stat, 'sst_pas_read', 'directive_parm_bad', msg_parm, 4);
     end;
-  syn_infile_name_lnum (j);            {set logical number of next input line}
+  syo_infile_name_lnum (j);            {set logical number of next input line}
   mode_pop;                            {pop to state before directive}
   end;
 {
@@ -718,7 +718,7 @@ mode_token_ifpush_k: begin
   goto loop_char_in;                   {back and re-process char with new mode}
   end;
 mode_token_ifpush2_k: begin
-  syn_infile_name_push (parm);         {push new logical input file name}
+  syo_infile_name_push (parm);         {push new logical input file name}
   mode_pop;                            {pop to state before directive}
   end;
 {

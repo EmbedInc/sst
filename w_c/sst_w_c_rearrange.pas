@@ -566,7 +566,7 @@ sst_term_arele_k: begin
 }
 otherwise
       sys_msg_parm_int (msg_parm[1], ord(term_p^.ttype));
-      syn_error (term_p^.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
+      syo_error (term_p^.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
       end;                             {end of term type cases we needed to handle}
     term_p := term_p^.next_p;          {advance to next term in expression}
     end;                               {back and process this new term in expression}
@@ -830,7 +830,7 @@ const
 var
   scope_p: sst_scope_p_t;              {scratch pointer to scope descriptor}
   sym2_p: sst_symbol_p_t;              {scratch pointer to symbol descriptor}
-  str_h: syn_string_t;                 {handle to source streams chars range}
+  str_h: syo_string_t;                 {handle to source streams chars range}
   msg_parm:                            {references to paramters for messages}
     array[1..max_msg_parms] of sys_parm_msg_t;
 
@@ -954,7 +954,7 @@ sst_symtype_com_k: begin
 sst_symtype_label_k: begin
   str_h.first_char := sym.char_h;
   str_h.last_char := sym.char_h;
-  syn_error (str_h, 'sst_c_write', 'goto_nonlocal_unimp', nil, 0);
+  syo_error (str_h, 'sst_c_write', 'goto_nonlocal_unimp', nil, 0);
   end;
 {
 **************

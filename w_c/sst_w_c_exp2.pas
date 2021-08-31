@@ -134,7 +134,7 @@ op2_eq_ne:                             {doing = or <> operator}
   case dt_p^.dtype of
 sst_dtype_rec_k,
 sst_dtype_array_k: begin
-      syn_error (term_first2.str_h, 'sst_c_write', 'op_compare_dtype_bad', nil, 0);
+      syo_error (term_first2.str_h, 'sst_c_write', 'op_compare_dtype_bad', nil, 0);
       end;
     end;
   end;

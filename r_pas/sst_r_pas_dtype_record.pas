@@ -12,7 +12,7 @@ procedure sst_r_pas_dtype_record (     {process RECORD_DATA_TYPE}
 
 var
   tag: sys_int_machine_t;              {syntax tags from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   align_old: sys_int_adr_t;            {saved copy of old alignment rule}
   start_pp: sst_symbol_pp_t;           {adr of start of fields chain pointer}
   variant: sys_int_machine_t;          {sequential overlay variant number, 0 = base}
@@ -42,7 +42,7 @@ procedure record_field (
 
 var
   tag: sys_int_machine_t;              {syntax tags from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   sym_first_p: sst_symbol_p_t;         {pointer to first symbol in chain}
   sym_p: sst_symbol_p_t;               {pointer to current symbol}
   dt_p: sst_dtype_p_t;                 {pointer to data type for fields}
@@ -55,17 +55,17 @@ label
   loop;
 
 begin
-  syn_level_down;                      {down into RECORD_FIELD syntax}
+  syo_level_down;                      {down into RECORD_FIELD syntax}
   sym_first_p := nil;                  {indicate no symbol created yet}
 
 loop:                                  {back here each new RECORD_FIELD tag}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get next tag}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get next tag}
   case tag of
 {
 *   RECORD_FIELD is empty.  This should only occurr as the first tag.
 }
-syn_tag_end_k: begin
-  syn_level_up;                        {up from RECORD_FIELD syntax}
+syo_tag_end_k: begin
+  syo_level_up;                        {up from RECORD_FIELD syntax}
   return;
   end;
 {
@@ -74,8 +74,8 @@ syn_tag_end_k: begin
 }
 1: begin
   sst_symbol_new                       {create new field name symbol}
-    (str_h, syn_charcase_down_k, sym_p, stat);
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+    (str_h, syo_charcase_down_k, sym_p, stat);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
 
   sym_p^.symtype := sst_symtype_field_k; {new symbol is field of a record data type}
   sym_p^.flags := sym_p^.flags + [sst_symflag_def_k]; {symbol will be defined}
@@ -116,7 +116,7 @@ sst_dtype_bool_k,
 sst_dtype_set_k,
 sst_dtype_range_k: ;                   {all the data types that may be packed}
 otherwise
-      syn_error (str_h, 'sst_pas_read', 'dtype_packed_bad', nil, 0);
+      syo_error (str_h, 'sst_pas_read', 'dtype_packed_bad', nil, 0);
       end;
     end;
 
@@ -124,7 +124,7 @@ otherwise
   while sym_p <> nil do begin          {once for each name for this field}
     if dt_p^.align > 0 then begin      {this field more than just bit-aligned ?}
       if pack then begin               {packing fields, but field not bit-aligned ?}
-        syn_error (str_h, 'sst_pas_read', 'dtype_packed_aligned', nil, 0);
+        syo_error (str_h, 'sst_pas_read', 'dtype_packed_aligned', nil, 0);
         end;
       ofsa := ofsa +                   {go to end of any partially used address}
         ((ofsb + sst_config.bits_adr - 1) div sst_config.bits_adr);
@@ -155,12 +155,12 @@ otherwise
     d.bits_min := max(d.bits_min, sz); {update record size to include new field}
     end;
 
-  syn_level_up;                        {up from RECORD_FIELD syntax}
+  syo_level_up;                        {up from RECORD_FIELD syntax}
   return;
   end;
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of RECORD_FIELD tag cases}
 
   goto loop;                           {back for next RECORD_FIELD tag}
@@ -186,7 +186,7 @@ procedure record_fields (
 
 var
   tag: sys_int_machine_t;              {syntax tags from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   ofsa: sys_int_max_t;                 {current offsets to end of last invariant rec}
   ofsb: sys_int_machine_t;
   dt: sst_dtype_k_t;                   {scratch data type ID}
@@ -196,16 +196,16 @@ label
   loop;
 
 begin
-  syn_level_down;                      {down into RECORD_FIELDS syntax}
+  syo_level_down;                      {down into RECORD_FIELDS syntax}
   ofsa := ofs_a;                       {init current offset to start given}
   ofsb := ofs_b;
 
 loop:                                  {back here each new non-variant field}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get next tag}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get next tag}
   case tag of
 
-syn_tag_end_k: begin                   {no more tags in this RECORD_FIELDS syntax}
-  syn_level_up;                        {up from RECORD_FIELDS syntax}
+syo_tag_end_k: begin                   {no more tags in this RECORD_FIELDS syntax}
+  syo_level_up;                        {up from RECORD_FIELDS syntax}
   return;
   end;
 
@@ -215,7 +215,7 @@ syn_tag_end_k: begin                   {no more tags in this RECORD_FIELDS synta
 
 2: begin                               {tag is data type for later overlay IDs}
   if variant <> 0 then begin           {already within a variant part ?}
-    syn_error (str_h, 'sst_pas_read', 'dtype_case_nested', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'dtype_case_nested', nil, 0);
     end;
   val_dtype_p := nil;                  {indicate find old descriptor, if possible}
   sst_r_pas_data_type (val_dtype_p);   {get pointer to variant IDs data type}
@@ -227,7 +227,7 @@ sst_dtype_enum_k,
 sst_dtype_bool_k,
 sst_dtype_char_k: ;
 otherwise
-    syn_error (str_h, 'sst', 'dtype_not_ordinal2', nil, 0);
+    syo_error (str_h, 'sst', 'dtype_not_ordinal2', nil, 0);
     end;
   end;
 
@@ -265,7 +265,7 @@ otherwise
     err := true;                       {definately a data type mismatch error}
     end;
   if err then begin                    {overlay ID doesn't match data type ?}
-    syn_error (str_h, 'sst', 'dtype_exp_mismatch', nil, 0);
+    syo_error (str_h, 'sst', 'dtype_exp_mismatch', nil, 0);
     end;
   end;
 
@@ -274,7 +274,7 @@ otherwise
   end;
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of RECORD_FIELDS TAG cases}
   goto loop;                           {back for next tag in RECORD_FIELDS}
   end;
@@ -284,12 +284,12 @@ otherwise
 *   Start of main routine.
 }
 begin
-  syn_level_down;                      {down into RECORD_DATA_TYPE syntax}
+  syo_level_down;                      {down into RECORD_DATA_TYPE syntax}
   variant := 0;                        {init to next fields are base fields}
   variant_used := false;               {init to no fields of this variant found}
   val.dtype := sst_dtype_int_k;        {init user variant ID to harmless value}
   val.int_val := 0;
-  syn_get_tag_msg (                    {get alignment tag}
+  syo_get_tag_msg (                    {get alignment tag}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
 {
 *   The keywords preceeding RECORD effect the alignment of the whole record,
@@ -314,15 +314,15 @@ begin
 4:  begin                              {no explicit keyword, use current alignment}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of alignment directive cases}
 
   sst_scope_new;                       {make new scope for all the field names}
 
-  syn_get_tag_msg (                    {get RECORD_FIELDS tag}
+  syo_get_tag_msg (                    {get RECORD_FIELDS tag}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   d.dtype := sst_dtype_rec_k;          {this data type is a record}
   d.bits_min := 0;                     {no size since no fields yet}
@@ -338,5 +338,5 @@ otherwise
 
   sst_scope_old;                       {restore old current scope}
   sst_align := align_old;              {restore old alignment rule}
-  syn_level_up;                        {up from RECORD_DATA_TYPE syntax}
+  syo_level_up;                        {up from RECORD_DATA_TYPE syntax}
   end;

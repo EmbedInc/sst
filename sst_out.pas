@@ -665,7 +665,7 @@ var
   sym_p: sst_symbol_p_t;               {points to symbol descriptor of hash entry}
   found: boolean;                      {TRUE if found name in hash table}
   c: char;                             {scratch character}
-  str_h: syn_string_t;                 {handle to source chars for error message}
+  str_h: syo_string_t;                 {handle to source chars for error message}
   msg_parm:                            {parameter references for messages}
     array[1..max_msg_parms] of sys_parm_msg_t;
 
@@ -682,11 +682,11 @@ begin
   string_vstring (name_end, ext, ext_len); {make raw name suffix}
   if rename <> sst_rename_none_k then begin {allowed to change name at all ?}
     case sst_config.charcase of        {what is the output character case rule ?}
-syn_charcase_down_k: begin
+syo_charcase_down_k: begin
         string_downcase (name_start);
         string_downcase (name_end);
         end;
-syn_charcase_up_k: begin
+syo_charcase_up_k: begin
         string_upcase (name_start);
         string_upcase (name_end);
         end;
@@ -748,7 +748,7 @@ suffix_nfnd:                           {jump here if NAME_START not ended in suf
 
   string_copy (name_start, token);     {make temp copy of name start}
   case sst_config.charcase of          {what is the output character case rule ?}
-syn_charcase_up_k: begin
+syo_charcase_up_k: begin
       string_vstring (name_start, 'N', 1);
       end;
 otherwise
@@ -786,7 +786,7 @@ next_name:                             {back here to try name with new seq numbe
       str_h.first_char := sym_p^.char_h; {get handle to start of other symbol}
       str_h.last_char := str_h.first_char;
       sys_msg_parm_vstr (msg_parm[1], name_out);
-      syn_error (str_h, 'sst', 'out_name_used', msg_parm, 1);
+      syo_error (str_h, 'sst', 'out_name_used', msg_parm, 1);
       end;
     string_append1 (name_seq, '_');
     string_f_int (token, seq);
@@ -1065,7 +1065,7 @@ sst_symtype_dtype_k: string_append (suffix, sst_config.suffix_dtype);
 *   the output files.
 }
 procedure sst_out_notify_src_range (   {declare source chars range for new output}
-  in      str_h: syn_string_t);        {new out chars related to these in chars}
+  in      str_h: syo_string_t);        {new out chars related to these in chars}
 
 begin
   sst_out.dyn_p^.str_h := str_h;

@@ -19,7 +19,7 @@ type
     suffix_cog_k);                     {file name suffix_was .cog}
 
 var
-  mflag: syn_mflag_k_t;                {syntaxed matched yes/no flag}
+  mflag: syo_mflag_k_t;                {syntaxed matched yes/no flag}
   suffix_id: suffix_k_t;               {identifies which file name suffix found}
 
 label
@@ -51,47 +51,47 @@ begin
       ;
     end;                               {done handling input file name suffix}
 
-  syn_init;                            {init syntaxer}
+  syo_init;                            {init syntaxer}
   sst_r_pas_preproc_init;              {init our pre-processor}
-  syn_preproc_set (addr(sst_r_pas_preproc)); {install our pre-processor}
+  syo_preproc_set (addr(sst_r_pas_preproc)); {install our pre-processor}
   if suffix_id = suffix_none_k         {set name of top level input file}
     then begin                         {FNAM doesn't have explicit suffix}
-      syn_infile_top_set (fnam, '.cog .pas');
+      syo_infile_top_set (fnam, '.cog .pas');
       end
     else begin                         {FNAM already contains explicit suffix}
-      syn_infile_top_set (fnam, '');
+      syo_infile_top_set (fnam, '');
       end
     ;
 {
 *   Keep looping until either an error or end of input.
 }
 loop:                                  {back here each new top level syntax}
-  syn_tree_clear;                      {set up for parsing}
+  syo_tree_clear;                      {set up for parsing}
   toplev (mflag);                      {try to parse one top level syntax}
-  if mflag = syn_mflag_yes_k
+  if mflag = syo_mflag_yes_k
     then begin                         {syntax matched}
-      error_syn_found := false;        {indicate no syntax error}
+      error_syo_found := false;        {indicate no syntax error}
       end
     else begin                         {syntax did not match}
-      syn_p_test_eod (mflag);          {check for end of input data}
-      if mflag = syn_mflag_yes_k then begin {no error, encountered end of data}
+      syo_p_test_eod (mflag);          {check for end of input data}
+      if mflag = syo_mflag_yes_k then begin {no error, encountered end of data}
         sys_error_none (stat);         {indicate no error condition}
         goto leave;
         end;
-      syn_tree_err;                    {set up for error re-parse}
+      syo_tree_err;                    {set up for error re-parse}
       toplev (mflag);                  {do error re-parse}
-      error_syn_found := true;         {indicate we will hit error syntax tree end}
+      error_syo_found := true;         {indicate we will hit error syntax tree end}
       end
     ;
-  syn_tree_setup;                      {set up syntax tree for getting tags}
+  syo_tree_setup;                      {set up syntax tree for getting tags}
   sst_r_pas_statement (stat);          {process top level contruction}
-  if (not error_syn_found) and (not sys_error(stat)) {everything went well ?}
+  if (not error_syo_found) and (not sys_error(stat)) {everything went well ?}
     then goto loop;                    {back and do next top level construction}
 {
 *   Something unusual happened.
 }
   if not sys_error(stat) then begin    {syntax error not caught as contents error ?}
-    syn_error_print ('', '', nil, 0);  {print message about syntax error}
+    syo_error_print ('', '', nil, 0);  {print message about syntax error}
     end;
 
   if sys_stat_match (sst_subsys_k, sst_stat_eod_k, stat)

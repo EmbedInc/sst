@@ -21,7 +21,7 @@ const
 
 var
   tag: sys_int_machine_t;              {syntax tags from .syn file}
-  str_h, str2_h: syn_string_t;         {handle to string for a tag}
+  str_h, str2_h: syo_string_t;         {handle to string for a tag}
   dt_p: sst_dtype_p_t;                 {scratch data type pointer}
   dt_set_p: sst_dtype_p_t;             {points to original data type for a SET}
   dt_original_p: sst_dtype_p_t;        {save copy of DTYPE_P on entry}
@@ -161,10 +161,10 @@ begin
 
   dt_align := sst_align;               {default our alignment rule to curr rule}
   created := false;                    {init to no new dtype descriptor created}
-  syn_level_down;                      {down into DATA_TYPE syntax}
+  syo_level_down;                      {down into DATA_TYPE syntax}
 
 loop_tag_start:                        {back here for each new tag at syntax start}
-  syn_get_tag_msg (                    {get starting tag in DATA_TYPE syntax}
+  syo_get_tag_msg (                    {get starting tag in DATA_TYPE syntax}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   case tag of
 
@@ -177,8 +177,8 @@ loop_tag_start:                        {back here for each new tag at syntax sta
       end;
 
 3: begin                               {tag is for DATA_TYPE_ATTRIBUTE syntax}
-      syn_level_down;                  {down into DATA_TYPE_ATTRIBUTE syntax}
-      syn_get_tag_msg (                {get tag for this attribute}
+      syo_level_down;                  {down into DATA_TYPE_ATTRIBUTE syntax}
+      syo_get_tag_msg (                {get tag for this attribute}
         tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
       case tag of
 1:      dt_align := sst_align_natural_k; {NATURAL}
@@ -187,20 +187,20 @@ loop_tag_start:                        {back here for each new tag at syntax sta
 4:      dt_align := 2;                 {ALIGNED(1)}
 5:      dt_align := 4;                 {ALIGNED(2)}
 6:      dt_align := 8;                 {ALIGNED(3)}
-syn_tag_end_k: ;                       {nothing here at all (this is legal)}
+syo_tag_end_k: ;                       {nothing here at all (this is legal)}
 otherwise
-        syn_error_tag_unexp (tag, str_h);
+        syo_error_tag_unexp (tag, str_h);
         end;
-      syn_level_up;                    {back up from DATA_TYPE_ATTRIBUTE syntax}
+      syo_level_up;                    {back up from DATA_TYPE_ATTRIBUTE syntax}
       goto loop_tag_start;             {back for another tag at start of DATA_TYPE}
       end;
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of pointer yes/no tag cases}
 
   enum_dtype_set := false;             {init to enum data type not explicitly set}
-  syn_get_tag_msg (                    {get tag for basic data type class}
+  syo_get_tag_msg (                    {get tag for basic data type class}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   case tag of
 {
@@ -220,8 +220,8 @@ otherwise
 *   SIMPLE_DATA_TYPE
 }
 1: begin
-  syn_level_down;                      {down into SIMPLE_DATA_TYPE syntax}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
+  syo_level_down;                      {down into SIMPLE_DATA_TYPE syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   str2_h := str_h;                     {save handle to original simple data type}
 do_enum_dtype_set:                     {back here after ele data types determined}
   case tag of
@@ -325,7 +325,7 @@ sst_dtype_range_k: begin               {need to determine starting name value}
         i := dt_enum.range_ord_first;  {first name will have first value of range}
         end;
 otherwise
-        syn_error (str2_h, 'sst_pas_read', 'dtype_enum_ele_bad', nil, 0);
+        syo_error (str2_h, 'sst_pas_read', 'dtype_enum_ele_bad', nil, 0);
         end;
       if not created then begin        {can't re-use DTYPE_P^ ?}
         dtype_create (dtype_p);        {point to new data type descriptor}
@@ -350,17 +350,17 @@ otherwise
       end
     ;
 
-  syn_level_down;                      {down into ENUMERATED_DATA_TYPE syntax}
+  syo_level_down;                      {down into ENUMERATED_DATA_TYPE syntax}
 
   dtype_p^.dtype := sst_dtype_enum_k;
   dtype_p^.enum_first_p := nil;
   prev_sym_p := nil;                   {init to no previous symbol exists}
 
 enum_loop:                             {back here each new tag}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_enum_bad', nil, 0);
-  if tag = syn_tag_end_k then goto done_enum; {no more enumerated names ?}
-  sst_symbol_new (str_h, syn_charcase_down_k, sym_p, stat);
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_enum_bad', nil, 0);
+  if tag = syo_tag_end_k then goto done_enum; {no more enumerated names ?}
+  sst_symbol_new (str_h, syo_charcase_down_k, sym_p, stat);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   sym_p^.symtype := sst_symtype_enum_k; {symbol is enumerated name}
   sym_p^.flags := [sst_symflag_def_k];
   sym_p^.enum_next_p := nil;           {init to this symbol is last in chain}
@@ -377,18 +377,18 @@ enum_loop:                             {back here each new tag}
   sym_p^.enum_dtype_p := dtype_p;      {point symbol to its parent data type}
   prev_sym_p := sym_p;                 {new symbol becomes previous symbol}
 
-  syn_get_tag_msg (                    {get optional value tag for this name}
+  syo_get_tag_msg (                    {get optional value tag for this name}
     tag, str_h, 'sst_pas_read', 'dtype_enum_bad', nil, 0);
   case tag of
 1:  begin                              {explicit value was given for this name}
       sst_r_pas_exp (str_h, true, exp_p); {get explicit name value expression}
       sst_exp_useage_check (exp_p^, [sst_rwflag_read_k], dt_enum); {check expression}
       sst_ordval (exp_p^.val, i, stat); {get expression ordinal value in I}
-      syn_error_abort (stat, str_h, '', '', nil, 0);
+      syo_error_abort (stat, str_h, '', '', nil, 0);
       end;
 2:  ;                                  {default value for this name, I already set}
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
   sym_p^.enum_ordval := i;             {set ordinal value of this enumerated name}
@@ -397,7 +397,7 @@ otherwise
 
 done_enum:                             {jump here when no more enumerated names}
   dtype_p^.enum_last_p := prev_sym_p;  {set pointer to end of symbols chain}
-  syn_level_up;                        {back up from ENUMERATED_DATA_TYPE syntax}
+  syo_level_up;                        {back up from ENUMERATED_DATA_TYPE syntax}
 
   if not enum_dtype_set then begin     {explicit data type not already set ?}
     bits := 1;                         {init number of bits needed}
@@ -416,15 +416,15 @@ done_enum:                             {jump here when no more enumerated names}
 }
 10: begin
   dtype_create (dtype_p);              {make sure DTYPE_P points to dtype desc}
-  syn_level_down;                      {down into SUBRANGE_DATA_TYPE syntax}
+  syo_level_down;                      {down into SUBRANGE_DATA_TYPE syntax}
   dtype_p^.dtype := sst_dtype_range_k; {indicate this is a subrange data type}
 {
 *   Process range start expression.  This sets the final data type fields
 *   RANGE_DTYPE_P and RANGE_FIRST_P.  The variable RANGE_START is also set to
 *   the ordinal value of the range start expression.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_range_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_range_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_exp (str_h, true, dtype_p^.range_first_p); {process range start value}
   sst_dtype_resolve (                  {get pointer to root data type descriptor}
     dtype_p^.range_first_p^.dtype_p^,  {raw dtype of range start expression}
@@ -434,35 +434,35 @@ done_enum:                             {jump here when no more enumerated names}
     dtype_p^.range_first_p^.val,       {input constant value descriptor}
     range_start,                       {returned ordinal value}
     stat);
-  syn_error_abort (stat, str_h, 'sst_pas_read', 'dtype_range_illegal', nil, 0);
+  syo_error_abort (stat, str_h, 'sst_pas_read', 'dtype_range_illegal', nil, 0);
 {
 *   Process the range end expression.  It is verified to conform to the
 *   data type established by the start range expression.  This also sets
 *   the final data type field RANGE_LAST_P.  The variable RANGE_END
 *   is also set to the ordinal value of the range end expression.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_range_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_range_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_exp (str_h, true, dtype_p^.range_last_p); {process range end value}
   if not sst_dtype_convertable (       {data type incompatible with start range ?}
       dtype_p^.range_last_p^.dtype_p^,
       dtype_p^.range_first_p^.dtype_p^)
       then begin
-    syn_error (str_h, 'sst_pas_read', 'dtype_range_not_match', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'dtype_range_not_match', nil, 0);
     end;
   sst_ordval (                         {get ordinal value of subrange end}
     dtype_p^.range_last_p^.val,        {input constant value descriptor}
     range_end,                         {returned ordinal value}
     stat);
-  syn_error_abort (stat, str_h, 'sst_pas_read', 'dtype_range_illegal', nil, 0);
+  syo_error_abort (stat, str_h, 'sst_pas_read', 'dtype_range_illegal', nil, 0);
 
   if range_end < range_start then begin {subrange is inverted ?}
-    syn_error (str_h, 'sst_pas_read', 'dtype_range_inverted', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'dtype_range_inverted', nil, 0);
     end;
 
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_range_bad', nil, 0);
-  if tag <> syn_tag_end_k then syn_error_tag_unexp (tag, str_h);
-  syn_level_up;                        {done with SUBRANGE_DATA_TYPE syntax level}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_range_bad', nil, 0);
+  if tag <> syo_tag_end_k then syo_error_tag_unexp (tag, str_h);
+  syo_level_up;                        {done with SUBRANGE_DATA_TYPE syntax level}
 {
 *   All done parsing the input stream for this subrange.  All the data has
 *   been collected.  Now use that information to fill in the remaining fields.
@@ -473,7 +473,7 @@ done_enum:                             {jump here when no more enumerated names}
   dtype_p^.bits_min :=                 {set minimum number of bits required}
     bits_min(range_start, range_end);
   if dtype_p^.bits_min < 0 then begin  {right size integer not available ?}
-    syn_error (dtype_p^.range_first_p^.str_h,
+    syo_error (dtype_p^.range_first_p^.str_h,
      'sst_pas_read', 'dtype_range_int_nosize', nil, 0);
     end;
 
@@ -500,26 +500,26 @@ done_enum:                             {jump here when no more enumerated names}
       sys_stat_match (sst_subsys_k, sst_stat_sym_not_found_k, stat)
     then begin                         {pointing to undefined data type}
       sst_symbol_new                   {create symbol that will be defined later}
-        (str_h, syn_charcase_down_k, sym_p, stat);
-      syn_error_abort (stat, str_h, '', '', nil, 0);
+        (str_h, syo_charcase_down_k, sym_p, stat);
+      syo_error_abort (stat, str_h, '', '', nil, 0);
       sst_dtype_new (dt_p);            {create data type block for new symbol}
       sym_p^.symtype := sst_symtype_dtype_k; {new symbol is a data type}
       sym_p^.dtype_dtype_p := dt_p;    {point symbol to its data type block}
       dt_p^.symbol_p := sym_p;         {point data type to its symbol block}
       end                              {done handling pointer to undef data type}
     else begin                         {not pointing to undefined data type}
-      syn_error_abort (stat, str_h, '', '', nil, 0);
+      syo_error_abort (stat, str_h, '', '', nil, 0);
       if sym_p^.symtype <> sst_symtype_dtype_k then begin
         if sym_p^.char_h.crange_p = nil
           then begin                   {no source char, internally created}
-            syn_error (str_h, 'sst_pas_read', 'symbol_not_dtype_internal', nil, 0);
+            syo_error (str_h, 'sst_pas_read', 'symbol_not_dtype_internal', nil, 0);
             end
           else begin                   {symbol has know source character}
             sst_charh_info (sym_p^.char_h, fnam, lnum);
             sys_msg_parm_vstr (msg_parm[1], sym_p^.name_in_p^);
             sys_msg_parm_int (msg_parm[2], lnum);
             sys_msg_parm_vstr (msg_parm[3], fnam);
-            syn_error (str_h, 'sst_pas_read', 'symbol_not_dtype', msg_parm, 3);
+            syo_error (str_h, 'sst_pas_read', 'symbol_not_dtype', msg_parm, 3);
             end
           ;
         end;
@@ -543,7 +543,7 @@ done_enum:                             {jump here when no more enumerated names}
         sys_msg_parm_vstr (msg_parm[1], sym_p^.name_in_p^);
         sys_msg_parm_int (msg_parm[2], lnum);
         sys_msg_parm_vstr (msg_parm[3], fnam);
-        syn_error (str_h, 'sst_pas_read', 'dtype_undefined', msg_parm, 3);
+        syo_error (str_h, 'sst_pas_read', 'dtype_undefined', msg_parm, 3);
         end;
       dtype_p^.copy_symbol_p := sym_p;
       dtype_p^.bits_min := sym_p^.dtype_dtype_p^.bits_min;
@@ -558,7 +558,7 @@ done_enum:                             {jump here when no more enumerated names}
 *   SIMPLE DATA TYPE > *** unexpected ***
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of SIMPLE_DATA_TYPE cases}
 {
 *******************************
@@ -567,7 +567,7 @@ otherwise
 *   been just the explicit data type for enumerated elements.  If so,
 *   the next tag is for the ENUMERATED_DATA_TYPE syntax.
 }
-  syn_get_tag_msg (                    {get optional enumerated data type tag}
+  syo_get_tag_msg (                    {get optional enumerated data type tag}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   case tag of
 9:  begin                              {now at enumerated data type}
@@ -580,11 +580,11 @@ otherwise
       end;
       goto do_enum_dtype_set;          {back to handle enum with explicit data type}
       end;
-syn_tag_end_k: ;                       {the previous data type stands by itself}
+syo_tag_end_k: ;                       {the previous data type stands by itself}
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
-  syn_level_up;                        {back up from SIMPLE_DATA_TYPE}
+  syo_level_up;                        {back up from SIMPLE_DATA_TYPE}
   end;                                 {end of SIMPLE_DATA_TYPE case}
 {
 *************************************************
@@ -593,12 +593,12 @@ otherwise
 }
 2: begin
   if pointer then begin
-    syn_error (str_h, 'sst_pas_read', 'dtype_pnt_not_allowed', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'dtype_pnt_not_allowed', nil, 0);
     end;
   dtype_create (dtype_p);              {create new data type descriptor}
-  syn_level_down;                      {down into SET_DATA_TYPE syntax}
+  syo_level_down;                      {down into SET_DATA_TYPE syntax}
 
-  syn_get_tag_msg (                    {get tag for optional BITSIZE keyword}
+  syo_get_tag_msg (                    {get tag for optional BITSIZE keyword}
     tag, str2_h, 'sst_pas_read', 'dtype_set_syerr', nil, 0);
   case tag of
 1:  begin                              {tag is for explicit set size expression}
@@ -606,20 +606,20 @@ otherwise
       sst_exp_useage_check (           {make sure proper kind of expression}
         exp_p^, [sst_rwflag_read_k], sst_dtype_int_max_p^);
       sst_ordval (exp_p^.val, j, stat); {get min required bits in J}
-      syn_error_abort (stat, str2_h, '', '', nil, 0);
+      syo_error_abort (stat, str2_h, '', '', nil, 0);
       set_size_set := true;            {indicate explicit set size was given}
       end;
 2:  begin                              {no explicit bit size given}
       set_size_set := false;
       end;
 otherwise
-    syn_error_tag_unexp (tag, str2_h);
+    syo_error_tag_unexp (tag, str2_h);
     end;
 
-  syn_get_tag_msg (                    {get tag for elements data type}
+  syo_get_tag_msg (                    {get tag for elements data type}
     tag, str_h, 'sst_pas_read', 'dtype_set_syerr', nil, 0);
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   dt_set_p := nil;                     {indicate to return pointer to new data type}
   sst_r_pas_data_type (dt_set_p);      {get pointer to base data type descriptor}
@@ -637,7 +637,7 @@ sst_dtype_enum_k: begin                {set of enumerated data type}
         if i < 0 then begin            {can't make set of negative element values}
           sys_msg_parm_vstr (msg_parm[1], sym_p^.name_in_p^);
           sys_msg_parm_int (msg_parm[2], i);
-          syn_error (str_h, 'sst_pas_read', 'dtype_set_enum_negative', msg_parm, 2);
+          syo_error (str_h, 'sst_pas_read', 'dtype_set_enum_negative', msg_parm, 2);
           end;
         dtype_p^.bits_min := max(      {take this enumerated value into account}
           dtype_p^.bits_min, i + 1);
@@ -666,7 +666,7 @@ otherwise
     if j < dtype_p^.bits_min then begin {specified less than min required bits ?}
       sys_msg_parm_int (msg_parm[1], dtype_p^.bits_min);
       sys_msg_parm_int (msg_parm[2], j);
-      syn_error (str2_h, 'sst_pas_read', 'set_bitsize_too_small', msg_parm, 2);
+      syo_error (str2_h, 'sst_pas_read', 'set_bitsize_too_small', msg_parm, 2);
       end;
     dtype_p^.bits_min := j;            {set min required bits to specified value}
     end;
@@ -674,7 +674,7 @@ otherwise
   if dtype_p^.bits_min > 256 then begin {too many elements in set ?}
 set_dtype_bad:                         {jump here if base data type not useable}
     sys_msg_parm_vstr (msg_parm[1], dt_p^.symbol_p^.name_in_p^);
-    syn_error (str_h, 'sst_pas_read', 'dtype_set_bad', msg_parm, 1);
+    syo_error (str_h, 'sst_pas_read', 'dtype_set_bad', msg_parm, 1);
     end;
 
   dtype_p^.dtype := sst_dtype_set_k;   {output data type is definately SET}
@@ -718,7 +718,7 @@ got_set_size:                          {all done with SIZE_USED and ALIGN_NAT fi
     (dtype_p^.bits_min + sst_set_ele_per_word - 1)
     div sst_set_ele_per_word;
   dtype_p^.set_dtype_final := true;    {final data type is definately known}
-  syn_level_up;                        {back up from SET_DATA_TYPE syntax}
+  syo_level_up;                        {back up from SET_DATA_TYPE syntax}
   end;
 {
 *************************************************
@@ -727,7 +727,7 @@ got_set_size:                          {all done with SIZE_USED and ALIGN_NAT fi
 }
 3: begin
   if pointer then begin
-    syn_error (str_h, 'sst_pas_read', 'dtype_pnt_not_allowed', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'dtype_pnt_not_allowed', nil, 0);
     end;
   dtype_create (dtype_p);              {create new data type descriptor}
   sst_r_pas_dtype_record (dtype_p^);   {separate routine does all the work}
@@ -739,11 +739,11 @@ got_set_size:                          {all done with SIZE_USED and ALIGN_NAT fi
 }
 4: begin
   if pointer then begin
-    syn_error (str_h, 'sst_pas_read', 'dtype_pnt_not_allowed', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'dtype_pnt_not_allowed', nil, 0);
     end;
   dtype_create (dtype_p);              {create new data type descriptor}
-  syn_level_down;                      {down into ARRAY_DATA_TYPE syntax}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get PACKED tag}
+  syo_level_down;                      {down into ARRAY_DATA_TYPE syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get PACKED tag}
 
   dtype_p^.ar_n_subscr := 0;           {init number of subscripts}
   dtype_p^.ar_dtype_rem_p := nil;      {init pointer to array "remainder" data type}
@@ -751,7 +751,7 @@ got_set_size:                          {all done with SIZE_USED and ALIGN_NAT fi
   dt_ar_p := nil;                      {init to not curr dtype for this subscript}
 
 loop_ar_dtype:                         {back here each new tag in ARRAY_DATA_TYPE}
-  syn_get_tag_msg (tag, str2_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get next tag}
+  syo_get_tag_msg (tag, str2_h, 'sst_pas_read', 'dtype_bad', nil, 0); {get next tag}
   case tag of
 {
 *   Tag is for a new ARRAY_INDEX_RANGE syntax.  This declares the conditions
@@ -771,17 +771,17 @@ loop_ar_dtype:                         {back here each new tag in ARRAY_DATA_TYP
         ;
 
       dtype_p^.ar_n_subscr := dtype_p^.ar_n_subscr + 1; {one more subscript in array}
-      syn_level_down;                  {down into ARRAY_INDEX_RANGE syntax}
+      syo_level_down;                  {down into ARRAY_INDEX_RANGE syntax}
 
-      syn_get_tag_msg (                {get tag for min subscript value expression}
+      syo_get_tag_msg (                {get tag for min subscript value expression}
         tag, str_h, 'sst_pas_read', 'subscript_range_bad', nil, 0);
-      if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+      if tag <> 1 then syo_error_tag_unexp (tag, str_h);
       sst_r_pas_exp (str_h, true, dt_ar_p^.ar_ind_first_p); {get min value exp}
       sst_ordval                       {get ordinal value of subscript range min}
         (dt_ar_p^.ar_ind_first_p^.val, range_start, stat);
-      syn_error_abort (stat, str_h, 'sst_pas_read', 'subscript_dtype_bad', nil, 0);
+      syo_error_abort (stat, str_h, 'sst_pas_read', 'subscript_dtype_bad', nil, 0);
 
-      syn_get_tag_msg (                {get tag for max subscript value expression}
+      syo_get_tag_msg (                {get tag for max subscript value expression}
         tag, str_h, 'sst_pas_read', 'subscript_range_bad', nil, 0);
 
       case tag of
@@ -796,14 +796,14 @@ loop_ar_dtype:                         {back here each new tag in ARRAY_DATA_TYP
                 dt_ar_p^.ar_ind_last_p^.dtype_p^,
                 dt_ar_p^.ar_ind_first_p^.dtype_p^))
               then begin
-            syn_error (str_h, 'sst_pas_read', 'subscript_dtype_different', nil, 0);
+            syo_error (str_h, 'sst_pas_read', 'subscript_dtype_different', nil, 0);
             end;
           sst_ordval                   {get ordinal value of subscript range max}
             (dt_ar_p^.ar_ind_last_p^.val, range_end, stat);
-          syn_error_abort (
+          syo_error_abort (
             stat, str_h, 'sst_pas_read', 'subscript_dtype_bad', nil, 0);
           if range_end < range_start then begin
-            syn_error (str_h, 'sst_pas_read', 'subscript_range_order', nil, 0);
+            syo_error (str_h, 'sst_pas_read', 'subscript_range_order', nil, 0);
             end;
           dt_ar_p^.ar_ind_n := range_end - range_start + 1; {num of subscript vals}
           end;
@@ -812,14 +812,14 @@ loop_ar_dtype:                         {back here each new tag in ARRAY_DATA_TYP
           dt_ar_p^.ar_ind_n := 1;      {otherwise treat as if just one value allowed}
           end;
 otherwise
-        syn_error_tag_unexp (tag, str_h);
+        syo_error_tag_unexp (tag, str_h);
         end;                           {end of subscript max value cases}
 
       n_ele := n_ele * dt_ar_p^.ar_ind_n; {accumulate total number of array elements}
-      syn_get_tag_msg (                {this tag should be end of syntax}
+      syo_get_tag_msg (                {this tag should be end of syntax}
         tag, str_h, 'sst_pas_read', 'subscript_range_bad', nil, 0);
-      if tag <> syn_tag_end_k then syn_error_tag_unexp (tag, str_h);
-      syn_level_up;                    {up from ARRAY_INDEX_RANGE to ARRAY_DATA_TYPE}
+      if tag <> syo_tag_end_k then syo_error_tag_unexp (tag, str_h);
+      syo_level_up;                    {up from ARRAY_INDEX_RANGE to ARRAY_DATA_TYPE}
       goto loop_ar_dtype;
       end;                             {end of tag is ARRAY_INDEX_RANGE case}
 
@@ -828,7 +828,7 @@ otherwise
 *   Unexepected TAG value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of ARRAY_DATA_TYPE syntax tag cases}
 {
 *   The last tag read is for the data type of the array elements.
@@ -873,7 +873,7 @@ otherwise
     (dt_ar_p^.dtype = sst_dtype_char_k) and {element data type is CHAR ?}
     (dtype_p^.ar_n_subscr = 1);        {one-dimensional array ?}
 
-  syn_level_up;                        {up from ARRAY_DATA_TYPE syntax}
+  syo_level_up;                        {up from ARRAY_DATA_TYPE syntax}
   end;
 {
 *************************************************
@@ -882,7 +882,7 @@ otherwise
 }
 5: begin
   if not pointer then begin
-    syn_error (str_h, 'sst_pas_read', 'dtype_proc_not_pointer', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'dtype_proc_not_pointer', nil, 0);
     end;
   dtype_create (dtype_p);              {create new data type descriptor}
   dtype_p^.dtype := sst_dtype_proc_k;  {data type is a procedure}
@@ -897,9 +897,9 @@ otherwise
   dtype_p^.proc_p^.flags := [];        {init to no special flags apply}
   dtype_p^.proc_p^.first_arg_p := nil; {init args chain to empty}
 
-  syn_level_down;                      {down into ROUTINE_TYPE syntax}
+  syo_level_down;                      {down into ROUTINE_TYPE syntax}
 
-  syn_get_tag_msg (                    {get routine type tag}
+  syo_get_tag_msg (                    {get routine type tag}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   case tag of                          {what type of routine is this}
 1:  begin                              {routine is a procedure}
@@ -909,46 +909,46 @@ otherwise
       func := true;
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {done with routine type keyword cases}
 
-  syn_get_tag_msg (                    {get args definition tag}
+  syo_get_tag_msg (                    {get args definition tag}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   sst_r_pas_proc_args (dtype_p^.proc_p^); {read routine arg declarations, if any}
 
-  syn_get_tag_msg (                    {get function value data type tag}
+  syo_get_tag_msg (                    {get function value data type tag}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   case tag of
 1:  begin                              {no function data type present}
       if func then begin
-        syn_error (str_h, 'sst_pas_read', 'func_no_data_type', nil, 0);
+        syo_error (str_h, 'sst_pas_read', 'func_no_data_type', nil, 0);
         end;
       end;
 2:  begin                              {function data type is present}
       if not func then begin
-        syn_error (str_h, 'sst_pas_read', 'proc_data_type', nil, 0);
+        syo_error (str_h, 'sst_pas_read', 'proc_data_type', nil, 0);
         end;
       sst_r_pas_data_type (dtype_p^.proc_p^.dtype_func_p); {get func return dtype}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of function data type cases}
 
-  syn_get_tag_msg (                    {get VAL_PARAM tag, if present}
+  syo_get_tag_msg (                    {get VAL_PARAM tag, if present}
     tag, str_h, 'sst_pas_read', 'dtype_bad', nil, 0);
   case tag of
-syn_tag_end_k: ;                       {VAL_PARAM not present}
+syo_tag_end_k: ;                       {VAL_PARAM not present}
 1:  begin                              {VAL_PARAM was specified}
       sst_r_pas_vparam (dtype_p^.proc_p^); {adjust argument list accordingly}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
-  syn_level_up;                        {up from ROUTINE_TYPE to DATA_TYPE syntax}
+  syo_level_up;                        {up from ROUTINE_TYPE to DATA_TYPE syntax}
   end;
 {
 *************************************************
@@ -956,7 +956,7 @@ otherwise
 *   Unexpected tag value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of DATA_TYPE tag cases}
 {
 *************************************************
@@ -964,7 +964,7 @@ otherwise
 *   Done filling in the basic info in the data type block pointed to by
 *   DTYPE_P.  Now set the final alignment, cleanup, and leave.
 }
-  syn_level_up;                        {pop back from DATA_TYPE syntax}
+  syo_level_up;                        {pop back from DATA_TYPE syntax}
 
   if created and pointer then begin    {set alignment of pointed-to data type ?}
     sst_dtype_align (dtype_p^, sst_align); {use default alignment rule}

@@ -11,23 +11,23 @@ procedure sst_r_pas_statements;        {build opcodes from STATEMENTS syntax}
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
 
 label
   tag_loop;
 
 begin
   sst_scope_p^.flag_ref_used := true;  {referenced symbols will be flagged as used}
-  syn_level_down;                      {down into STATEMENTS syntax level}
+  syo_level_down;                      {down into STATEMENTS syntax level}
 
 tag_loop:                              {back here each new RAW_STATEMENT syntax}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   case tag of
 {
 *   Hit end of STATMENTS syntax.
 }
-syn_tag_end_k: begin
-  syn_level_up;                        {up from STATEMENTS syntax}
+syo_tag_end_k: begin
+  syo_level_up;                        {up from STATEMENTS syntax}
   return;
   end;
 {
@@ -40,7 +40,7 @@ syn_tag_end_k: begin
 *   Unexpected tag value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of tag value cases}
   goto tag_loop;                       {back for next syntax tag in STATEMENTS}
   end;

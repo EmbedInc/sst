@@ -447,7 +447,7 @@ sst_dtype_pnt_k: (                     {data type is a pointer}
     name_in_p: string_var_p_t;         {points to name as appeared in source code}
     name_out_p: string_var_p_t;        {points to name as used in output}
     next_p: sst_symbol_p_t;            {chain pointer for application use}
-    char_h: syn_char_t;                {handle to source character}
+    char_h: syo_char_t;                {handle to source character}
     scope_p: sst_scope_p_t;            {points to scope this symbol defined in}
     symtype: sst_symtype_k_t;          {symbol type, use SST_SYMTYPE_xxx_K}
     flags: sst_symflag_t;              {set of one-bit status flags}
@@ -545,7 +545,7 @@ sst_symtype_illegal_k: (               {illegal, internal error if reference thi
     op2: sst_op2_k_t;                  {operator between previous and this term}
     op1: sst_op1_k_t;                  {unadic operator applied to this term}
     ttype: sst_term_k_t;               {what kind of term this is}
-    str_h: syn_string_t;               {handle to source file character range}
+    str_h: syo_string_t;               {handle to source file character range}
     dtype_p: sst_dtype_p_t;            {points to root data type for this item}
     dtype_hard: boolean;               {TRUE if data type is hard}
     val_eval: boolean;                 {TRUE if attempted to resolve value}
@@ -589,7 +589,7 @@ sst_term_arele_k: (                    {term is for set of array elements}
     end;
 
   sst_exp_t = record                   {definition of an arbitrary expression}
-    str_h: syn_string_t;               {handle to source file character range}
+    str_h: syo_string_t;               {handle to source file character range}
     dtype_p: sst_dtype_p_t;            {points to root data type for this expression}
     dtype_hard: boolean;               {TRUE if data type is hard}
     val_eval: boolean;                 {TRUE if attempted to resolve value}
@@ -604,7 +604,7 @@ sst_term_arele_k: (                    {term is for set of array elements}
     modtyp: sst_var_modtyp_k_t;        {what kind of modifier this is}
     case sst_var_modtyp_k_t of
 sst_var_modtyp_top_k: (                {modifier is top variable name}
-      top_str_h: syn_string_t;         {handle to source file character range}
+      top_str_h: syo_string_t;         {handle to source file character range}
       top_sym_p: sst_symbol_p_t;       {points to symbol for top name}
       );
 sst_var_modtyp_unpnt_k: (              {modifier is to dereference pointer}
@@ -615,7 +615,7 @@ sst_var_modtyp_subscr_k: (             {next less significant subscript of array
       subscr_last: boolean;            {TRUE if last subscript of set}
       );
 sst_var_modtyp_field_k: (              {modifier is field name of record}
-      field_str_h: syn_string_t;       {handle to source file character range}
+      field_str_h: syo_string_t;       {handle to source file character range}
       field_sym_p: sst_symbol_p_t;     {points to symbol for this field name}
       );
     end;
@@ -666,7 +666,7 @@ sst_vtype_com_k: (                     {a common block reference}
   sst_opc_t = record                   {mandatory header for all opcodes}
     next_p: sst_opc_p_t;               {points to next successive opcode, NIL = end}
     opcode: sst_opc_k_t;               {what type of opcode this is}
-    str_h: syn_string_t;               {handle to source file character range}
+    str_h: syo_string_t;               {handle to source file character range}
     case sst_opc_k_t of
 sst_opc_module_k: (                    {opcode is grouping of routines}
       module_sym_p: sst_symbol_p_t;    {points to module name symbol}
@@ -809,7 +809,7 @@ sst_opc_write_eol_k: (                 {write end of line to standard output}
     suffix_dtype: string_var32_t;      {suffix for data type names}
     suffix_const: string_var32_t;      {suffix for constant names}
     sym_len_max: sys_int_machine_t;    {max characters in output symbol names}
-    charcase: syn_charcase_k_t;        {make names upper, lower, or case sensitive}
+    charcase: syo_charcase_k_t;        {make names upper, lower, or case sensitive}
     reserve_p: string_chain_ent_p_t;   {points to start of reserved names chain}
     config: string_var8192_t;          {config info specific to particular back end}
     end;
@@ -884,7 +884,7 @@ name_sym: ^procedure (                 {set output name for an existing symbol}
   in out  sym: sst_symbol_t);          {NOP if symbol already has output name}
 
 notify_src_range: ^procedure (         {declare source chars range for new output}
-  in      str_h: syn_string_t);        {new out chars related to these in chars}
+  in      str_h: syo_string_t);        {new out chars related to these in chars}
 
 tab_indent: ^procedure;                {tab to current indentation level}
 
@@ -906,7 +906,7 @@ write: ^procedure (                    {write output lines from memory to file}
     indent_level: sys_int_machine_t;   {logical indentation level}
     break_len: string_index_t;         {line length if break done}
     break_start: string_index_t;       {first char that goes on next line if break}
-    str_h: syn_string_t;               {source stream handle for curr out chars}
+    str_h: syo_string_t;               {source stream handle for curr out chars}
     wpos: sst_wpos_k_t;                {write position relative to curr line}
     comm: string_var80_t;              {comment for this line}
     commented_pos: string_index_t;     {identifies char tagged with comment}
@@ -991,12 +991,12 @@ procedure sst_call_arg_var (           {add variable call arg to call}
   val_param; extern;
 
 function sst_char_from_ins (           {check for char is from special include file}
-  in      char_h: syn_char_t)          {handle to source character to check}
+  in      char_h: syo_char_t)          {handle to source character to check}
   :boolean;                            {TRUE is character is from the include file}
   val_param; extern;
 
 procedure sst_charh_info (             {get info from handle to source character}
-  in      char_h: syn_char_t;          {handle to source character}
+  in      char_h: syo_char_t;          {handle to source character}
   in out  fnam: univ string_var_arg_t; {name of source file for first char}
   out     lnum: sys_int_machine_t);    {source file line number of first char}
   extern;
@@ -1218,7 +1218,7 @@ procedure sst_set_val_convert (        {convert set value expression data type}
   extern;
 
 procedure sst_strh_info (              {get info from handle to source string}
-  in      str_h: syn_string_t;         {handle to source characters}
+  in      str_h: syo_string_t;         {handle to source characters}
   in out  fnam: univ string_var_arg_t; {name of source file for first char}
   out     lnum: sys_int_machine_t);    {source file line number of first char}
   extern;
@@ -1237,7 +1237,7 @@ procedure sst_sym_var_new_out (        {create output symbol that is a variable}
   extern;
 
 procedure sst_symbol_lookup (          {get data about an existing symbol}
-  in      name_h: syn_string_t;        {handle to name string from tag}
+  in      name_h: syo_string_t;        {handle to name string from tag}
   out     sym_p: sst_symbol_p_t;       {returned pointer to symbol descriptor}
   out     stat: sys_err_t);            {completion status code}
   extern;
@@ -1249,8 +1249,8 @@ procedure sst_symbol_lookup_name (     {look up symbol in visible name spaces}
   extern;
 
 procedure sst_symbol_new (             {add symbol to current scope given syn handle}
-  in      name_h: syn_string_t;        {handle to name string from tag}
-  in      charcase: syn_charcase_k_t;  {SYN_CHARCASE_xxx_K with DOWN, UP or ASIS}
+  in      name_h: syo_string_t;        {handle to name string from tag}
+  in      charcase: syo_charcase_k_t;  {SYO_CHARCASE_xxx_K with DOWN, UP or ASIS}
   out     symbol_p: sst_symbol_p_t;    {points to new symbol descriptor}
   out     stat: sys_err_t);            {completion status code}
   val_param; extern;

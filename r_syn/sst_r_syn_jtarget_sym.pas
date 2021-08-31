@@ -46,7 +46,7 @@ begin
   seq_label := seq_label + 1;          {update sequence number for next time}
   string_append (name, token);         {make full label name}
   sst_symbol_new_name (name, sym_p, stat); {add symbol to symbol table}
-  sys_error_abort (stat, 'sst_syn_read', 'symbol_label_create', msg_parm, 1);
+  sys_error_abort (stat, 'sst_syo_read', 'symbol_label_create', msg_parm, 1);
 
   sym_p^.symtype := sst_symtype_label_k; {fill in new label symbol descriptor}
   sym_p^.label_opc_p := nil;

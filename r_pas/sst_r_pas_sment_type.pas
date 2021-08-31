@@ -15,14 +15,14 @@ const
 
 var
   tag: sys_int_machine_t;              {syntax tag from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   chain_p: sst_symbol_p_t;             {points to symbols declared here}
   symbol_p: sst_symbol_p_t;            {points to current symbol definition}
   dtype_p: sst_dtype_p_t;              {pointer to new data type definition}
   dt_p: sst_dtype_p_t;                 {scratch data type block pointer}
   fnam: string_treename_t;             {file name passed to a message}
   lnum: sys_int_machine_t;             {line number passed to a message}
-  mflag: syn_mflag_k_t;                {syntaxed matched yes/no flag}
+  mflag: syo_mflag_k_t;                {syntaxed matched yes/no flag}
   msg_parm:                            {parameter references for messages}
     array[1..max_msg_parms] of sys_parm_msg_t;
   stat: sys_err_t;                     {completion status code}
@@ -36,26 +36,26 @@ begin
   chain_p := nil;                      {init chain of new symbols to empty}
 
 loop_statement:                        {back here each new TYPE_SUBSTATEMENT syntax}
-  syn_tree_clear;                      {set up for parsing}
+  syo_tree_clear;                      {set up for parsing}
   sst_r_pas_syn_type (mflag);          {try to parse next TYPE_SUBSTATEMENT syntax}
-  if mflag = syn_mflag_yes_k
+  if mflag = syo_mflag_yes_k
     then begin                         {syntax matched}
-      error_syn_found := false;        {indicate no syntax error}
+      error_syo_found := false;        {indicate no syntax error}
       end
     else begin                         {syntax did not match}
       return;                          {no more TYPE_SUBSTATMENTS here}
       end
     ;
-  syn_tree_setup;                      {set up syntax tree for getting tags}
-  syn_level_down;                      {down into TYPE_SUBSTATEMENT syntax level}
+  syo_tree_setup;                      {set up syntax tree for getting tags}
+  syo_level_down;                      {down into TYPE_SUBSTATEMENT syntax level}
 
 loop_tag:                              {back here for each new TYPE_SUBSTATEMENT tag}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'type_sment_bad', nil, 0); {get next tag}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'type_sment_bad', nil, 0); {get next tag}
   case tag of                          {what kind of tag is it ?}
 {
 *   End of this TYPE statement.
 }
-syn_tag_end_k: begin
+syo_tag_end_k: begin
   goto loop_statement;                 {back for next TYPE_SUBSTATEMENT syntax}
   end;
 {
@@ -63,7 +63,7 @@ syn_tag_end_k: begin
 }
 1: begin
   sst_symbol_new (                     {add new symbol to current scope}
-    str_h, syn_charcase_down_k, symbol_p, stat);
+    str_h, syo_charcase_down_k, symbol_p, stat);
   if sys_stat_match (sst_subsys_k, sst_stat_sym_prev_def_k, stat)
     then begin                         {symbol already exists}
       if  (symbol_p^.symtype <> sst_symtype_dtype_k) or else
@@ -73,11 +73,11 @@ syn_tag_end_k: begin
         sys_msg_parm_vstr (msg_parm[1], symbol_p^.name_in_p^);
         sys_msg_parm_int (msg_parm[2], lnum);
         sys_msg_parm_vstr (msg_parm[3], fnam);
-        syn_error (str_h, 'sst_pas_read', 'symbol_already_def', msg_parm, 3);
+        syo_error (str_h, 'sst_pas_read', 'symbol_already_def', msg_parm, 3);
         end;
       end
     else begin                         {symbol did not already exist}
-      syn_error_abort (stat, str_h, '', '', nil, 0); {check for error}
+      syo_error_abort (stat, str_h, '', '', nil, 0); {check for error}
       symbol_p^.symtype := sst_symtype_dtype_k; {new symbol is a data type}
       sst_dtype_new (symbol_p^.dtype_dtype_p); {create dtype block for this symbol}
       symbol_p^.dtype_dtype_p^.symbol_p := symbol_p; {point dtype block to symbol}
@@ -114,7 +114,7 @@ syn_tag_end_k: begin
   end;
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of TAG cases}
 
   goto loop_tag;                       {back and process next tag}

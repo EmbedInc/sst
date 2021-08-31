@@ -145,7 +145,7 @@ sst_opc_write_eol_k: begin             {write end of line to standard output}
 
 otherwise
       sys_msg_parm_int (msg_parm[1], ord(opc_p^.opcode));
-      syn_error (opc_p^.str_h, 'sst', 'opcode_unexpected', msg_parm, 1);
+      syo_error (opc_p^.str_h, 'sst', 'opcode_unexpected', msg_parm, 1);
       end;                             {end of opcode type cases}
     opc_p := opc_p^.next_p;            {advance to next opcode in this chain}
     end;                               {back and process this new opcode}

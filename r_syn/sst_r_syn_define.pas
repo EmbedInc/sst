@@ -13,7 +13,7 @@ const
 
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syn_string_t;                 {handle to string from input file}
+  str_h: syo_string_t;                 {handle to string from input file}
   syname: string_var32_t;              {name of syntax symbol being defined}
   name_p: string_var_p_t;              {pointer to name in hash table entry}
   data_p: symbol_data_p_t;             {pointer to user data in hash table entry}
@@ -27,37 +27,37 @@ var
 begin
   syname.max := sizeof(syname.str);    {init local var strings}
 
-  syn_level_down;                      {down into DEFINE syntax}
+  syo_level_down;                      {down into DEFINE syntax}
 {
 **************************************
 *
 *   Get name of symbol being defined, and set up state for writing code
 *   to the symbol subroutine.
 }
-  syn_get_tag_msg (                    {get symbol name tag}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
-  syn_get_tag_string (str_h, syname);  {get name of symbol being defined}
+  syo_get_tag_msg (                    {get symbol name tag}
+    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
+  syo_get_tag_string (str_h, syname);  {get name of symbol being defined}
   string_upcase (syname);              {SYN symbol names are case-insensitive}
 
   string_hash_ent_lookup (             {look up name in SYN symbol table}
     table_sym, syname, name_p, data_p);
   if data_p = nil then begin           {symbol not previously declared ?}
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syn_error (str_h, 'sst_syn_read', 'symbol_not_declared', msg_parm, 1);
+    syo_error (str_h, 'sst_syo_read', 'symbol_not_declared', msg_parm, 1);
     end;
   if sst_symflag_extern_k in data_p^.sym_p^.flags then begin
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syn_error (str_h, 'sst_syn_read', 'symbol_external', msg_parm, 1);
+    syo_error (str_h, 'sst_syo_read', 'symbol_external', msg_parm, 1);
     end;
   if sst_symflag_def_k in data_p^.sym_p^.flags then begin
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syn_error (str_h, 'sst_syn_read', 'symbol_already_defined', msg_parm, 1);
+    syo_error (str_h, 'sst_syo_read', 'symbol_already_defined', msg_parm, 1);
     end;
 
   %debug; writeln ('Defining ', syname.str:syname.len);
 
-  def_syn_p := data_p;                 {save pnt to data about syntax being defined}
+  def_syo_p := data_p;                 {save pnt to data about syntax being defined}
 
   sst_opcode_new;                      {create opcode for this routine definition}
   sst_opc_p^.opcode := sst_opc_rout_k;
@@ -96,7 +96,7 @@ begin
 *
 *   Write code for mandatory initialization before any syntax checking is done.
 }
-  sst_call (sym_start_routine_p^);     {create call to SYN_P_START_ROUTINE}
+  sst_call (sym_start_routine_p^);     {create call to SYO_P_START_ROUTINE}
   sst_call_arg_str (sst_opc_p^, syname.str, syname.len); {add syntax name argument}
   sst_call_arg_int (sst_opc_p^, syname.len); {add syntax name length argument}
 {
@@ -116,9 +116,9 @@ begin
 {
 *   Process EXPRESSION syntax.
 }
-  syn_get_tag_msg (                    {get tag for symbol expression}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (                    {get tag for symbol expression}
+    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
 
   sst_r_syn_expression (               {process EXPRESSION syntax}
     jtarg,                             {jump targets}
@@ -129,9 +129,9 @@ begin
 **************************************
 *
 *   Create opcodes for the syntax routine exit code.  This will be a call
-*   to SYN_P_END_ROUTINE with the MFLAG variable.
+*   to SYO_P_END_ROUTINE with the MFLAG variable.
 }
-  sst_call (sym_end_routine_p^);       {create call to SYN_P_END_ROUTINE}
+  sst_call (sym_end_routine_p^);       {create call to SYO_P_END_ROUTINE}
   sst_call_arg_var (sst_opc_p^, mflag_p^); {add call argument for MFLAG variable}
 {
 **************************************
@@ -142,6 +142,6 @@ begin
   sst_opcode_pos_pop;                  {back from subroutine definition opcode}
   sst_scope_p := scope_old_p;          {restore old scope and name space}
   sst_names_p := names_old_p;
-  syn_level_up;                        {back up from DEFINE syntax}
-  def_syn_p := nil;                    {no syntax currently being defined}
+  syo_level_up;                        {back up from DEFINE syntax}
+  def_syo_p := nil;                    {no syntax currently being defined}
   end;

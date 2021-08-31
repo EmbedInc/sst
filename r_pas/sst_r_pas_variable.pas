@@ -15,8 +15,8 @@ const
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
-  str2_h: syn_string_t;                {saved copy of STR_H}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
+  str2_h: syo_string_t;                {saved copy of STR_H}
   mod_p: sst_var_mod_p_t;              {points to current modifier descriptor}
   name: string_var80_t;                {scratch field name}
   dt_p: sst_dtype_p_t;                 {scratch pointer to data type descriptor}
@@ -35,12 +35,12 @@ begin
 
   sst_mem_alloc_namesp (               {allocate memory for root variable descriptor}
     sizeof(var_p^), var_p);
-  syn_level_down;                      {down into VARIABLE syntax level}
-  syn_get_tag_msg (                    {get tag for top level variable name}
+  syo_level_down;                      {down into VARIABLE syntax level}
+  syo_get_tag_msg (                    {get tag for top level variable name}
     tag, str_h, 'sst_pas_read', 'symbol_syntax_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_symbol_lookup (str_h, var_p^.mod1.top_sym_p, stat); {get pointer to symbol descr}
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   var_p^.mod1.next_p := nil;           {init to no following modifiers}
   var_p^.mod1.modtyp := sst_var_modtyp_top_k; {indicate this is top level name}
   var_p^.mod1.top_str_h := str_h;      {save string handle to top level symbol name}
@@ -143,7 +143,7 @@ sst_symtype_com_k: begin               {top symbol is common block name}
 
 otherwise                              {illegal symbol type for this usage}
       sys_msg_parm_vstr (msg_parm[1], sym.name_in_p^);
-      syn_error (str_h, 'sst_pas_read', 'symbol_bad_type', msg_parm, 1);
+      syo_error (str_h, 'sst_pas_read', 'symbol_bad_type', msg_parm, 1);
       end;                             {end of symbol type cases}
     end;                               {done with SYM abbreviation}
   mod_p := addr(var_p^.mod1);          {init pointer to current modifier block}
@@ -175,9 +175,9 @@ next_mod:
       ;
     mod_allowed := false;              {no further modifiers allowed now}
     end;
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'symbol_syntax_bad', nil, 0);
-  if tag = syn_tag_end_k then begin    {done processing VARIABLE syntax ?}
-    syn_level_up;                      {back up from VARIABLE syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'symbol_syntax_bad', nil, 0);
+  if tag = syo_tag_end_k then begin    {done processing VARIABLE syntax ?}
+    syo_level_up;                      {back up from VARIABLE syntax}
     return;
     end;
   sst_mem_alloc_namesp (sizeof(mod_p^.next_p^), mod_p^.next_p); {get mem for new mod}
@@ -193,9 +193,9 @@ next_mod:
       (not mod_allowed) or
       (dt_base_p^.dtype <> sst_dtype_rec_k)
       then begin
-    syn_error (str_h, 'sst_pas_read', 'parent_not_record', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'parent_not_record', nil, 0);
     end;
-  syn_get_tag_string (str_h, name);    {get field name}
+  syo_get_tag_string (str_h, name);    {get field name}
   string_downcase (name);              {make lower case for name matching}
   modf.modtyp := sst_var_modtyp_field_k; {set type for this modifier}
   modf.field_str_h := str_h;           {save handle to source file characters}
@@ -205,7 +205,7 @@ next_mod:
     if modf.field_sym_p = nil then begin {hit end of field names chain ?}
       sys_msg_parm_vstr (msg_parm[1], name);
       sys_msg_parm_vstr (msg_parm[2], dt_base_p^.symbol_p^.name_in_p^);
-      syn_error (str_h, 'sst_pas_read', 'field_name_not_found', msg_parm, 2);
+      syo_error (str_h, 'sst_pas_read', 'field_name_not_found', msg_parm, 2);
       end;
     end;                               {back and check for found named field}
   var_p^.dtype_p := modf.field_sym_p^.field_dtype_p; {update new data type so far}
@@ -218,10 +218,10 @@ next_mod:
       (not mod_allowed) or
       (dt_base_p^.dtype <> sst_dtype_pnt_k)
       then begin
-    syn_error (str_h, 'sst_pas_read', 'symbol_not_pointer', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'symbol_not_pointer', nil, 0);
     end;
   if dt_base_p^.pnt_dtype_p = nil then begin
-    syn_error (str_h, 'sst_pas_read', 'pointer_dereference_bad', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'pointer_dereference_bad', nil, 0);
     end;
   modf.modtyp := sst_var_modtyp_unpnt_k; {this modifier is pointer dereference}
   case var_p^.vtype of                 {what kind of "variable" do we have ?}
@@ -238,7 +238,7 @@ sst_vtype_var_k: begin                 {regular variable}
 sst_vtype_dtype_k: ;
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(var_p^.vtype));
-    syn_error (str_h, 'sst', 'vtype_unexpected', msg_parm, 1);
+    syo_error (str_h, 'sst', 'vtype_unexpected', msg_parm, 1);
     end;
   var_p^.dtype_p := dt_base_p^.pnt_dtype_p; {data type of dereferenced pointer}
   end;
@@ -250,21 +250,21 @@ otherwise
       (not mod_allowed) or
       (dt_base_p^.dtype <> sst_dtype_array_k)
       then begin
-    syn_error (str_h, 'sst_pas_read', 'symbol_not_array', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'symbol_not_array', nil, 0);
     end;
   first := true;                       {init to next subscript if first in array}
   dt_p := dt_base_p;                   {init to "rest" of array is whole array}
-  syn_level_down;                      {down into ARRAY_SUBSCRIPTS syntax}
+  syo_level_down;                      {down into ARRAY_SUBSCRIPTS syntax}
   str2_h := str_h;                     {save string handle to all the subscripts}
 
 loop_subscr:                           {back here for each new ARRAY_SUBSCRIPTS tag}
-  syn_get_tag_msg (                    {get tag for next subscript expression}
+  syo_get_tag_msg (                    {get tag for next subscript expression}
     tag, str_h, 'sst_pas_read', 'symbol_syntax_bad', nil, 0);
   case tag of
 1: begin                               {tag is for another subscript}
       if dt_p = nil then begin         {too many subscripts ?}
         sys_msg_parm_int (msg_parm[1], dt_base_p^.ar_n_subscr);
-        syn_error (str2_h, 'sst_pas_read', 'subscripts_too_many', msg_parm, 1);
+        syo_error (str2_h, 'sst_pas_read', 'subscripts_too_many', msg_parm, 1);
         end;
       if not first then begin          {not first subscript in this array ?}
         sst_mem_alloc_scope (          {grab memory for this new var modifier}
@@ -285,23 +285,23 @@ loop_subscr:                           {back here for each new ARRAY_SUBSCRIPTS 
       mod_p^.subscr_last := dt_p = nil; {TRUE if this is last subscript in array}
       goto loop_subscr;                {back for next ARRAY_SUBSCRIPTS syntax tag}
       end;
-syn_tag_end_k: begin                   {tag is end of ARRAY_SUBSCRIPTS syntax}
-      syn_level_up;                    {back up from ARRAY_SUBSCRIPTS syntax}
+syo_tag_end_k: begin                   {tag is end of ARRAY_SUBSCRIPTS syntax}
+      syo_level_up;                    {back up from ARRAY_SUBSCRIPTS syntax}
       if dt_p <> nil then begin        {no more subscripts, but not end of array ?}
         sys_msg_parm_int (msg_parm[1], dt_base_p^.ar_n_subscr);
-        syn_error (str2_h, 'sst_pas_read', 'subscripts_too_few', msg_parm, 1);
+        syo_error (str2_h, 'sst_pas_read', 'subscripts_too_few', msg_parm, 1);
         end;
       var_p^.dtype_p := dt_base_p^.ar_dtype_ele_p; {dtype is now array elements}
       end;
 otherwise                              {unexpected syntax tag value}
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of ARRAY_SUBSCRIPTS tag cases}
   end;
 {
 *   Unexpected tag value.
 }
 otherwise
-      syn_error_tag_unexp (tag, str_h);
+      syo_error_tag_unexp (tag, str_h);
       end;                             {end of tag cases}
     goto next_mod;                     {back for new tag with new data type block}
     end;                               {done with MODF abbreviation}

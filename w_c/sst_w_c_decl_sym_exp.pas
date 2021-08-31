@@ -88,7 +88,7 @@ sst_term_arele_k: begin
 }
 otherwise
       sys_msg_parm_int (msg_parm[1], ord(term_p^.ttype));
-      syn_error (term_p^.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
+      syo_error (term_p^.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
       end;                             {end of term type cases}
     term_p := term_p^.next_p;          {advance to next term in expression}
     end;                               {back and process this new term in expression}

@@ -40,8 +40,8 @@ begin
 
   string_copy (name, namec);           {make local copy of name supplied by caller}
   case sst_config.charcase of          {apply current output name case rule}
-syn_charcase_down_k: string_downcase (namec);
-syn_charcase_up_k: string_upcase (namec);
+syo_charcase_down_k: string_downcase (namec);
+syo_charcase_up_k: string_upcase (namec);
     end;                               {end of character case rule cases}
 
   scope_p := sst_scope_p;              {set first scope to look for name in}

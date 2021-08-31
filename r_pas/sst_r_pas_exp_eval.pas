@@ -12,17 +12,17 @@ procedure sst_r_pas_exp_eval (         {find constant value of EXPRESSION syntax
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   tag_op: sys_int_machine_t;           {syntax tag for operator between items}
-  str_h_op: syn_string_t;              {handle to string associated with TAG_OP}
+  str_h_op: syo_string_t;              {handle to string associated with TAG_OP}
   val2: sst_var_value_t;               {for ITEM after current operator}
 
 label
   loop, do_float, dtype_mismatch, op_mismatch;
 
 begin
-  syn_level_down;                      {down to EXPRESSION syntax}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
+  syo_level_down;                      {down to EXPRESSION syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
   case tag of
 1: begin                               {first operand is EXPRESSION}
       sst_r_pas_exp_eval (val);
@@ -31,7 +31,7 @@ begin
       sst_r_pas_item_eval (val);
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 {
 *   VAL has been initialized from the first (and mandatory) item
@@ -41,13 +41,13 @@ otherwise
 *   previous work.
 }
 loop:                                  {back here each new operator/item pair}
-  syn_get_tag_msg (tag_op, str_h_op, 'sst_pas_read', 'constant_bad', nil, 0); {get op tag}
-  if tag_op = syn_tag_end_k then begin {no more tags in EXPRESSION ?}
-    syn_level_up;                      {back up from EXPRESSION syntax}
+  syo_get_tag_msg (tag_op, str_h_op, 'sst_pas_read', 'constant_bad', nil, 0); {get op tag}
+  if tag_op = syo_tag_end_k then begin {no more tags in EXPRESSION ?}
+    syo_level_up;                      {back up from EXPRESSION syntax}
     return;
     end;
 
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0); {get second ITEM tag}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0); {get second ITEM tag}
   case tag of
 1: begin                               {this operand is EXPRESSION}
       sst_r_pas_exp_eval (val2);
@@ -56,7 +56,7 @@ loop:                                  {back here each new operator/item pair}
       sst_r_pas_item_eval (val2);
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 {
 *   VAL declares the value of the first operand, and VAL2 declares
@@ -251,8 +251,8 @@ otherwise
   goto loop;                           {back and handle next operator/operand pair}
 
 dtype_mismatch:                        {mismatched operand data types}
-  syn_error (str_h, 'sst_pas_read', 'exp_dtype_mismatch', nil, 0);
+  syo_error (str_h, 'sst_pas_read', 'exp_dtype_mismatch', nil, 0);
 
 op_mismatch:                           {operator is mismatched to operand data types}
-  syn_error (str_h, 'sst_pas_read', 'exp_operand_mismatch', nil, 0);
+  syo_error (str_h, 'sst_pas_read', 'exp_operand_mismatch', nil, 0);
   end;

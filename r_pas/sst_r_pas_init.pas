@@ -396,7 +396,7 @@ begin
 {
 *   Init other values in the common block.
 }
-  error_syn_found := false;            {init to no syntax error}
+  error_syo_found := false;            {init to no syntax error}
   addr_of := false;                    {init to not doing arg of ADDR function}
   top_block := top_block_none_k;       {not in top block yet}
   nest_level := 0;                     {init block nesting level}

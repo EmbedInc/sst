@@ -9,14 +9,14 @@ define sst_r_pas_sment_rout;
 %include 'sst_r_pas.ins.pas';
 
 procedure sst_r_pas_sment_rout (       {process ROUTINE_HEADING syntax}
-  in      str_all_h: syn_string_t);    {string handle for whole statement}
+  in      str_all_h: syo_string_t);    {string handle for whole statement}
 
 const
   max_msg_parms = 3;                   {max parameters we can pass to a message}
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   func: boolean;                       {TRUE if subroutine is a function}
   here: boolean;                       {routine actually defined right here}
   existed: boolean;                    {TRUE if routine previously declared}
@@ -40,9 +40,9 @@ label
 begin
   fnam.max := sizeof(fnam.str);
 
-  syn_level_down;                      {down into ROUTINE_HEADING syntax}
+  syo_level_down;                      {down into ROUTINE_HEADING syntax}
 
-  syn_get_tag_msg                      {get PROCEDURE/FUNCTION tag}
+  syo_get_tag_msg                      {get PROCEDURE/FUNCTION tag}
     (tag, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
   case tag of                          {what type of routine is this}
 1:  begin                              {routine is a procedure}
@@ -52,17 +52,17 @@ begin
       func := true;
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {done with routine type keyword cases}
 
-  syn_get_tag_msg                      {get routine name tag}
+  syo_get_tag_msg                      {get routine name tag}
     (tag, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
   sst_symbol_new (                     {try to create new symbol for routine name}
-    str_h, syn_charcase_asis_k, sym_p, stat);
+    str_h, syo_charcase_asis_k, sym_p, stat);
   existed :=                           {true if symbol previously declared}
     sys_stat_match(sst_subsys_k, sst_stat_sym_prev_def_k, stat);
   declared := false;                   {init to symbol new declared as routine}
-  syn_error_abort (stat, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
+  syo_error_abort (stat, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
 {
 *   Make sure we are in a nested scope for creating the routine descriptor.
 *   We will always create a nested scope here, whether the routine was previously
@@ -78,7 +78,7 @@ sst_symtype_proc_k: begin              {symbol was already declared as a routine
         declared := true;              {remember that routine already declared}
         sym_old_p := sym_p;            {save pointer to old symbol}
         sst_symbol_new (               {create temporary symbol in new scope}
-          str_h, syn_charcase_down_k, sym_p, stat);
+          str_h, syo_charcase_down_k, sym_p, stat);
         sym_p^.flags := sym_old_p^.flags; {init with existing symbol flags}
         end;
 sst_symtype_illegal_k: ;               {symbol defined, but not declared as anything}
@@ -87,7 +87,7 @@ otherwise
       sys_msg_parm_vstr (msg_parm[1], sym_p^.name_in_p^);
       sys_msg_parm_int (msg_parm[2], lnum);
       sys_msg_parm_vstr (msg_parm[3], fnam);
-      syn_error (str_h, 'sst_pas_read', 'symbol_already_def', msg_parm, 3);
+      syo_error (str_h, 'sst_pas_read', 'symbol_already_def', msg_parm, 3);
       end;
     end;                               {done handling symbol already existed case}
   sst_scope_p^.symbol_p := sym_p;      {point scope to its defining symbol}
@@ -112,17 +112,17 @@ otherwise
   sym_p^.proc_dtype_p^.size_align := 0;
   sym_p^.proc_dtype_p^.proc_p := addr(sym_p^.proc);
 
-  syn_get_tag_msg                      {get tag for routine arguments}
+  syo_get_tag_msg                      {get tag for routine arguments}
     (tag, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_proc_args (sym_p^.proc);   {process call arguments, if any}
 
-  syn_get_tag_msg                      {get tag for function return data type}
+  syo_get_tag_msg                      {get tag for function return data type}
     (tag, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
   case tag of
 1:  begin                              {no function data type is declared}
       if func then begin
-        syn_error (str_h, 'sst_pas_read', 'func_no_data_type', nil, 0);
+        syo_error (str_h, 'sst_pas_read', 'func_no_data_type', nil, 0);
         end
       end;
 2:  begin                              {function data type IS declared}
@@ -131,12 +131,12 @@ otherwise
           sst_r_pas_data_type (sym_p^.proc.dtype_func_p); {read in data type}
           end
         else begin                     {routine is a procedure}
-          syn_error (str_h, 'sst_pas_read', 'proc_data_type', nil, 0);
+          syo_error (str_h, 'sst_pas_read', 'proc_data_type', nil, 0);
           end
         ;
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of function dtype tag cases}
 {
 *   Done processing call arguments and function return data type, if any.
@@ -145,12 +145,12 @@ otherwise
   here := true;                        {init to routine is defined right here}
   scope_internal := false;             {init to not explicitly internal routine}
 next_opt:                              {back here each new routine option}
-  syn_get_tag_msg                      {get tag for next routine option}
+  syo_get_tag_msg                      {get tag for next routine option}
     (tag, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
-  if tag = syn_tag_end_k then goto done_opt; {finished all routine options ?}
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h); {unexpected TAG value ?}
-  syn_level_down;                      {down into ROUTINE_OPTION syntax}
-  syn_get_tag_msg                      {get tag to identify routine option}
+  if tag = syo_tag_end_k then goto done_opt; {finished all routine options ?}
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h); {unexpected TAG value ?}
+  syo_level_down;                      {down into ROUTINE_OPTION syntax}
+  syo_get_tag_msg                      {get tag to identify routine option}
     (tag, str_h, 'sst_pas_read', 'statement_proc_bad', nil, 0);
   case tag of
 1: begin                               {routine option FORWARD}
@@ -162,7 +162,7 @@ next_opt:                              {back here each new routine option}
         sys_msg_parm_vstr (msg_parm[1], sym_old_p^.name_in_p^);
         sys_msg_parm_int (msg_parm[2], lnum);
         sys_msg_parm_vstr (msg_parm[3], fnam);
-        syn_error (str_h, 'sst_pas_read', 'proc_redeclare', msg_parm, 3);
+        syo_error (str_h, 'sst_pas_read', 'proc_redeclare', msg_parm, 3);
         end;
       if not (sst_symflag_global_k in sym_p^.flags) then begin {not already global ?}
         sym_p^.flags := sym_p^.flags + [
@@ -189,9 +189,9 @@ vparam:                                {jump here from INTERNAL option}
         sst_procflag_noreturn_k];
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of routine option type cases}
-  syn_level_up;                        {back up from ROUTINE_OPTION syntax}
+  syo_level_up;                        {back up from ROUTINE_OPTION syntax}
   goto next_opt;                       {back to handle next routine option}
 done_opt:                              {all done with routine options}
   if                                   {this is a top subroutine in MODULE block ?}
@@ -284,20 +284,20 @@ done_opt:                              {all done with routine options}
       sst_scope_old;                   {pop back to original scope}
       end
     ;
-  syn_level_up;                        {back up from ROUTINE_HEADING syntax}
+  syo_level_up;                        {back up from ROUTINE_HEADING syntax}
   return;
 
 proc_mismatch:                         {print routines mismatch error and abort}
   if sym_old_p = nil
     then begin                         {there was no previous declaration}
-      syn_error (str_h, '', '', nil, 0);
+      syo_error (str_h, '', '', nil, 0);
       end
     else begin                         {previous declaration existed}
       sst_charh_info (sym_old_p^.char_h, fnam, lnum);
       sys_msg_parm_vstr (msg_parm[1], sym_old_p^.name_in_p^);
       sys_msg_parm_int (msg_parm[2], lnum);
       sys_msg_parm_vstr (msg_parm[3], fnam);
-      syn_error (str_all_h, 'sst_pas_read', 'proc_mismatch', msg_parm, 3);
+      syo_error (str_all_h, 'sst_pas_read', 'proc_mismatch', msg_parm, 3);
       end
     ;
   end;

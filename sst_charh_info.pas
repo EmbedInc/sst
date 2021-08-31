@@ -9,7 +9,7 @@ define sst_charh_info;
 %include 'sst2.ins.pas';
 
 procedure sst_charh_info (             {get info from handle to source character}
-  in      char_h: syn_char_t;          {handle to source character}
+  in      char_h: syo_char_t;          {handle to source character}
   in out  fnam: univ string_var_arg_t; {name of source file for first char}
   out     lnum: sys_int_machine_t);    {source file line number of first char}
 
@@ -26,7 +26,7 @@ begin
     return;
     end;
 
-  syn_get_char_line (                  {get info about this source character}
+  syo_get_char_line (                  {get info about this source character}
     char_h,                            {handle to source character}
     ichar, cnum, sline,                {unused returned arguments}
     lnum,                              {line number within source file}

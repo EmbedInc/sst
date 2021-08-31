@@ -12,11 +12,11 @@ procedure sst_r_pas_item_eval (        {find constant value of ITEM syntax}
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   tag2: sys_int_machine_t;             {syntax tag to avoid corrupting TAG}
-  str2_h: syn_string_t;                {string handle associated with TAG2}
+  str2_h: syo_string_t;                {string handle associated with TAG2}
   tag_unadic: sys_int_machine_t;       {tag for preceding unadic operator, if any}
-  str_h_unadic: syn_string_t;          {handle to string associated with TAG_UNADIC}
+  str_h_unadic: syo_string_t;          {handle to string associated with TAG_UNADIC}
   token: string_var80_t;               {scratch string for number conversion}
   str: string_var8192_t;               {for building string constant}
   size: sys_int_adr_t;                 {amount of memory needed}
@@ -32,9 +32,9 @@ begin
   token.max := sizeof(token.str);      {init local var strings}
   str.max := sizeof(str.str);
 
-  syn_level_down;                      {down into ITEM syntax level}
-  syn_get_tag_msg (tag_unadic, str_h_unadic, 'sst_pas_read', 'constant_bad', nil, 0);
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
+  syo_level_down;                      {down into ITEM syntax level}
+  syo_get_tag_msg (tag_unadic, str_h_unadic, 'sst_pas_read', 'constant_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
   case tag of
 {
 ********************************
@@ -42,9 +42,9 @@ begin
 *   Floating point number.
 }
 1: begin
-  syn_get_tag_string (str_h, token);   {get string of real number}
+  syo_get_tag_string (str_h, token);   {get string of real number}
   string_t_fp2 (token, val.float_val, stat); {make floating point from string}
-  syn_error_abort (stat, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
+  syo_error_abort (stat, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
   val.dtype := sst_dtype_float_k;
   end;
 {
@@ -94,7 +94,7 @@ begin
 }
 5: begin
   writeln ('SET constant expression have not been implemented yet.');
-  syn_error (str_h, '', '', nil, 0);
+  syo_error (str_h, '', '', nil, 0);
   end;
 {
 ********************************
@@ -102,18 +102,18 @@ begin
 *   Variable, CONST, function, or array.
 }
 6: begin
-  syn_level_down;                      {down into VARIABLE syntax}
-  syn_get_tag_msg (                    {get variable name tag}
+  syo_level_down;                      {down into VARIABLE syntax}
+  syo_get_tag_msg (                    {get variable name tag}
     tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
-  syn_get_tag_msg (tag2, str2_h, 'sst_pas_read', 'constant_bad', nil, 0);
-  if tag2 <> syn_tag_end_k then begin
-    syn_error (str2_h, 'sst_pas_read', 'var_not_simple', nil, 0);
+  syo_get_tag_msg (tag2, str2_h, 'sst_pas_read', 'constant_bad', nil, 0);
+  if tag2 <> syo_tag_end_k then begin
+    syo_error (str2_h, 'sst_pas_read', 'var_not_simple', nil, 0);
     end;
-  syn_level_up;                        {back to ITEM syntax level from VARIABLE}
+  syo_level_up;                        {back to ITEM syntax level from VARIABLE}
 
   sst_symbol_lookup (str_h, sym_p, stat); {look up symbol name in symbol table}
-  syn_error_abort (stat, str_h, '', '', nil, 0);
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'constant_bad', nil, 0);
   case tag of                          {what follows the symbol name ?}
 
 1: begin                               {nothing follows the symbol name}
@@ -127,23 +127,23 @@ sst_symtype_enum_k: begin              {symbol is value of an enumerated type}
   end;
 otherwise                              {this symbol type can not have a constant val}
   sys_msg_parm_vstr (msg_parm[1], sym_p^.name_in_p^);
-  syn_error (str_h, 'sst_pas_read', 'symbol_not_value', msg_parm, 1);
+  syo_error (str_h, 'sst_pas_read', 'symbol_not_value', msg_parm, 1);
   end;                                 {end of symbol data type cases}
   end;                                 {end of symbol with nothing following}
 
 2: begin                               {symbol is followed by function arguments}
   if sym_p^.symtype <> sst_symtype_front_k then begin {not intrinsic function ?}
     sys_msg_parm_vstr (msg_parm[1], sym_p^.name_in_p^);
-    syn_error (str_h, 'sst_pas_read', 'func_not_intrinsic', msg_parm, 1);
+    syo_error (str_h, 'sst_pas_read', 'func_not_intrinsic', msg_parm, 1);
     end;
 
   writeln ('"', sym_p^.name_in_p^.str:sym_p^.name_in_p^.len,
     '" is unimplemented intrinsic function in SST_R_PAS_ITEM_EVAL.');
-  syn_error (str_h, '', '', nil, 0);
+  syo_error (str_h, '', '', nil, 0);
   end;                                 {end of ITEM is function with args case}
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {done with what follows symbol cases}
   end;                                 {end of VAR, CONST, function, or array case}
 {
@@ -180,7 +180,7 @@ otherwise
 *   Unexpected TAG value for second tag in ITEM.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {done with second ITEM tag cases}
 {
 *   VAL is all set except for handling the unadic operator, if any.
@@ -217,9 +217,9 @@ otherwise
     end;                               {end of data type cases}
   end;                                 {done handling preceeding unadic operator}
 
-  syn_level_up;                        {up from ITEM syntax level}
+  syo_level_up;                        {up from ITEM syntax level}
   return;
 
 unadic_not_match:                      {unadic operator not match item data type}
-  syn_error (str_h_unadic, 'sst_pas_read', 'unadic_not_match', nil, 0);
+  syo_error (str_h_unadic, 'sst_pas_read', 'unadic_not_match', nil, 0);
   end;

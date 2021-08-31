@@ -14,9 +14,9 @@ const
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   tag2: sys_int_machine_t;             {extra syntax tag to avoid corrupting TAG}
-  str2_h: syn_string_t;                {handle to string associated with TAG2}
+  str2_h: syo_string_t;                {handle to string associated with TAG2}
   var_p: sst_var_p_t;                  {points to variable descriptor}
   sym_p: sst_symbol_p_t;               {pointer to scratch symbol descriptor}
   sym_prev_p: sst_symbol_p_t;          {points to previous symbol in linked list}
@@ -37,7 +37,7 @@ label
 *   pointing to the symbol descriptor for the label.  Errors will be checked.
 }
 procedure get_label_sym_pnt (
-  in      str_h: syn_string_t;         {string handle to lable name}
+  in      str_h: syo_string_t;         {string handle to lable name}
   out     sym_p: sst_symbol_p_t);      {returned pointing to symbol descriptor}
 
 var
@@ -48,13 +48,13 @@ begin
   fnam.max := sizeof(fnam.str);
 
   sst_symbol_lookup (str_h, sym_p, stat); {get pointer to label symbol}
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   if sym_p^.symtype <> sst_symtype_label_k then begin {symbol not a label ?}
     sst_charh_info (sym_p^.char_h, fnam, lnum);
     sys_msg_parm_vstr (msg_parm[1], sym_p^.name_in_p^);
     sys_msg_parm_int (msg_parm[2], lnum);
     sys_msg_parm_vstr (msg_parm[3], fnam);
-    syn_error (str_h, 'sst_pas_read', 'symbol_not_label', msg_parm, 3);
+    syo_error (str_h, 'sst_pas_read', 'symbol_not_label', msg_parm, 3);
     end;
   end;
 {
@@ -64,17 +64,17 @@ begin
 }
 begin
   s.max := sizeof(s.str);              {init local var string}
-  syn_level_down;                      {down into RAW_STATMENT syntax}
+  syo_level_down;                      {down into RAW_STATMENT syntax}
 
 tag_loop:                              {back here each new top level synax tag}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   case tag of
 {
 ***************************
 *
 *   No more tags in this RAW_STATEMENT syntax.
 }
-syn_tag_end_k: begin
+syo_tag_end_k: begin
   goto leave;                          {go to normal exit code}
   end;
 {
@@ -110,12 +110,12 @@ syn_tag_end_k: begin
     sst_opc_p^.if_exp_p^,              {expression to check}
     [sst_rwflag_read_k],               {read/write access needed to expression value}
     sst_dtype_bool_p^);                {data type value must be compatible with}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   sst_opcode_pos_push (sst_opc_p^.if_true_p); {new opcodes get chained here}
   sst_r_pas_raw_sment;                 {build opcodes for TRUE case}
   sst_opcode_pos_pop;                  {back to regular opcode chain}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag = syn_tag_end_k
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag = syo_tag_end_k
     then begin                         {no ELSE clause}
       sst_opc_p^.if_false_p := nil;    {indicate no opcodes for FALSE case}
       end
@@ -146,23 +146,23 @@ syn_tag_end_k: begin
 {
 *   Process counting variable.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_variable (sst_opc_p^.lpcn_var_p); {get descriptor for counting var}
   sst_var_funcname (sst_opc_p^.lpcn_var_p^); {call func instead of stuff return val}
   if sst_opc_p^.lpcn_var_p^.vtype <> sst_vtype_var_k then begin {not a variable ?}
-    syn_get_tag_string (str_h, s);     {get "variable" reference string}
+    syo_get_tag_string (str_h, s);     {get "variable" reference string}
     sys_msg_parm_vstr (msg_parm[1], s);
-    syn_error (str_h, 'sst_pas_read', 'not_a_variable', msg_parm, 1);
+    syo_error (str_h, 'sst_pas_read', 'not_a_variable', msg_parm, 1);
     end;
   if not (sst_rwflag_write_k in sst_opc_p^.lpcn_var_p^.rwflag) then begin
-    syn_error (str_h, 'sst', 'var_not_writeable', nil, 0);
+    syo_error (str_h, 'sst', 'var_not_writeable', nil, 0);
     end;
 {
 *   Process starting value expression.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_exp (str_h, false, sst_opc_p^.lpcn_exp_start_p); {build exp descriptor}
   sst_exp_useage_check (               {check expression attributes for this useage}
     sst_opc_p^.lpcn_exp_start_p^,      {expression to check}
@@ -171,7 +171,7 @@ syn_tag_end_k: begin
 {
 *   Process TO/DOWNTO keywords.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   case tag of
 1: begin                               {keyword is TO}
       sst_opc_p^.lpcn_inc_dir := sst_incdir_up_k;
@@ -180,13 +180,13 @@ syn_tag_end_k: begin
       sst_opc_p^.lpcn_inc_dir := sst_incdir_down_k;
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of TO/DOWNTO tag cases}
 {
 *   Process ending value expression.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_exp (str_h, false, sst_opc_p^.lpcn_exp_end_p); {build exp descriptor}
   sst_exp_useage_check (               {check expression attributes for this useage}
     sst_opc_p^.lpcn_exp_end_p^,        {expression to check}
@@ -196,7 +196,7 @@ otherwise
 *   Set up the loop increment value expression.  This is either -1 or +1,
 *   or an explicit value if the BY keyword is present.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   case tag of
 
 1: begin                               {implicit value is either -1 or +1}
@@ -237,13 +237,13 @@ sst_incdir_down_k: exp.val.int_val := -1;
       end;
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 {
 *   Process the loop statement.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_opcode_pos_push (sst_opc_p^.lpcn_code_p); {new opcodes get chained here}
   sst_r_pas_raw_sment;                 {build opcodes for body of loop}
   sst_opcode_pos_pop;                  {back to regular opcode chain}
@@ -260,7 +260,7 @@ otherwise
   sst_opcode_pos_push (sst_opc_p^.lpbt_code_p); {new opcodes get chained here}
 
 loop_tag6:                             {back here each new syntax tag}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   case tag of
 1: begin                               {tag is for more statements in loop body}
       sst_r_pas_raw_sment;             {add more statements to body of loop}
@@ -275,7 +275,7 @@ loop_tag6:                             {back here each new syntax tag}
         sst_dtype_bool_p^);            {data type value must be compatible with}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   end;
 {
@@ -290,8 +290,8 @@ otherwise
 {
 *   Process loop conditional expression.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_exp (str_h, false, sst_opc_p^.lptp_exp_p); {make conditional expression}
   sst_exp_useage_check (               {check expression attributes for this useage}
     sst_opc_p^.lptp_exp_p^,            {expression to check}
@@ -300,8 +300,8 @@ otherwise
 {
 *   Process loop body code.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_opcode_pos_push (sst_opc_p^.lptp_code_p); {new opcodes get chained here}
   sst_r_pas_raw_sment;                 {build opcodes for loop body}
   sst_opcode_pos_pop;                  {back to regular opcode chain}
@@ -322,22 +322,22 @@ otherwise
   sym_prev_p := nil;                   {init to no previous symbol created yet}
 
 loop_tag8:                             {back here each new tag in WITH statement}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   case tag of
 1: begin                               {tag is for another WITH_ABBREV syntax}
-      syn_level_down;                  {down into WITH_ABBREV syntax}
-      syn_get_tag_msg (                {get tag for abbreviation expansion "variable"}
+      syo_level_down;                  {down into WITH_ABBREV syntax}
+      syo_get_tag_msg (                {get tag for abbreviation expansion "variable"}
         tag, str_h, 'sst_pas_read', 'statement_with_bad', nil, 0);
-      if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+      if tag <> 1 then syo_error_tag_unexp (tag, str_h);
       sst_r_pas_variable (var_p);      {create var descriptor for abbrev expansion}
       sst_var_funcname (var_p^);       {call func instead of stuff return value}
-      syn_get_tag_msg (                {get tag for abbreviation name}
+      syo_get_tag_msg (                {get tag for abbreviation name}
         tag2, str2_h, 'sst_pas_read', 'statement_with_bad', nil, 0);
-      if tag <> 1 then syn_error_tag_unexp (tag, str_h);
-      syn_level_up;                    {back up from WITH_ABBREV syntax}
+      if tag <> 1 then syo_error_tag_unexp (tag, str_h);
+      syo_level_up;                    {back up from WITH_ABBREV syntax}
       sst_symbol_new                   {create initial symbol for abbrev name}
-        (str2_h, syn_charcase_down_k, sym_p, stat);
-      syn_error_abort (stat, str2_h, 'sst_pas_read', 'statement_with_bad', nil, 0);
+        (str2_h, syo_charcase_down_k, sym_p, stat);
+      syo_error_abort (stat, str2_h, 'sst_pas_read', 'statement_with_bad', nil, 0);
       sym_p^.symtype := sst_symtype_abbrev_k; {new symbol is an abbreviation}
       sym_p^.abbrev_var_p := var_p;    {point abbreviation to its expansion}
       sym_p^.next_p := nil;            {init this symbol to be end of chain}
@@ -359,7 +359,7 @@ loop_tag8:                             {back here each new tag in WITH statement
       sst_scope_old;                   {restore to previous scope}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   end;
 {
@@ -402,12 +402,12 @@ otherwise
   sst_opcode_new;                      {make new opcode descriptor}
   sst_opc_p^.str_h := str_h;           {save handle to source characters}
   sst_r_pas_variable (var_p);          {read VARIABLE and build variable descriptor}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   case tag of
 {
 *   Statement is a procedure call with no arguments.
 }
-syn_tag_end_k: begin
+syo_tag_end_k: begin
   args_here := false;                  {no subroutine arguments exist}
   goto do_call;                        {to common code for to handle subroutine call}
   end;
@@ -423,7 +423,7 @@ do_call:                               {start common code to handle subroutine c
       (var_p^.vtype = sst_vtype_rout_k) and then
       (var_p^.rout_proc_p^.dtype_func_p <> nil)
       then begin
-    syn_error (str_h, 'sst_pas_read', 'routine_is_function', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'routine_is_function', nil, 0);
     end;
   sst_opc_p^.opcode := sst_opc_call_k; {opcode is for subroutine call}
   sst_opc_p^.call_var_p := var_p;      {point opcode to variable referencing subr}
@@ -440,7 +440,7 @@ do_call:                               {start common code to handle subroutine c
     [sst_rwflag_write_k],              {access actually used}
     var_p^.rwflag,                     {allowed access to this variable}
     stat);
-  syn_error_abort (stat, sst_opc_p^.str_h, '', '', nil, 0);
+  syo_error_abort (stat, sst_opc_p^.str_h, '', '', nil, 0);
   sst_opc_p^.opcode := sst_opc_assign_k; {opcode indicates assignment statement}
   sst_opc_p^.assign_var_p := var_p;    {set pointer to variable being assigned to}
   sst_r_pas_exp (str_h, false, sst_opc_p^.assign_exp_p); {build expression descriptor}
@@ -448,13 +448,13 @@ do_call:                               {start common code to handle subroutine c
     sst_opc_p^.assign_exp_p^,          {expression to check}
     [sst_rwflag_read_k],               {read/write access needed to expression value}
     var_p^.dtype_p^);                  {data type value must be compatible with}
-  syn_error_abort (stat, sst_opc_p^.assign_exp_p^.str_h, '', '', nil, 0);
+  syo_error_abort (stat, sst_opc_p^.assign_exp_p^.str_h, '', '', nil, 0);
   end;
 {
 *   Unexpected tag value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of TAG cases within call/assign sment}
   end;
 {
@@ -496,10 +496,10 @@ otherwise
   sst_opcode_new;                      {make new opcode descriptor}
   sst_opc_p^.str_h := str_h;           {save handle to source characters}
   sst_opc_p^.opcode := sst_opc_discard_k; {indicate the type of this new opcode}
-  syn_get_tag_msg (                    {get tag to function reference expression}
+  syo_get_tag_msg (                    {get tag to function reference expression}
     tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   sst_r_pas_exp (str_h, false, sst_opc_p^.discard_exp_p); {get function reference exp}
   with sst_opc_p^.discard_exp_p^: exp do begin {EXP is func ref expression descriptor}
@@ -509,7 +509,7 @@ otherwise
         ( (exp.term1.ttype <> sst_term_func_k) and {not some kind of function ?}
           (exp.term1.ttype <> sst_term_ifunc_k))
         then begin
-      syn_error (str_h, 'sst_pas_read', 'discard_arg_bad', nil, 0);
+      syo_error (str_h, 'sst_pas_read', 'discard_arg_bad', nil, 0);
       end;
     end;                               {done with EXP abbreviation}
   end;
@@ -519,16 +519,16 @@ otherwise
 *   Unrecognized or unimplemented TAG value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of tag cases}
 {
 *   Make sure there are no more tags left in this RAW_STATEMENT syntax.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> syn_tag_end_k then begin
-    syn_error_tag_unexp (tag, str_h);  {complain if not hit end of syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> syo_tag_end_k then begin
+    syo_error_tag_unexp (tag, str_h);  {complain if not hit end of syntax}
     end;
 
 leave:                                 {common exit point}
-  syn_level_up;                        {up from RAW_STATEMENT syntax level}
+  syo_level_up;                        {up from RAW_STATEMENT syntax level}
   end;

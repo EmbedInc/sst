@@ -16,7 +16,7 @@ const
 
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syn_string_t;                 {handle to string from input file}
+  str_h: syo_string_t;                 {handle to string from input file}
   sym_p, sym2_p: sst_symbol_p_t;       {scratch pointers to symbol descriptors}
   name_p: string_var_p_t;              {pointer to name in hash table entry}
   data_p: symbol_data_p_t;             {points to data in hash table entry}
@@ -37,10 +37,10 @@ label
 
 begin
   token.max := sizeof(token.str);      {init local var string}
-  syn_level_down;                      {down into UNTAGGED_ITEM syntax}
+  syo_level_down;                      {down into UNTAGGED_ITEM syntax}
 
-  syn_get_tag_msg (                    {get tag to identify type of item}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
+  syo_get_tag_msg (                    {get tag to identify type of item}
+    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
   case tag of
 {
 **************************************
@@ -51,9 +51,9 @@ begin
   sym2_p := sym_ichar_eol_p;           {symbol to compare character value to}
 
 comp_char_sym2:                        {compare char value to SYM2_P^}
-  sst_call (sym_cpos_push_p^);         {write call to SYN_P_CPOS_PUSH}
+  sst_call (sym_cpos_push_p^);         {write call to SYO_P_CPOS_PUSH}
 
-  sst_call (sym_get_ichar_p^);         {write call to SYN_P_GET_ICHAR}
+  sst_call (sym_get_ichar_p^);         {write call to SYO_P_GET_ICHAR}
   sst_r_syn_int (sym_p);               {make temporary integer variable}
   sst_call_arg_var (sst_opc_p^, sym_p^); {add integer variable call argument}
 
@@ -66,7 +66,7 @@ comp_char_sym2:                        {compare char value to SYM2_P^}
 {
 *   Pop parsing state saved earlier.
 }
-  sst_call (sym_cpos_pop_p^);          {write call to SYN_P_CPOS_POP}
+  sst_call (sym_cpos_pop_p^);          {write call to SYO_P_CPOS_POP}
   sst_call_arg_var (sst_opc_p^, sym_mflag); {add MFLAG variable as call argument}
 {
 *   Handle the jump targets.
@@ -91,18 +91,18 @@ comp_char_sym2:                        {compare char value to SYM2_P^}
 *   Item is symbol reference
 }
 3: begin
-  syn_get_tag_string (str_h, token);   {get name of SYN file symbol}
+  syo_get_tag_string (str_h, token);   {get name of SYN file symbol}
   string_upcase (token);
   string_hash_ent_lookup (table_sym, token, name_p, data_p); {look up name in table}
   if data_p = nil then begin           {no such entry in table ?}
     sys_msg_parm_vstr (msg_parm[1], token);
-    syn_error (str_h, 'sst_syn_read', 'symbol_not_declared', msg_parm, 1);
+    syo_error (str_h, 'sst_syo_read', 'symbol_not_declared', msg_parm, 1);
     end;
 {
 *   Add called syntax to list of syntaxes called by this parent, if not
 *   already in list.
 }
-  call_pp := addr(def_syn_p^.call_p);  {init end of called syntaxes chain pointer}
+  call_pp := addr(def_syo_p^.call_p);  {init end of called syntaxes chain pointer}
   call_p := call_pp^;                  {init to first called syntax in chain}
   while call_p <> nil do begin         {loop thru called syntaxes chain}
     if call_p^.data_p = data_p then begin {this called syntax already in list ?}
@@ -132,11 +132,11 @@ in_list:                               {jump here if called syntax already in li
 *   Item is string constant
 }
 4: begin
-  syn_level_down;                      {down into STRING syntax}
-  syn_get_tag_msg (                    {get tag for string contents}
-    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
-  syn_get_tag_string (str_h, token);   {get string value}
-  syn_level_up;                        {back up from STRING syntax}
+  syo_level_down;                      {down into STRING syntax}
+  syo_get_tag_msg (                    {get tag for string contents}
+    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
+  syo_get_tag_string (str_h, token);   {get string value}
+  syo_level_up;                        {back up from STRING syntax}
 
   sst_call (sym_test_string_p^);       {create call to SYM_P_TEST_STRING}
   sst_call_arg_var (sst_opc_p^, sym_mflag); {MFLAG variable is argument 1}
@@ -157,28 +157,28 @@ in_list:                               {jump here if called syntax already in li
 *   Item is .RANGE
 }
 5: begin
-  syn_get_tag_msg (                    {get tag for range start character}
-    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
+  syo_get_tag_msg (                    {get tag for range start character}
+    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
-  syn_get_tag_string (str_h, token);   {get string value}
+  syo_get_tag_string (str_h, token);   {get string value}
   i := ord(token.str[2]) & 127;        {get character value for start of range}
 
-  syn_get_tag_msg (                    {get tag for range start character}
-    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
+  syo_get_tag_msg (                    {get tag for range start character}
+    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
-  syn_get_tag_string (str_h, token);   {get string value}
+  syo_get_tag_string (str_h, token);   {get string value}
   j := ord(token.str[2]) & 127;        {get character value for start of range}
 {
 *   I contains the 0-127 character value for the start of the range, and
 *   J contains the 0-127 character value for the end of the range.
 }
-  sst_call (sym_cpos_push_p^);         {write call to SYN_P_CPOS_PUSH}
+  sst_call (sym_cpos_push_p^);         {write call to SYO_P_CPOS_PUSH}
 
-  sst_call (sym_get_ichar_p^);         {write call to SYN_P_GET_ICHAR}
+  sst_call (sym_get_ichar_p^);         {write call to SYO_P_GET_ICHAR}
   sst_r_syn_int (sym_p);               {make temporary integer variable}
   sst_call_arg_var (sst_opc_p^, sym_p^); {add integer variable call argument}
 {
@@ -306,7 +306,7 @@ in_list:                               {jump here if called syntax already in li
 {
 *   Pop parsing state saved earlier.
 }
-  sst_call (sym_cpos_pop_p^);          {write call to SYN_P_CPOS_POP}
+  sst_call (sym_cpos_pop_p^);          {write call to SYO_P_CPOS_POP}
   sst_call_arg_var (sst_opc_p^, sym_mflag); {add MFLAG variable as call argument}
 {
 *   Handle the jump targets.
@@ -322,37 +322,37 @@ in_list:                               {jump here if called syntax already in li
 *   Item is .OCCURS
 }
 6: begin
-  syn_get_tag_msg (                    {get tag for min occurrence number}
-    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
+  syo_get_tag_msg (                    {get tag for min occurrence number}
+    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
-  syn_get_tag_string (str_h, token);   {get string value}
+  syo_get_tag_string (str_h, token);   {get string value}
   string_t_int (token, i, stat);       {get min occurrence number}
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   if i < 0 then begin                  {negative min occurrence limit not allowed}
-    syn_error (str_h, 'sst_syn_read', 'occurs_limit_low_bad', nil, 0);
+    syo_error (str_h, 'sst_syo_read', 'occurs_limit_low_bad', nil, 0);
     end;
 
-  syn_level_down;                      {down into END_RANGE syntax}
-  syn_get_tag_msg (                    {get tag for min occurrence number}
-    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
+  syo_level_down;                      {down into END_RANGE syntax}
+  syo_get_tag_msg (                    {get tag for min occurrence number}
+    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
   case tag of
 1:  begin                              {tag was for max occurrence integer value}
-      syn_get_tag_string (str_h, token); {get string value}
+      syo_get_tag_string (str_h, token); {get string value}
       string_t_int (token, j, stat);   {get max occurrence number}
-      syn_error_abort (stat, str_h, '', '', nil, 0);
+      syo_error_abort (stat, str_h, '', '', nil, 0);
       if j < i then begin
-        syn_error (str_h, 'sst_syn_read', 'occurs_limit_high_below', nil, 0);
+        syo_error (str_h, 'sst_syo_read', 'occurs_limit_high_below', nil, 0);
         end;
       end;
 2:  begin                              {tag was for infinite occurrences}
       j := -1;                         {flag that infinite occurrences allowed}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
-  syn_level_up;                        {back up from END_RANGE syntax}
+  syo_level_up;                        {back up from END_RANGE syntax}
 {
 *   I is set to the minimum allowable occurrence count and J is the maximum
 *   allowable occurrence count.  J is negative to indicate that no upper
@@ -410,11 +410,11 @@ otherwise
     var_p^.vtype := sst_vtype_var_k;
     end;
 {
-*   Insert call to SYN_P_CPOS_PUSH if there is any chance the final
+*   Insert call to SYO_P_CPOS_PUSH if there is any chance the final
 *   syntax matched answer might be NO.
 }
   if k <> 0 then begin                 {some limit will have to be checked ?}
-    sst_call (sym_cpos_push_p^);       {create call to SYN_P_CPOS_PUSH}
+    sst_call (sym_cpos_push_p^);       {create call to SYO_P_CPOS_PUSH}
     end;
 {
 *   Make opcode for counted loop with decision at the bottom.  We will
@@ -484,7 +484,7 @@ otherwise
 *   Write code to process the item.
 *
 *   An additional layer of jump targets is used if we must always
-*   do a SYN_P_CPOS_POP before passing back to the parent.
+*   do a SYO_P_CPOS_POP before passing back to the parent.
 }
   if k = 0
     then begin                         {OK to go directly to parent on error}
@@ -495,7 +495,7 @@ otherwise
         lab_fall_k,                    {fall thru on NO}
         lab_same_k);                   {go to parent target on ERROR}
       end
-    else begin                         {must always do call to SYN_P_CPOS_POP}
+    else begin                         {must always do call to SYO_P_CPOS_POP}
       sst_r_syn_jtargets_make (        {create private jump targets layer}
         jtarg,                         {template jump targets}
         jt2,                           {output jump targets}
@@ -636,7 +636,7 @@ otherwise
 
   sst_r_syn_jtargets_done (jt2);       {ITEM ERROR case comes here}
 
-  sst_call (sym_cpos_pop_p^);          {create call to SYN_P_CPOS_POP}
+  sst_call (sym_cpos_pop_p^);          {create call to SYO_P_CPOS_POP}
   sst_call_arg_var (sst_opc_p^, sym_mflag); {add MFLAG variable as call argument}
 
   sst_r_syn_goto (                     {go to jump targets, as required}
@@ -674,8 +674,8 @@ done_occurs:                           {all done processing OCCURS item}
 *   Item is .CHARCASE
 }
 8: begin
-  syn_get_tag_msg (                    {get tag for character case select}
-    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
+  syo_get_tag_msg (                    {get tag for character case select}
+    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
   case tag of
 1:  begin                              {upper case}
       sym_p := sym_charcase_up_p;
@@ -688,7 +688,7 @@ done_occurs:                           {all done processing OCCURS item}
       end;
     end;                               {end of character case cases}
 
-  sst_call (sym_charcase_p^);          {create call to SYN_P_CHARCASE}
+  sst_call (sym_charcase_p^);          {create call to SYO_P_CHARCASE}
   sst_call_arg_enum (sst_opc_p^, sym_p^); {pass new character case as argument 1}
 
   goto always_match;                   {make sure MFLAG is set to YES}
@@ -722,7 +722,7 @@ always_match:                          {jump here to set MFLAG to YES}
 *   Item is .UPTO
 }
 10: begin
-  sst_call (sym_cpos_push_p^);         {create call to SYN_P_CPOS_PUSH}
+  sst_call (sym_cpos_push_p^);         {create call to SYO_P_CPOS_PUSH}
 
   sst_r_syn_jtargets_make (            {make new jump targets for nested ITEM}
     jtarg, jt,                         {input and output jump targets}
@@ -730,7 +730,7 @@ always_match:                          {jump here to set MFLAG to YES}
   sst_r_syn_item (jt, sym_mflag);      {process nested ITEM}
   sst_r_syn_jtargets_done (jt);        {tag implicit labels as being here}
 
-  sst_call (sym_cpos_pop_p^);          {create call to SYN_P_CPOS_POP}
+  sst_call (sym_cpos_pop_p^);          {create call to SYO_P_CPOS_POP}
   sst_call_arg_enum (sst_opc_p^, sym_mflag_no_p^); {always restores state}
 
   sst_r_syn_goto (                     {go to jump targets, as required}
@@ -791,8 +791,8 @@ optional:                              {jump here from .OCCURS [0 TO 1]}
 *   Unexpected expression format tag value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of item format cases}
 
-  syn_level_up;                        {back up from ITEM syntax}
+  syo_level_up;                        {back up from ITEM syntax}
   end;

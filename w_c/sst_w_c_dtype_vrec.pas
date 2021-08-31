@@ -46,7 +46,7 @@ procedure sst_w_c_dtype_vrec (         {write data type definition of variant re
   val_param;
 
 var
-  str_h: syn_string_t;                 {string handle for error message}
+  str_h: syo_string_t;                 {string handle for error message}
   pos_hash: string_hash_pos_t;         {hash table position handle}
   ovlid: sys_int_machine_t;            {sequential ID of this overlay}
   trunc_beg: sys_int_machine_t;        {num char to trunc from field names}
@@ -260,7 +260,7 @@ sst_dtype_char_k: begin                {variant ID type is CHARACTER}
 otherwise                              {unexpected variant ID type}
     str_h.first_char := field_p^.char_h;
     str_h.last_char := field_p^.char_h;
-    syn_error (str_h, 'sst_c_write', 'variant_id_dtype_unexpected', nil, 0);
+    syo_error (str_h, 'sst_c_write', 'variant_id_dtype_unexpected', nil, 0);
     end;
 
 got_sname:                             {got STRUCT name in SNAME}

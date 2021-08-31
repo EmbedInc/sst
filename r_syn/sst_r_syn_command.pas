@@ -11,13 +11,13 @@ procedure sst_r_syn_command (          {process COMMAND syntax}
 
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syn_string_t;                 {handle to string from input file}
+  str_h: syo_string_t;                 {handle to string from input file}
 
 begin
   sys_error_none (stat);               {init to no errors}
 
-  syn_level_down;                      {down into COMMAND syntax level}
-  syn_get_tag_msg (tag, str_h, 'sst_syn_read', 'syerr_command', nil, 0);
+  syo_level_down;                      {down into COMMAND syntax level}
+  syo_get_tag_msg (tag, str_h, 'sst_syo_read', 'syerr_command', nil, 0);
   case tag of
 {
 *   End of input data.
@@ -39,8 +39,8 @@ begin
       end;
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of top level tag cases}
 
-  syn_level_up;                        {back up from COMMAND syntax level}
+  syo_level_up;                        {back up from COMMAND syntax level}
   end;

@@ -9,7 +9,7 @@ define sst_r_pas_sment_case;
 %include 'sst_r_pas.ins.pas';
 
 procedure sst_r_pas_sment_case (       {CASE statement, inside RAW_STATEMENT syntax}
-  in      str_all_h: syn_string_t);    {string handle for whole CASE statement}
+  in      str_all_h: syo_string_t);    {string handle for whole CASE statement}
 
 const
   max_msg_parms = 3;                   {max parameters we can pass to a message}
@@ -21,7 +21,7 @@ type
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   dt_p: sst_dtype_p_t;                 {points to resolved base data type descriptor}
   dt: sst_dtype_k_t;                   {resolved base data type ID}
   case_opc_p: sst_case_opc_p_t;        {pnt to current case exec block descriptor}
@@ -100,7 +100,7 @@ loop_ent:                              {back here to compare to next entry in ch
     sys_msg_parm_int (msg_parm[1], case_val_p^.val);
     sys_msg_parm_int (msg_parm[2], lnum);
     sys_msg_parm_vstr (msg_parm[3], fnam);
-    syn_error (
+    syo_error (
       case_val_p^.exp_p^.str_h,
      'sst_pas_read', 'case_duplicate_choice_vals', msg_parm, 3);
     end;
@@ -128,8 +128,8 @@ begin
 {
 *   Process expression that selects which case.
 }
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_exec_bad', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_exp (str_h, false, opc.case_exp_p); {process choice selector expression}
   sst_dtype_resolve (                  {get base data types of this expression}
     opc.case_exp_p^.dtype_p^,          {input data type descriptor}
@@ -140,13 +140,13 @@ sst_dtype_enum_k,
 sst_dtype_bool_k,
 sst_dtype_char_k: ;                    {these are all the legal data types}
 otherwise
-    syn_error (str_h, 'sst_pas_read', 'exp_bad_case', nil, 0);
+    syo_error (str_h, 'sst_pas_read', 'exp_bad_case', nil, 0);
     end;
 
   case_opc_p := nil;                   {init to no current exec block descriptor}
 
 loop_case:                             {back here each new complete case}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_case_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_case_bad', nil, 0);
   case tag of
 {
 *******************************************
@@ -172,7 +172,7 @@ loop_case:                             {back here each new complete case}
   case_opc_p^.next_p := nil;           {indicate this block is end of chain}
 
 loop_choice:                           {back here for each new tag this case}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_case_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_case_bad', nil, 0);
   case tag of
 {
 *   Tag is for EXPRESSION syntax that identifies the value of another choice
@@ -193,7 +193,7 @@ loop_choice:                           {back here for each new tag this case}
         case_val_p^.exp_p^.val,        {constant value descriptor}
         case_val_p^.val,               {returned ordinal value}
         stat);                         {error status return code}
-      syn_error_abort (stat, str_h, '', '', nil, 0);
+      syo_error_abort (stat, str_h, '', '', nil, 0);
       insert_chain (chain_all_k);      {add to choices chain for whole CASE sment}
       insert_chain (chain_case_k);     {add to choices chain for this case}
       goto loop_choice;                {back to get next choice val for this case}
@@ -210,7 +210,7 @@ loop_choice:                           {back here for each new tag this case}
 *   Unexpected TAG value within current case.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of tag cases within current case}
   goto loop_case;                      {back for next case in CASE statement}
   end;                                 {end of tag was another case in CASE sment}
@@ -236,7 +236,7 @@ otherwise
 *   Unexpected TAG value in CASE statement syntax.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of CASE statement top level syntax tags}
   end;                                 {done with OPC abbreviation}
   end;

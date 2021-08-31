@@ -12,12 +12,12 @@ procedure sst_r_pas_statement (        {process STATEMENT construction}
 
 var
   tag: sys_int_machine_t;              {tag number from .syn file}
-  str_h: syn_string_t;                 {handle to string for current tag}
+  str_h: syo_string_t;                 {handle to string for current tag}
 
 begin
   sys_error_none (stat);               {init STAT to indicate no error}
-  syn_level_down;                      {down into STATEMENT construction}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_bad', nil, 0);
+  syo_level_down;                      {down into STATEMENT construction}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_bad', nil, 0);
   case tag of
 {
 *   CONST
@@ -64,10 +64,10 @@ begin
   sst_opc_p^.str_h := str_h;           {save source file char range handle}
 
   sst_opcode_pos_push (sst_opc_p^.exec_p); {executable opcodes get chained on here}
-  syn_level_down;                      {down into EXECUTABLE_BLOCK syntax}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_bad', nil, 0);
+  syo_level_down;                      {down into EXECUTABLE_BLOCK syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'statement_bad', nil, 0);
   sst_r_pas_statements;                {build opcodes from STATEMENTS syntax}
-  syn_level_up;                        {back up from EXECUTABLE_BLOCK syntax}
+  syo_level_up;                        {back up from EXECUTABLE_BLOCK syntax}
   sst_opcode_pos_pop;                  {end of block of executable code}
 
   sst_opcode_pos_pop;                  {end of program/subroutine}
@@ -94,6 +94,6 @@ begin
   end;
 
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {done with all the statement type cases}
   end;

@@ -11,8 +11,8 @@ procedure sst_r_pas_write;             {process WRITE and WRITELN statements}
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
-  strh_top: syn_string_t;              {string handle for top WRITE/WRITELN tag}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
+  strh_top: syo_string_t;              {string handle for top WRITE/WRITELN tag}
   fw_max: sys_int_machine_t;           {max field width specifiers allowed}
   fw_n: sys_int_machine_t;             {field width specifier number}
   exp_p: sst_exp_p_t;                  {scratch pointer to expression descriptor}
@@ -22,13 +22,13 @@ label
   loop_arg, loop_width;
 
 begin
-  syn_get_tag_msg (                    {get WRITE/WRITELN tag}
+  syo_get_tag_msg (                    {get WRITE/WRITELN tag}
     tag, strh_top, 'sst_pas_read', 'write_sment_bad', nil, 0);
   case tag of
 1:  eol := false;                      {WRITE statement}
 2:  eol := true;                       {WRITELN statement}
 otherwise
-    syn_error_tag_unexp (tag, strh_top);
+    syo_error_tag_unexp (tag, strh_top);
     end;
 {
 ******************************
@@ -36,7 +36,7 @@ otherwise
 *   Loop back here each new WRITELN_ARG syntax.
 }
 loop_arg:
-  syn_get_tag_msg (                    {get tag for next WRITE/WRITELN argument}
+  syo_get_tag_msg (                    {get tag for next WRITE/WRITELN argument}
     tag, str_h, 'sst_pas_read', 'write_sment_bad', nil, 0);
   case tag of
 {
@@ -46,8 +46,8 @@ loop_arg:
   sst_opcode_new;                      {make new opcode for this argument}
   sst_opc_p^.str_h := str_h;           {save handle to source stream characters}
   sst_opc_p^.opcode := sst_opc_write_k; {indicate what kind of opcode this is}
-  syn_level_down;                      {down into WRITELN_ARG syntax}
-  syn_get_tag_msg (                    {tag for expression of value to write}
+  syo_level_down;                      {down into WRITELN_ARG syntax}
+  syo_get_tag_msg (                    {tag for expression of value to write}
     tag, str_h, 'sst_pas_read', 'write_sment_bad', nil, 0);
   sst_r_pas_exp (str_h, false, sst_opc_p^.write_exp_p); {get write value expression}
   sst_opc_p^.write_width_exp_p := nil; {init to use free format to write value}
@@ -58,16 +58,16 @@ loop_arg:
   fw_n := 1;                           {init number of next field width specifier}
 
 loop_width:                            {back here for each new field width specifier}
-  syn_get_tag_msg (                    {tag for next field width expression}
+  syo_get_tag_msg (                    {tag for next field width expression}
     tag, str_h, 'sst_pas_read', 'write_sment_bad', nil, 0);
   case tag of
 1:  begin                              {found another field width specifier}
       if fw_n > fw_max then begin
-        syn_error (str_h, 'sst_pas_read', 'write_fwidths_too_many', nil, 0);
+        syo_error (str_h, 'sst_pas_read', 'write_fwidths_too_many', nil, 0);
         end;
       sst_r_pas_exp (str_h, false, exp_p); {create field width expression descriptor}
       if exp_p^.val.dtype <> sst_dtype_int_k then begin {field width not integer ?}
-        syn_error (str_h, 'sst_pas_read', 'write_fwidth_not_integer', nil, 0);
+        syo_error (str_h, 'sst_pas_read', 'write_fwidth_not_integer', nil, 0);
         end;
       case fw_n of                     {set the right field width exp pointer}
 1:      sst_opc_p^.write_width_exp_p := exp_p;
@@ -76,23 +76,23 @@ loop_width:                            {back here for each new field width speci
       fw_n := fw_n + 1;                {make number of next field width specifier}
       goto loop_width;                 {back for next field width specifier}
       end;                             {end of tag is field width specifier case}
-syn_tag_end_k: ;                       {exit loop on no more field width specifiers}
+syo_tag_end_k: ;                       {exit loop on no more field width specifiers}
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
-  syn_level_up;                        {back up from WRITELN_ARG syntax}
+  syo_level_up;                        {back up from WRITELN_ARG syntax}
   goto loop_arg;                       {back for next argument in WRITE/WRITELN}
   end;                                 {done with tag for this WRITELN_ARG syntax}
 {
 *   Tag indicates end of RAW_STATEMENT syntax.
 }
-syn_tag_end_k: ;                       {exit args loop}
+syo_tag_end_k: ;                       {exit args loop}
 {
 *   Unexpected tag in RAW_STATEMENT.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 {
 ******************************

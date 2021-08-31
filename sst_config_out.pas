@@ -247,7 +247,7 @@ var
   ent_p: string_chain_ent_p_t;         {pointer to current string chain entry}
   sym_p: sst_symbol_p_t;               {scratch pointer to symbol descriptor}
   dt_p: sst_dtype_p_t;                 {scratch pointer to data type descriptor}
-  char_none_h: syn_char_t;             {source stream char handle, set to invalid}
+  char_none_h: syo_char_t;             {source stream char handle, set to invalid}
   uptr_given: boolean;                 {TRUE if UNIV_POINTER command given}
   os_given: boolean;                   {TRUE if OS command given}
   msg_parm:                            {parameter references for messages}
@@ -334,7 +334,7 @@ begin
   sst_config.sym_len_max := 0;
   sst_config.config.max := sizeof(sst_config.config.str);
   sst_config.config.len := 0;
-  sst_config.charcase := syn_charcase_down_k;
+  sst_config.charcase := syo_charcase_down_k;
   sst_config.reserve_p := nil;
 
   uptr_given := false;                 {init to UNIV_POINTER command not given yet}
@@ -640,8 +640,8 @@ otherwise
     'UPPER LOWER',
     pick);
   case pick of
-1: sst_config.charcase := syn_charcase_up_k;
-2: sst_config.charcase := syn_charcase_down_k;
+1: sst_config.charcase := syo_charcase_up_k;
+2: sst_config.charcase := syo_charcase_down_k;
 otherwise
     goto parm_range_err;
     end;

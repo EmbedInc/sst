@@ -9,7 +9,7 @@
 %include 'util.ins.pas';
 %include 'string.ins.pas';
 %include 'file.ins.pas';
-%include 'syn.ins.pas';
+%include 'syo.ins.pas';
 %include 'sst.ins.pas';
 
 type

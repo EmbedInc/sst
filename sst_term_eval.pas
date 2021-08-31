@@ -142,7 +142,7 @@ sst_dtype_copy_k: begin
       goto resolve_dtype;
       end;
 otherwise
-    syn_error (e.str_h, 'sst', 'dtype_element_bad', nil, 0);
+    syo_error (e.str_h, 'sst', 'dtype_element_bad', nil, 0);
     end;                               {ORD_ELE_MIN, ORD_ELE_MAX all set}
 
   if t.dtype_p^.set_dtype_p = nil
@@ -153,7 +153,7 @@ otherwise
       end
     else begin                         {previous terms have been evaluated}
       if dt2_p <> t.dtype_p^.set_dtype_p then begin
-        syn_error (e.str_h, 'sst', 'dtype_element_mismatch', nil, 0);
+        syo_error (e.str_h, 'sst', 'dtype_element_mismatch', nil, 0);
         end;
       ord_min := min(ord_min, ord_ele_min); {update min/max ordinal value range}
       ord_max := max(ord_max, ord_ele_max);
@@ -213,7 +213,7 @@ begin
         (n > n_allowed)
         then begin
       sys_msg_parm_int (msg_parm[1], n_allowed);
-      syn_error (
+      syo_error (
         ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_args_too_many', msg_parm, 1);
       end;
     sst_exp_eval (ifarg_p^.exp_p^, false); {evaluate this argument}
@@ -227,7 +227,7 @@ begin
         (dt_allowed <> []) and         {explicit types required ?}
         (not (ifarg_p^.exp_p^.val.dtype in dt_allowed)) {not match directly ?}
         then begin
-      syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
+      syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
       end;
     args_dt := args_dt + [ifarg_p^.exp_p^.val.dtype]; {accumulate dtype IDs found}
     t.val_fnd := t.val_fnd and ifarg_p^.exp_p^.val_fnd; {TRUE if all args const}
@@ -240,7 +240,7 @@ begin
       then begin
     sys_msg_parm_int (msg_parm[1], n_allowed);
     sys_msg_parm_int (msg_parm[2], n);
-    syn_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
+    syo_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
     end;
 
   ifarg_p := term.ifunc_args_p;        {reset current argument to first in chain}
@@ -291,7 +291,7 @@ sst_dtype_pnt_k: begin
       end;
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(term.val.dtype));
-    syn_error (term.str_h, 'sst', 'dtype_unexpected', msg_parm, 1);
+    syo_error (term.str_h, 'sst', 'dtype_unexpected', msg_parm, 1);
     end;                               {end of data type cases}
   end;
 {
@@ -311,7 +311,7 @@ sst_vtype_const_k: begin               {"variable" is a named constant}
       end;
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(term.var_var_p^.vtype));
-    syn_error (term.str_h, 'sst', 'vtype_unexpected', msg_parm, 1);
+    syo_error (term.str_h, 'sst', 'vtype_unexpected', msg_parm, 1);
     end;                               {end of "variable" type cases}
   end;
 {
@@ -378,7 +378,7 @@ sst_ifunc_addr_k: begin                {instrinsic function ADDR}
       sst_dtype_pnt_k],
     args_dt);
   if not sst_exp_simple(ifarg_p^.exp_p^) then begin {arg not a simple expression ?}
-    syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'arg_addr_bad', nil, 0);
+    syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'arg_addr_bad', nil, 0);
     end;
 
   sst_dtype_new (term.dtype_p);        {create and init new data type descriptor}
@@ -537,12 +537,12 @@ sst_dtype_int_k: begin
 sst_dtype_enum_k: begin
       term.val.enum_p := ifarg_p^.exp_p^.val.enum_p^.enum_prev_p;
       if term.val.enum_p = nil then begin {no enumerated value here ?}
-        syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'ifunc_dec_min', nil, 0);
+        syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'ifunc_dec_min', nil, 0);
         end;
       end;
 sst_dtype_char_k: begin
       if ord(ifarg_p^.exp_p^.val.char_val) = 0 then begin
-        syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'ifunc_dec_min', nil, 0);
+        syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'ifunc_dec_min', nil, 0);
         end;
       term.val.char_val := chr(ord(ifarg_p^.exp_p^.val.char_val) - 1);
       end;
@@ -602,7 +602,7 @@ sst_dtype_int_k: term.dtype_hard := false;
         end;
       end;
 otherwise
-    syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
+    syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
     end;
   end;
 {
@@ -635,7 +635,7 @@ sst_dtype_int_k: begin
 sst_dtype_enum_k: begin
       term.val.enum_p := ifarg_p^.exp_p^.val.enum_p^.enum_next_p;
       if term.val.enum_p = nil then begin {no enumerated value here ?}
-        syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'ifunc_inc_max', nil, 0);
+        syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'ifunc_inc_max', nil, 0);
         end;
       end;
 sst_dtype_char_k: begin
@@ -713,7 +713,7 @@ sst_dtype_int_k: term.dtype_hard := false;
         end;
       end;
 otherwise
-    syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
+    syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
     end;
   end;
 {
@@ -754,7 +754,7 @@ sst_ifunc_max_k: begin
   if args_n < 2 then begin             {too few arguments ?}
     sys_msg_parm_int (msg_parm[1], 2);
     sys_msg_parm_int (msg_parm[2], args_n);
-    syn_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
+    syo_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
     end;
   if sst_dtype_float_k in args_dt      {any argument floating point ?}
     then begin                         {result will be floating point}
@@ -806,7 +806,7 @@ sst_ifunc_min_k: begin
   if args_n < 2 then begin             {too few arguments ?}
     sys_msg_parm_int (msg_parm[1], 2);
     sys_msg_parm_int (msg_parm[2], args_n);
-    syn_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
+    syo_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
     end;
   if sst_dtype_float_k in args_dt      {any argument floating point ?}
     then begin                         {result will be floating point}
@@ -910,7 +910,7 @@ sst_var_modtyp_subscr_k: begin         {modifier is array subscript}
 
 sst_var_modtyp_field_k: begin          {modifier is field in record}
         if mod_p^.field_sym_p^.field_ofs_bits <> 0 then begin {not address aligned ?}
-          syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'arg_ifunc_offset_unaligned', nil, 0);
+          syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'arg_ifunc_offset_unaligned', nil, 0);
           end;
         term.val.int_val := term.val.int_val + {add in offset for this field}
           mod_p^.field_sym_p^.field_ofs_adr;
@@ -919,7 +919,7 @@ sst_var_modtyp_field_k: begin          {modifier is field in record}
 
 otherwise
       sys_msg_parm_int (msg_parm[1], ord(mod_p^.modtyp));
-      syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'var_modifier_unknown', msg_parm, 1);
+      syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'var_modifier_unknown', msg_parm, 1);
       end;
 
     while dt_p^.dtype = sst_dtype_copy_k do begin {resolve base data type}
@@ -948,7 +948,7 @@ sst_ifunc_ord_val_k: begin
   term.dtype_hard := false;
   if term.val_fnd then begin           {argument has known constant value ?}
     sst_ordval (ifarg_p^.exp_p^.val, term.val.int_val, stat); {get ordinal value}
-    syn_error_abort (stat, ifarg_p^.exp_p^.str_h, '', '', nil, 0);
+    syo_error_abort (stat, ifarg_p^.exp_p^.str_h, '', '', nil, 0);
     end;
   end;
 {
@@ -1102,7 +1102,7 @@ sst_ifunc_size_char_k: begin
 sst_dtype_char_k: term.val.int_val := 1;
 sst_dtype_array_k: begin
       if not dt_p^.ar_string then begin
-        syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
+        syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'func_intrinsic_arg_dtype_bad', nil, 0);
         end;
       term.val.int_val := dt_p^.ar_ind_n;
       end;
@@ -1195,7 +1195,7 @@ sst_ifunc_xor_k: begin                 {exclusive or of all arguments}
   if args_n < 2 then begin             {too few arguments ?}
     sys_msg_parm_int (msg_parm[1], 2);
     sys_msg_parm_int (msg_parm[2], args_n);
-    syn_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
+    syo_error (term.str_h, 'sst', 'func_intrinsic_args_too_few', msg_parm, 2);
     end;
   term.dtype_p := sst_dtype_int_max_p; {result is always integer}
   term.dtype_hard := false;
@@ -1223,7 +1223,7 @@ sst_ifunc_setinv_k: begin              {inversion of a set}
   term.dtype_p := ifarg_p^.exp_p^.dtype_p; {same data type as argument}
   term.dtype_hard := ifarg_p^.exp_p^.dtype_hard;
   if not term.dtype_hard then begin    {can't invert set of unsure data type}
-    syn_error (term.str_h, 'sst', 'set_invert_dtype_ambiguous', nil, 0);
+    syo_error (term.str_h, 'sst', 'set_invert_dtype_ambiguous', nil, 0);
     end;
   term.val_fnd := false;               {resolving value not implemented yet}
   end;
@@ -1232,7 +1232,7 @@ sst_ifunc_setinv_k: begin              {inversion of a set}
 }
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(term.ifunc_id));
-    syn_error (term.str_h, 'sst', 'func_intrinsic_unknown', msg_parm, 1);
+    syo_error (term.str_h, 'sst', 'func_intrinsic_unknown', msg_parm, 1);
     end;                               {end of intrinsic function ID cases}
 done_ifunc:                            {jump here if done processing ifunc}
   end;                                 {done with term is an intrinsic function}
@@ -1245,7 +1245,7 @@ sst_term_type_k: begin
   term.dtype_p := term.type_dtype_p;
   term.rwflag := term.type_exp_p^.rwflag;
   if term.dtype_p^.size_used <> term.type_exp_p^.dtype_p^.size_used then begin
-    syn_error (term.str_h, 'sst', 'type_cast_mismatch_size', nil, 0);
+    syo_error (term.str_h, 'sst', 'type_cast_mismatch_size', nil, 0);
     end;
 {
 *   The constant value is resolved after the type-casting function for some
@@ -1377,7 +1377,7 @@ sst_term_exp_k: begin
 }
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(term.ttype));
-    syn_error (term.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
+    syo_error (term.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
     end;                               {end of term type cases}
 done_term_type:                        {jump here if done with term type case}
   sst_dtype_resolve (                  {set base data types of term}
@@ -1428,7 +1428,7 @@ otherwise goto bad_op1;
 }
 otherwise
 bad_op1:                               {jump here on bad unadic operator}
-      syn_error (term.str_h, 'sst', 'operator_mismatch_unadic', nil, 0);
+      syo_error (term.str_h, 'sst', 'operator_mismatch_unadic', nil, 0);
       end;                             {end of data type cases}
     end;                               {done handling unadic operator exists}
 {
@@ -1436,12 +1436,12 @@ bad_op1:                               {jump here on bad unadic operator}
 }
 leave:                                 {common exit point}
   if nval_err and (not term.val_fnd) then begin {need value but not possible ?}
-    syn_error (term.str_h, 'sst', 'exp_not_const_val', nil, 0);
+    syo_error (term.str_h, 'sst', 'exp_not_const_val', nil, 0);
     end;
   return;
 {
 *   Error exits.  These bomb out and don't return.
 }
 arg_bad_offset:
-  syn_error (ifarg_p^.exp_p^.str_h, 'sst', 'arg_ifunc_offset_bad', nil, 0);
+  syo_error (ifarg_p^.exp_p^.str_h, 'sst', 'arg_ifunc_offset_bad', nil, 0);
   end;

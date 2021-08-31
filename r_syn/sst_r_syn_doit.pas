@@ -13,8 +13,8 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
   out     stat: sys_err_t);            {completion status code}
 
 var
-  mflag: syn_mflag_k_t;                {syntax matched yes/no flag}
-  eflag: syn_mflag_k_t;                {scratch flag for error re-parse}
+  mflag: syo_mflag_k_t;                {syntax matched yes/no flag}
+  eflag: syo_mflag_k_t;                {scratch flag for error re-parse}
   hpos: string_hash_pos_t;             {position handle into our hash table}
   found: boolean;                      {TRUE when hash table entry found}
   name_p: string_var_p_t;              {pointer to name in hash table entry}
@@ -60,7 +60,7 @@ begin
 begin
   string_generic_fnam (fnam, '.syn', gnam); {make generic input file name}
   string_copy (gnam, prefix);          {use generic name as subroutine prefix}
-  syn_infile_top_set (fnam, '.syn');   {set name of top level input file}
+  syo_infile_top_set (fnam, '.syn');   {set name of top level input file}
 
   string_hash_create (                 {create hash table for SYN file symbols}
     table_sym,                         {hash table to initialize}
@@ -71,28 +71,28 @@ begin
     sst_scope_root_p^.mem_p^);         {parent memory context for hash table}
 
   seq_subr := 1;                       {init sequence num for next default subr name}
-  def_syn_p := nil;                    {init to no syntax currently being defined}
+  def_syo_p := nil;                    {init to no syntax currently being defined}
 {
 *   Main loop.  Come back here each new command from SYN file.  This loop
 *   terminates either on an error or end of data.
 }
 loop_cmd:
-  syn_tree_clear;                      {set up for parsing}
+  syo_tree_clear;                      {set up for parsing}
 
   sst_r_syn_sy_command (mflag);        {try to parse one top level syntax}
-  if mflag <> syn_mflag_yes_k then begin {syntax didn't match ?}
-    syn_tree_err;                      {set up for error re-parse}
+  if mflag <> syo_mflag_yes_k then begin {syntax didn't match ?}
+    syo_tree_err;                      {set up for error re-parse}
     sst_r_syn_sy_command (eflag);      {do error re-parse}
     end;
 
-  syn_tree_setup;                      {set up syntax tree for getting tags}
+  syo_tree_setup;                      {set up syntax tree for getting tags}
   sst_r_syn_command (stat);            {process this SYN file command}
 
   if sys_stat_match (sst_subsys_k, sst_stat_eod_k, stat) {hit end of input data ?}
     then goto eod;
   if sys_error(stat) then return;      {encountered hard error ?}
-  if mflag <> syn_mflag_yes_k then begin {syntax error not caught as content error ?}
-    syn_error_print ('', '', nil, 0);  {complain about syntax error}
+  if mflag <> syo_mflag_yes_k then begin {syntax error not caught as content error ?}
+    syo_error_print ('', '', nil, 0);  {complain about syntax error}
     sys_exit_error;                    {exit program with error condition}
     end;
   goto loop_cmd;                       {back for next command from SYN file}
@@ -135,7 +135,7 @@ eod:
         not (sst_symflag_used_k in data_p^.sym_p^.flags)
         then begin
       if not unused_syms then begin    {this is first unused symbol ?}
-        sys_message ('sst_syn_read', 'symbols_unused_show');
+        sys_message ('sst_syo_read', 'symbols_unused_show');
         unused_syms := true;           {flag that unused symbols were encountered}
         end;
       writeln ('  ', name_p^.str:name_p^.len); {write name of unused symbol}
@@ -159,7 +159,7 @@ eod:
         (not (sst_symflag_extern_k in data_p^.sym_p^.flags)) {not external ?}
         then begin
       if not undefined_syms then begin {this is first undefined symbol ?}
-        sys_message ('sst_syn_read', 'symbols_undefined_show');
+        sys_message ('sst_syo_read', 'symbols_undefined_show');
         undefined_syms := true;        {flag that undefined symbols were encountered}
         end;
       writeln ('  ', name_p^.str:name_p^.len); {write name of undefined symbol}
@@ -170,6 +170,6 @@ eod:
   string_hash_delete (table_sym);      {delete table for this SYN file symbols}
 
   if undefined_syms then begin         {some undefined symbols were found ?}
-    sys_message_bomb ('sst_syn_read', 'symbols_undefined_abort', nil, 0);
+    sys_message_bomb ('sst_syo_read', 'symbols_undefined_abort', nil, 0);
     end;
   end;

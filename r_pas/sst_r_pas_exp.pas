@@ -13,15 +13,15 @@ define sst_r_pas_exp;
 %include 'sst_r_pas.ins.pas';
 
 procedure sst_r_pas_exp (              {create compiled expression from input stream}
-  in      exp_str_h: syn_string_t;     {SYN string handle for whole EXPRESSION syntax}
+  in      exp_str_h: syo_string_t;     {SYN string handle for whole EXPRESSION syntax}
   in      nval_err: boolean;           {unknown value at compile time is err if TRUE}
   out     exp_p: sst_exp_p_t);         {returned pointer to new expression def}
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   tag2: sys_int_machine_t;             {to avoid corrupting TAG}
-  str2_h: syn_string_t;                {handle to string associated with TAG2}
+  str2_h: syo_string_t;                {handle to string associated with TAG2}
   term_p: sst_exp_term_p_t;            {points to current term in expression}
   levels_down: sys_int_machine_t;      {number of syntax levels currently down}
 
@@ -36,9 +36,9 @@ begin
   exp_p^.val_eval := false;            {init to not tried to evaluate expression}
 
 exp_loop:                              {back here if just contains one nested exp}
-  syn_level_down;                      {down into this EXPRESSIONn syntax level}
+  syo_level_down;                      {down into this EXPRESSIONn syntax level}
   levels_down := levels_down + 1;      {one more syntax level down from caller}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {item or nested exp}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {item or nested exp}
   case tag of
 {
 *************************************
@@ -47,10 +47,10 @@ exp_loop:                              {back here if just contains one nested ex
 *   expression, then we will compress out this level.
 }
 1: begin
-  syn_push_pos;                        {save position at nested expression}
-  syn_get_tag_msg (tag2, str2_h, 'sst_pas_read', 'exp_bad', nil, 0); {operator tag, if any}
-  syn_pop_pos;                         {restore current pos to nested expression}
-  if tag2 = syn_tag_end_k              {only one nested expression at this level ?}
+  syo_push_pos;                        {save position at nested expression}
+  syo_get_tag_msg (tag2, str2_h, 'sst_pas_read', 'exp_bad', nil, 0); {operator tag, if any}
+  syo_pop_pos;                         {restore current pos to nested expression}
+  if tag2 = syo_tag_end_k              {only one nested expression at this level ?}
     then goto exp_loop;                {don't create structure for "pass thru" level}
 {
 *   The expression here contains more than just one nested expression.
@@ -76,7 +76,7 @@ exp_loop:                              {back here if just contains one nested ex
 *   Unexpected TAG value for first tag in EXPRESSION.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of cases for first tag in EXPRESSION}
   term_p := addr(exp_p^.term1);        {init address to last term in expression}
 {
@@ -86,8 +86,8 @@ otherwise
 *   is pointing to the descriptor for the previous term.
 }
 term_loop:
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {get operator tag}
-  if tag = syn_tag_end_k               {hit end of expression ?}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {get operator tag}
+  if tag = syo_tag_end_k               {hit end of expression ?}
     then goto leave;
   sst_mem_alloc_namesp (               {allocate memory for new term descriptor}
     sizeof(term_p^.next_p^), term_p^.next_p);
@@ -156,9 +156,9 @@ term_loop:
       term.op2 := sst_op2_orelse_k;
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of operator tag cases}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {get tag for new term}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {get tag for new term}
   case tag of                          {what kind of term is this ?}
 {
 *   This new term in the expression is a nested expression.
@@ -177,7 +177,7 @@ otherwise
 *   Unexpected TAG value for new term in expression.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of new term type cases}
 {
 *   Some of the Pascal operators server dual functions.  Now look at the
@@ -208,7 +208,7 @@ sst_op2_lt_k: term.op2 := sst_op2_subset_k;
 }
 leave:
   while levels_down > 0 do begin       {once for each nested syntax level}
-    syn_level_up;                      {pop back one syntax level}
+    syo_level_up;                      {pop back one syntax level}
     levels_down := levels_down - 1;    {keep track of current nesting level}
     end;                               {back to pop another level up}
   sst_exp_eval (exp_p^, nval_err);     {find data types and evaluate if possible}

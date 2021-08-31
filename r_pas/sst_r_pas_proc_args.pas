@@ -16,7 +16,7 @@ procedure sst_r_pas_proc_args (        {process PARAMETER_DECLARATION syntax}
 var
   next_pp: ^sst_proc_arg_p_t;          {pointer to current end of args chain pointer}
   tag: sys_int_machine_t;              {syntax tag from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   arg_p: sst_proc_arg_p_t;             {pointer to current arg descriptor}
   first_arg_p: sst_proc_arg_p_t;       {points to first arg of same data type}
   arg: sst_proc_arg_t;                 {template for current argument descriptor}
@@ -37,26 +37,26 @@ begin
   arg.name_p := nil;
   arg.exp_p := nil;
   arg.dtype_p := nil;
-  syn_level_down;                      {down into PARAMETER_DECLARATION syntax}
+  syo_level_down;                      {down into PARAMETER_DECLARATION syntax}
 
 group_loop:                            {back here for each new args group tag}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'proc_arg_decl_bad', nil, 0);
-  if tag = syn_tag_end_k then begin    {all done, no more argument declarations ?}
-    syn_level_up;                      {up from PARAMETER_DECLARATION syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'proc_arg_decl_bad', nil, 0);
+  if tag = syo_tag_end_k then begin    {all done, no more argument declarations ?}
+    syo_level_up;                      {up from PARAMETER_DECLARATION syntax}
     return;
     end;
   if tag <> 1 then begin
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   arg.pass := sst_pass_none_k;         {default to passing method not yet known}
   arg.rwflag_int := [];                {default to pass direction not specified}
   arg.rwflag_ext := [];
   arg.univ := false;                   {init to type checking not disabled}
   first_arg_p := nil;                  {init to no new arg created yet}
-  syn_level_down;                      {down into PARAM_DECL_GROUP syntax}
+  syo_level_down;                      {down into PARAM_DECL_GROUP syntax}
 
 tag_loop:                              {back here each new tag in PARAM_DECL_GROUP}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'proc_arg_decl_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'proc_arg_decl_bad', nil, 0);
   case tag of                          {what pass direction is specified ?}
 1:  begin                              {IN}
       arg.pass := sst_pass_ref_k;
@@ -87,7 +87,7 @@ tag_loop:                              {back here each new tag in PARAM_DECL_GRO
       next_pp^ := arg_p;               {link new arg to end of old chain}
       next_pp := addr(arg_p^.next_p);  {update pointer to new end of chain pointer}
       arg_p^ := arg;                   {init new arg descriptor from template}
-      syn_get_tag_string (str_h, name); {get name of this call argument}
+      syo_get_tag_string (str_h, name); {get name of this call argument}
       string_downcase (name);
       sz := sizeof(string_var4_t) - 4 + name.len; {size of string to allocate}
       sst_mem_alloc_scope (sz, arg_p^.name_p); {allocate argument name string}
@@ -107,7 +107,7 @@ tag_loop:                              {back here each new tag in PARAM_DECL_GRO
         [sst_rwflag_read_k, sst_rwflag_write_k];
       arg.rwflag_ext := [sst_rwflag_read_k]; {caller's arg will not be altered}
       end;
-syn_tag_end_k: begin                   {no more tags in PARAM_DECL_GROUP}
+syo_tag_end_k: begin                   {no more tags in PARAM_DECL_GROUP}
       arg_p := first_arg_p;            {init to first arg with this data type}
       while arg_p <> nil do begin      {once for each arg with this data type}
         proc.n_args := proc.n_args + 1; {count one more call argument}
@@ -115,11 +115,11 @@ syn_tag_end_k: begin                   {no more tags in PARAM_DECL_GROUP}
         arg_p^.univ := arg.univ;       {update type checking disable flag}
         arg_p := arg_p^.next_p;        {advance to next arg with this data type}
         end;
-      syn_level_up;                    {up from PARAM_DECL_GROUP syntax}
+      syo_level_up;                    {up from PARAM_DECL_GROUP syntax}
       goto group_loop;                 {do next group of args with same data type}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of PARAM_DECL_GROUP tag cases}
   goto tag_loop;                       {back for next PARAM_DECL_GROUP tag}
   end;

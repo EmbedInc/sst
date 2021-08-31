@@ -13,7 +13,7 @@ const
 
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h, str2_h: syn_string_t;         {handles to strings from input file}
+  str_h, str2_h: syo_string_t;         {handles to strings from input file}
   syname: string_var32_t;              {name of syntax symbol being declared}
   prname: string_var32_t;              {name of procedure to run syntax}
   token: string_var16_t;               {scratch string for number conversion}
@@ -36,12 +36,12 @@ begin
   prname.max := sizeof(prname.str);
   token.max := sizeof(token.str);
 
-  syn_level_down;                      {down into DECLARE syntax}
+  syo_level_down;                      {down into DECLARE syntax}
 
-  syn_get_tag_msg (                    {get symbol name tag}
-    tag, str_h, 'sst_syn_read', 'syerr_declare', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
-  syn_get_tag_string (str_h, syname);  {get name of symbol being declared}
+  syo_get_tag_msg (                    {get symbol name tag}
+    tag, str_h, 'sst_syo_read', 'syerr_declare', nil, 0);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
+  syo_get_tag_string (str_h, syname);  {get name of symbol being declared}
 {
 *   Init to defaults before processing options.
 }
@@ -51,17 +51,17 @@ begin
 *   Back here to get each optional tag.
 }
 opt_tag:
-  syn_get_tag_msg (                    {get tag for next option, if any}
-    tag, str2_h, 'sst_syn_read', 'syerr_declare', nil, 0);
+  syo_get_tag_msg (                    {get tag for next option, if any}
+    tag, str2_h, 'sst_syo_read', 'syerr_declare', nil, 0);
   case tag of
 1:  begin                              {tag is for subroutine name}
-      syn_get_tag_string (str2_h, prname);
+      syo_get_tag_string (str2_h, prname);
       flags := flags + [sst_symflag_global_k]; {subroutine will be globally visible}
       end;
 2:  begin                              {tag is EXTERNAL option}
       flags := flags + [sst_symflag_extern_k]; {subroutine not defined here}
       end;
-syn_tag_end_k: begin                   {done processing all the optional tags}
+syo_tag_end_k: begin                   {done processing all the optional tags}
       if prname.len = 0 then begin     {need to make subroutine name ?}
         string_copy (prefix, prname);  {init subroutine name with prefix}
         prname.len := min(prname.len, prname.max - 6); {leave room for suffix}
@@ -73,7 +73,7 @@ syn_tag_end_k: begin                   {done processing all the optional tags}
           3,                           {field width}
           [string_fi_leadz_k, string_fi_unsig_k], {write leading zeros, no sign}
           stat);
-        syn_error_abort (stat, str2_h, 'sst_syn_read', 'seq_subr_err', nil, 0);
+        syo_error_abort (stat, str2_h, 'sst_syo_read', 'seq_subr_err', nil, 0);
         string_append (prname, token); {make full subroutine name}
         seq_subr := seq_subr + 1;      {update sequence number for next time}
         string_downcase (prname);      {default subroutine names are lower case}
@@ -81,11 +81,11 @@ syn_tag_end_k: begin                   {done processing all the optional tags}
       goto done_opt_tags;              {all done processing tags}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str2_h);
+    syo_error_tag_unexp (tag, str2_h);
     end;                               {end of optional tag type cases}
   goto opt_tag;                        {back for next optional tag}
 done_opt_tags:                         {done processing optional tags}
-  syn_level_up;                        {back up from DECLARE syntax}
+  syo_level_up;                        {back up from DECLARE syntax}
 
   string_upcase (syname);              {SYN file symbols are case-insensitive}
 {
@@ -100,7 +100,7 @@ done_opt_tags:                         {done processing optional tags}
     table_sym, syname, hpos, found);
   if found then begin                  {this symbol already declared ?}
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syn_error (str_h, 'sst_syn_read', 'symbol_already_used', msg_parm, 1);
+    syo_error (str_h, 'sst_syo_read', 'symbol_already_used', msg_parm, 1);
     end;
   string_hash_ent_add (                {add new symbol to the SYN symbol table}
     hpos,                              {handle to hash table position}
@@ -108,7 +108,7 @@ done_opt_tags:                         {done processing optional tags}
     data_p);                           {points to data area in hash table entry}
   sst_symbol_new_name (                {add subroutine name to SST symbol table}
     prname, data_p^.sym_p, stat);
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
 
   data_p^.name_p := name_p;            {save pointer to hash entry name}
   data_p^.call_p := nil;               {init list of called syntaxes to empty}
@@ -140,7 +140,7 @@ done_opt_tags:                         {done processing optional tags}
   arg_p^.next_p := nil;
   sst_symbol_new_name (                {create symbol for subroutine argument}
     string_v('mflag'(0)), arg_p^.sym_p, stat);
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   arg_p^.name_p := nil;
   arg_p^.exp_p := nil;
   arg_p^.dtype_p := sym_mflag_t_p^.dtype_dtype_p;

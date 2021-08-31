@@ -287,7 +287,7 @@ sst_opc_goto_k: begin
 sst_opc_case_k: begin
   if opc.case_exp_p^.val_fnd then begin {value of switch expression is known ?}
     sst_ordval (opc.case_exp_p^.val, ordval, stat); {get ordinal value of switch exp}
-    syn_error_abort (stat, opc.case_exp_p^.str_h, '', '', nil, 0);
+    syo_error_abort (stat, opc.case_exp_p^.str_h, '', '', nil, 0);
     case_val_p := opc.case_val_p;      {init pointer to first choice value in list}
     while case_val_p <> nil do begin   {loop thru the list of choice values}
       if case_val_p^.val = ordval then begin {this is the selected choice ?}
@@ -1049,7 +1049,7 @@ sst_dtype_copy_k: begin
 
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(dt_p^.dtype));
-    syn_error (
+    syo_error (
       opc.write_exp_p^.str_h, 'sst_c_write', 'dtype_exp_unexpected', msg_parm, 1);
     end;
 {

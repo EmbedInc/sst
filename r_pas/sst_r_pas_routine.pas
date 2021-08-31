@@ -13,7 +13,7 @@ define sst_r_pas_routine;
 %include 'sst_r_pas.ins.pas';
 
 procedure sst_r_pas_routine (          {create routine descriptor}
-  in      str_rout_h: syn_string_t;    {string handle to whole call}
+  in      str_rout_h: syo_string_t;    {string handle to whole call}
   in      v: sst_var_t;                {"variable" descriptor for routine name}
   in      args_here: boolean;          {TRUE if FUNCTION_ARGUMENTS syntax exists}
   out     proc_p: sst_proc_p_t);       {will point to new routine descriptor}
@@ -24,7 +24,7 @@ var
   arg_p: sst_proc_arg_p_t;             {points to current call argument}
   argt_p: sst_proc_arg_p_t;            {pointer to argument descriptor from template}
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   stat: sys_err_t;                     {completion status code}
 
 label
@@ -46,19 +46,19 @@ begin
 {
 *   The FUNCTION_ARGUMENTS syntax exists.  Now process the call arguments.
 }
-  syn_level_down;                      {down into FUNCTION_ARGUMENTS syntax}
+  syo_level_down;                      {down into FUNCTION_ARGUMENTS syntax}
   arg_pp := addr(proc_p^.first_arg_p); {adr of where to put pointer to next arg}
   argt_p := template_p^.first_arg_p;   {init pointer to template for argument}
 
 next_arg:                              {back here each new call argument}
-  syn_get_tag_msg (                    {get tag to this call argument}
+  syo_get_tag_msg (                    {get tag to this call argument}
     tag, str_h, 'sst_pas_read', 'args_syntax_err', nil, 0);
-  if tag = syn_tag_end_k then begin    {done with all the call arguments ?}
-    syn_level_up;                      {back up from FUNCTION_ARGUMENTS syntax}
+  if tag = syo_tag_end_k then begin    {done with all the call arguments ?}
+    syo_level_up;                      {back up from FUNCTION_ARGUMENTS syntax}
     goto done_args;
     end;
   if tag <> 1                          {illegal TAG value ?}
-    then syn_error_tag_unexp (tag, str_h);
+    then syo_error_tag_unexp (tag, str_h);
   proc_p^.n_args := proc_p^.n_args + 1; {one more call argument}
   sst_mem_alloc_scope (sizeof(arg_p^), arg_p); {allocate mem for argument descriptor}
   arg_pp^ := arg_p;                    {link new arg descriptor to end of chain}
@@ -84,9 +84,9 @@ next_arg:                              {back here each new call argument}
 }
 done_args:                             {definately done processing call arguments}
   sst_routines_match (template_p^, proc_p^, stat); {check call against template}
-  syn_error_abort (stat, str_rout_h, '', '', nil, 0);
+  syo_error_abort (stat, str_rout_h, '', '', nil, 0);
   return;
 
 var_not_rout:                          {"variable" descriptor not indicate a routine}
-  syn_error (str_rout_h, 'sst_pas_read', 'not_a_procedure', nil, 0);
+  syo_error (str_rout_h, 'sst_pas_read', 'not_a_procedure', nil, 0);
   end;

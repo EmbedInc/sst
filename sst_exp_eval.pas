@@ -753,7 +753,7 @@ otherwise
 }
 otherwise
         sys_msg_parm_int (msg_parm[1], ord(dt_exp_p^.dtype));
-        syn_error (term.str_h, 'sst', 'dtype_unexpected_exp', msg_parm, 1);
+        syo_error (term.str_h, 'sst', 'dtype_unexpected_exp', msg_parm, 1);
         end;                           {end of previous expression data type cases}
       end;                             {done with TERM abbreviation}
     term_p := term_p^.next_p;          {point to next term in expression}
@@ -769,22 +769,22 @@ otherwise
 
 leave:                                 {common exit point}
   if nval_err and (not exp.val_fnd) then begin {need value but not possible ?}
-    syn_error (exp.str_h, 'sst', 'exp_not_const_val', nil, 0);
+    syo_error (exp.str_h, 'sst', 'exp_not_const_val', nil, 0);
     end;
   return;
 {
 *   The data type of the expression so far and the new term are incompatible.
 }
 dtype_mismatch:
-  syn_error (term_p^.str_h, 'sst', 'dtype_term_mismatch', nil, 0);
+  syo_error (term_p^.str_h, 'sst', 'dtype_term_mismatch', nil, 0);
 {
 *   The operator is incompatible with the data type of the expression and term.
 }
 bad_operator:
-  syn_error (term_p^.str_h, 'sst', 'operator_mismatch', nil, 0);
+  syo_error (term_p^.str_h, 'sst', 'operator_mismatch', nil, 0);
 {
 *   The current term is not readable.  It is pointed to by TERM_P.
 }
 not_readable:
-  syn_error (term_p^.str_h, 'sst', 'term_not_readable', nil, 0);
+  syo_error (term_p^.str_h, 'sst', 'term_not_readable', nil, 0);
   end;

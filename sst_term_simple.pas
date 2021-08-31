@@ -71,7 +71,7 @@ sst_term_arele_k: return;
 
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(term.ttype));
-    syn_error (term.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
+    syo_error (term.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
     end;
   sst_term_simple := true;             {we now know that expression is simple}
   end;

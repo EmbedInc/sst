@@ -12,7 +12,7 @@ procedure sst_r_pas_sment_var;         {process VAR_STATEMENT syntax}
 
 var
   tag: sys_int_machine_t;              {syntax tag from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   sym_p: sst_symbol_p_t;               {scratch pointer to symbol table entry}
   chain_p: sst_symbol_p_t;             {points to symbols declared here}
   dtype_p: sst_dtype_p_t;              {points to data type for curr set of vars}
@@ -20,19 +20,19 @@ var
   com_chain_pp: sst_symbol_pp_t;       {points to end of common block names chain}
   exp_p: sst_exp_p_t;                  {points to initial value for variables}
   new_chain: boolean;                  {TRUE if next name start new chain}
-  charcase: syn_charcase_k_t;          {name character upper/lower case flag}
-  mflag: syn_mflag_k_t;                {syntaxed matched yes/no flag}
+  charcase: syo_charcase_k_t;          {name character upper/lower case flag}
+  mflag: syo_mflag_k_t;                {syntaxed matched yes/no flag}
   stat: sys_err_t;
 
 label
   loop_statement, loop_tag;
 
 begin
-  syn_level_down;                      {down into VAR_STATEMENT syntax}
+  syo_level_down;                      {down into VAR_STATEMENT syntax}
 {
 *   Process optional common block name for all the variables of this VAR statement.
 }
-  syn_get_tag_msg                      {get common block name tag}
+  syo_get_tag_msg                      {get common block name tag}
     (tag, str_h, 'sst_pas_read', 'var_sment_bad', nil, 0);
   case tag of
 1:  begin                              {no common block name}
@@ -41,8 +41,8 @@ begin
       end;
 2:  begin                              {common block name present}
       sst_symbol_new (                 {create and init common block name symbol}
-        str_h, syn_charcase_asis_k, com_p, stat);
-      syn_error_abort (stat, str_h, '', '', nil, 0);
+        str_h, syo_charcase_asis_k, com_p, stat);
+      syo_error_abort (stat, str_h, '', '', nil, 0);
       com_p^.symtype := sst_symtype_com_k; {set up common block symbol descriptor}
       if not (sst_symflag_global_k in com_p^.flags) then begin {not in DEFINE ?}
         com_p^.flags := com_p^.flags + {init to common block defined elsewhere}
@@ -59,7 +59,7 @@ begin
       com_chain_pp := addr(com_p^.com_first_p); {init pointer to com names chain end}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
   new_chain := true;                   {next symbol name starts new chain of vars}
@@ -67,38 +67,38 @@ otherwise
 *   Back here each new VAR_SUBSTATEMENT syntaxes.
 }
 loop_statement:
-  syn_tree_clear;                      {set up for parsing}
+  syo_tree_clear;                      {set up for parsing}
   sst_r_pas_syn_var (mflag);           {try to parse next VAR_SUBSTATEMENT syntax}
-  if mflag = syn_mflag_yes_k
+  if mflag = syo_mflag_yes_k
     then begin                         {syntax matched}
-      error_syn_found := false;        {indicate no syntax error}
+      error_syo_found := false;        {indicate no syntax error}
       end
     else begin                         {syntax did not match}
       return;                          {no more VAR_SUBSTATMENTS here}
       end
     ;
-  syn_tree_setup;                      {set up syntax tree for getting tags}
-  syn_level_down;                      {down into VAR_SUBSTATEMENT syntax level}
+  syo_tree_setup;                      {set up syntax tree for getting tags}
+  syo_level_down;                      {down into VAR_SUBSTATEMENT syntax level}
 {
 *   Determine whether the variable name cases should be preserved or not.
 *   The variable names are always converted to lower case unless they are
 *   globally known symbols.  This is only true if the EXTERN keyword is present.
 }
-  charcase := syn_charcase_down_k;     {init to assume conversion to lower case}
+  charcase := syo_charcase_down_k;     {init to assume conversion to lower case}
 
-  syn_push_pos;                        {save state of syntax tree traversal}
+  syo_push_pos;                        {save state of syntax tree traversal}
   repeat                               {loop over all the variable name tags}
-    syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'var_sment_bad', nil, 0);
+    syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'var_sment_bad', nil, 0);
     until tag <> 1;
   if tag = 2 then begin                {found EXTERN keyword ?}
-    charcase := syn_charcase_asis_k;   {preserve character upper/lower case}
+    charcase := syo_charcase_asis_k;   {preserve character upper/lower case}
     end;
-  syn_pop_pos;                         {restore syntax tree traversal state}
+  syo_pop_pos;                         {restore syntax tree traversal state}
 {
 *   Back here each new tag.
 }
 loop_tag:                              {back here for next syntax tag}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'var_sment_bad', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'var_sment_bad', nil, 0);
   case tag of
 {
 *   Tag is name of new symbol being declared as a variable.
@@ -117,7 +117,7 @@ loop_tag:                              {back here for next syntax tag}
       sym_p := sym_p^.next_p;          {update current symbol to new symbol}
       end
     ;
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   sym_p^.symtype := sst_symtype_var_k; {new symbol is a variable}
   sym_p^.flags := [                    {init flags for this symbol}
     sst_symflag_def_k];                {symbol will be defined}
@@ -136,7 +136,7 @@ loop_tag:                              {back here for next syntax tag}
   sym_p := chain_p;                    {init current symbol to first symbol in chain}
   while sym_p <> nil do begin          {once for each symbol in chain}
     if com_p <> nil then begin         {symbols are in a common block ?}
-      syn_error (str_h, 'sst_pas_read', 'common_and_extern', nil, 0);
+      syo_error (str_h, 'sst_pas_read', 'common_and_extern', nil, 0);
       end;
     sym_p^.flags := sym_p^.flags + [sst_symflag_global_k, sst_symflag_extern_k];
     sym_p := sym_p^.next_p;            {advance to next symbol in chain}
@@ -174,7 +174,7 @@ loop_tag:                              {back here for next syntax tag}
 {
 *   No tag was found.  This is the normal way to indicate end of VAR_SUBSTATEMENT.
 }
-syn_tag_end_k: begin
+syo_tag_end_k: begin
   goto loop_statement;                 {back for next VAR_SUBSTATEMENT syntax}
   end;
 {
@@ -185,7 +185,7 @@ syn_tag_end_k: begin
   sym_p := chain_p;                    {init current symbol to first in chain}
   while sym_p <> nil do begin          {once for each symbol in chain}
     if not (sst_symflag_static_k in sym_p^.flags) then begin {variable not static ?}
-      syn_error (str_h, 'sst', 'var_init_not_static', nil, 0);
+      syo_error (str_h, 'sst', 'var_init_not_static', nil, 0);
       end;
     sym_p^.var_val_p := exp_p;         {indicate this var has initial value}
     sym_p := sym_p^.next_p;            {to next var symbol with same initial value}
@@ -206,7 +206,7 @@ syn_tag_end_k: begin
 *   Unexpected tag value
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of tag cases}
   goto loop_tag;                       {back for next tag in VAR_SUBSTATEMENT}
   end;

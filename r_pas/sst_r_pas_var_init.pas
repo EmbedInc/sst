@@ -17,7 +17,7 @@ const
 
 var
   tag: sys_int_machine_t;              {syntax tag from .syn file}
-  str_h: syn_string_t;                 {handle to string for a tag}
+  str_h: syo_string_t;                 {handle to string for a tag}
   dt_p: sst_dtype_p_t;                 {points to base data type descriptor for var}
   dt_junk_p: sst_dtype_p_t;            {unused dtype descriptor pointer}
   dt: sst_dtype_k_t;                   {base data type ID of var}
@@ -35,8 +35,8 @@ begin
   name.max := sizeof(name.str);        {init var string}
 
   sst_dtype_resolve (dtype, dt_p, dt); {resolve variable's base data types}
-  syn_level_down;                      {down into VAR_INITIALIZER syntax}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
+  syo_level_down;                      {down into VAR_INITIALIZER syntax}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
   case tag of
 {
 ***************************
@@ -56,15 +56,15 @@ begin
   ind_n := 0;                          {init to next array index number, if used}
 
 loop_tag:                              {back here each new tag in VAR_INITIALIZER}
-  syn_get_tag_msg (                    {get tag for next VAR_INIT_FIELD syntax}
+  syo_get_tag_msg (                    {get tag for next VAR_INIT_FIELD syntax}
     tag, str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
   case tag of
 1: ;                                   {regular VAR_INIT_FIELD syntax}
-syn_tag_end_k: begin                   {end of VAR_INITIALIZER syntax}
+syo_tag_end_k: begin                   {end of VAR_INITIALIZER syntax}
       goto done_varinit;               {done with VAR_INITIALIZER syntax}
       end;
 otherwise                              {unexpected TAG value}
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
   if term_p = nil
@@ -85,22 +85,22 @@ otherwise                              {unexpected TAG value}
   term_p^.val_fnd := true;
   term_p^.rwflag := [sst_rwflag_read_k];
 
-  syn_level_down;                      {down into VAR_INIT_FIELD syntax}
+  syo_level_down;                      {down into VAR_INIT_FIELD syntax}
   case dt_p^.dtype of                  {what is var base data type ?}
 {
 *   The variable being initialized is a RECORD.
 }
 sst_dtype_rec_k: begin
-  syn_get_tag_msg (                    {get field name tag}
+  syo_get_tag_msg (                    {get field name tag}
     tag, str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
   case tag of                          {check for proper tag value}
 1: ;
 2: goto error_syntax;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
-  syn_get_tag_string (str_h, name);    {get name of this field}
+  syo_get_tag_string (str_h, name);    {get name of this field}
   string_downcase (name);              {make lower case for matching}
   sym_p := dt_p^.rec_first_p;          {init to first field in record}
   while sym_p <> nil do begin          {loop thru the fields in this record}
@@ -110,16 +110,16 @@ otherwise
     end;                               {back and check this new field in record}
   sys_msg_parm_vstr (msg_parm[1], name);
   sys_msg_parm_vstr (msg_parm[2], dtype.symbol_p^.name_in_p^);
-  syn_error (str_h, 'sst_pas_read', 'field_name_not_found', msg_parm, 2);
+  syo_error (str_h, 'sst_pas_read', 'field_name_not_found', msg_parm, 2);
 
 field_found:                           {SYM_P is pointing to selected field in rec}
   term_p^.ttype := sst_term_field_k;   {this term describes value of field in record}
   term_p^.dtype_p := sym_p^.field_dtype_p; {point to data type for this field}
   term_p^.field_sym_p := sym_p;        {point to symbol for this field}
 
-  syn_get_tag_msg (                    {get VAR_INITIALIZER value tag}
+  syo_get_tag_msg (                    {get VAR_INITIALIZER value tag}
     tag, str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
-  if tag <> 2 then syn_error_tag_unexp (tag, str_h);
+  if tag <> 2 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_var_init (                 {get initializer expression for this field}
     term_p^.dtype_p^, term_p^.field_exp_p);
   end;                                 {done with initialized var is a RECORD}
@@ -127,13 +127,13 @@ field_found:                           {SYM_P is pointing to selected field in r
 *   The variable being initialized is an ARRAY.
 }
 sst_dtype_array_k: begin
-  syn_get_tag_msg (                    {get VAR_INITIALIZER value tag}
+  syo_get_tag_msg (                    {get VAR_INITIALIZER value tag}
     tag, str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
   case tag of                          {check for proper tag value}
 1: goto error_syntax;
 2: ;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
   term_p^.ttype := sst_term_arele_k;   {this term describes array element value}
@@ -147,7 +147,7 @@ otherwise
     ;
   if ind_n >= dt_p^.ar_ind_n then begin {more values than array indicies ?}
     sys_msg_parm_int (msg_parm[1], dt_p^.ar_ind_n);
-    syn_error (str_h, 'sst_pas_read', 'var_init_index_too_many', msg_parm, 1);
+    syo_error (str_h, 'sst_pas_read', 'var_init_index_too_many', msg_parm, 1);
     end;
   term_p^.arele_start := ind_n;        {first index value}
   ind_n := ind_n + 1;                  {make index ordinal for next value}
@@ -160,7 +160,7 @@ otherwise
 *   The variable being initialized is a SET.
 }
 sst_dtype_set_k: begin
-  syn_error (str_h, 'sst_pas_read', 'var_init_set_unimp', nil, 0);
+  syo_error (str_h, 'sst_pas_read', 'var_init_set_unimp', nil, 0);
   end;
 {
 *   The data type of the variable does not match the syntax of the initializer
@@ -169,7 +169,7 @@ sst_dtype_set_k: begin
 otherwise
     goto error_syntax;
     end;
-  syn_level_up;                        {back up from VAR_INIT_FIELD syntax}
+  syo_level_up;                        {back up from VAR_INIT_FIELD syntax}
   sst_dtype_resolve (term_p^.dtype_p^, dt_junk_p, term_p^.val.dtype);
   goto loop_tag;                       {back for next tag in VAR_INITIALIZER}
 {
@@ -180,7 +180,7 @@ done_varinit:
     if ind_n <> dt_p^.ar_ind_n then begin {not right number of values found ?}
       sys_msg_parm_int (msg_parm[1], dt_p^.ar_ind_n);
       sys_msg_parm_int (msg_parm[2], ind_n);
-      syn_error (
+      syo_error (
         term_p^.str_h, 'sst_pas_read', 'var_init_index_too_few', msg_parm, 2);
       end;
 
@@ -230,12 +230,12 @@ otherwise
 *   Unexpected TAG value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of TAG value cases}
 
-  syn_level_up;                        {back up from VAR_INITIALIZER syntax}
+  syo_level_up;                        {back up from VAR_INITIALIZER syntax}
   return;                              {normal return}
 
 error_syntax:                          {jump here on syntax error}
-  syn_error (str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
+  syo_error (str_h, 'sst_pas_read', 'var_init_bad', nil, 0);
   end;

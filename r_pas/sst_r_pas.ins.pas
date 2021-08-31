@@ -5,7 +5,7 @@
 %include 'util.ins.pas';
 %include 'string.ins.pas';
 %include 'file.ins.pas';
-%include 'syn.ins.pas';
+%include 'syo.ins.pas';
 %include 'sst.ins.pas';
 
 const
@@ -66,7 +66,7 @@ type
     end;
 
 var (sst_r_pas)
-  error_syn_found: boolean;            {TRUE on syntax error}
+  error_syo_found: boolean;            {TRUE on syntax error}
   addr_of: boolean;                    {TRUE if processing ADDR function argument}
   top_block: top_block_k_t;            {what kind of structure is top nested block}
   nest_level: sys_int_machine_t;       {nesting level, module/program = 1}
@@ -94,7 +94,7 @@ procedure sst_r_pas_doit (             {read input source code into in-memory da
   extern;
 
 procedure sst_r_pas_exp (              {create compiled expression from input stream}
-  in      exp_str_h: syn_string_t;     {SYN string handle for whole EXPRESSION syntax}
+  in      exp_str_h: syo_string_t;     {SYO string handle for whole EXPRESSION syntax}
   in      nval_err: boolean;           {unknown value at compile time is err if TRUE}
   out     exp_p: sst_exp_p_t);         {returned pointer to new expression def}
   extern;
@@ -108,7 +108,7 @@ procedure sst_r_pas_exp_sym (          {point to symbol that is EXPRESSION}
   extern;
 
 procedure sst_r_pas_exp_term (         {read and process next term in expression}
-  in      term_str_h: syn_string_t;    {SYN string handle for whole term}
+  in      term_str_h: syo_string_t;    {SYO string handle for whole term}
   in      nval_err: boolean;           {unknown value at compile time is err if TRUE}
   out     term: sst_exp_term_t);       {term descriptor to fill in}
   extern;
@@ -135,7 +135,7 @@ procedure sst_r_pas_lit_string (       {read LIT_STRING syntax and return string
   extern;
 
 procedure sst_r_pas_preproc (          {pre-processor before syntaxer interpretation}
-  out     line_p: syn_line_p_t;        {points to descriptor for line chars are from}
+  out     line_p: syo_line_p_t;        {points to descriptor for line chars are from}
   out     start_char: sys_int_machine_t; {starting char within line, first = 1}
   out     n_chars: sys_int_machine_t); {number of characters returned by this call}
   extern;
@@ -151,7 +151,7 @@ procedure sst_r_pas_raw_sment;         {build opcodes from RAW_STATEMENT syntax}
   extern;
 
 procedure sst_r_pas_routine (          {create routine descriptor}
-  in      str_rout_h: syn_string_t;    {string handle to whole call}
+  in      str_rout_h: syo_string_t;    {string handle to whole call}
   in      v: sst_var_t;                {"variable" descriptor for routine name}
   in      args_here: boolean;          {TRUE if FUNCTION_ARGUMENTS syntax exists}
   out     proc_p: sst_proc_p_t);       {will point to new routine descriptor}
@@ -165,7 +165,7 @@ procedure sst_r_pas_statements;        {build opcodes from STATEMENTS syntax}
   extern;
 
 procedure sst_r_pas_sment_case (       {CASE statement, inside RAW_STATEMENT syntax}
-  in      str_all_h: syn_string_t);    {string handle for whole CASE statement}
+  in      str_all_h: syo_string_t);    {string handle for whole CASE statement}
   extern;
 
 procedure sst_r_pas_sment_const;       {process CONST_STATEMENT syntax}
@@ -178,15 +178,15 @@ procedure sst_r_pas_sment_label;       {process LABEL_STATEMENT syntax}
   extern;
 
 procedure sst_r_pas_sment_module (     {proces MODULE_STATEMENT syntax}
-  in      str_mod_h: syn_string_t);    {string handle to MODULE_STATEMENT syntax}
+  in      str_mod_h: syo_string_t);    {string handle to MODULE_STATEMENT syntax}
   extern;
 
 procedure sst_r_pas_sment_prog (       {process PROGRAM_STATEMENT syntax}
-  in      str_prog_h: syn_string_t);   {string handle to PROGRAM_STATEMENT syntax}
+  in      str_prog_h: syo_string_t);   {string handle to PROGRAM_STATEMENT syntax}
   extern;
 
 procedure sst_r_pas_sment_rout (       {process ROUTINE_HEADING syntax}
-  in      str_all_h: syn_string_t);    {string handle for whole statement}
+  in      str_all_h: syo_string_t);    {string handle for whole statement}
   extern;
 
 procedure sst_r_pas_sment_type;        {process TYPE_STATEMENT syntax}
@@ -196,15 +196,15 @@ procedure sst_r_pas_sment_var;         {process VAR_STATEMENT syntax}
   extern;
 
 procedure sst_r_pas_syn_pad (          {implements PAD syntax}
-  out     mflag: syn_mflag_k_t);       {syntax matched yes/no, use SYN_MFLAG_xxx_K}
+  out     mflag: syo_mflag_k_t);       {syntax matched yes/no, use SYO_MFLAG_xxx_K}
   extern;
 
 procedure sst_r_pas_syn_type (         {run TYPE_SUBSTATEMENT syntax}
-  out     mflag: syn_mflag_k_t);       {syntax matched yes/no, use SYN_MFLAG_xxx_K}
+  out     mflag: syo_mflag_k_t);       {syntax matched yes/no, use SYO_MFLAG_xxx_K}
   extern;
 
 procedure sst_r_pas_syn_var (          {run VAR_SUBSTATEMENT syntax}
-  out     mflag: syn_mflag_k_t);       {syntax matched yes/no, use SYN_MFLAG_xxx_K}
+  out     mflag: syo_mflag_k_t);       {syntax matched yes/no, use SYO_MFLAG_xxx_K}
   extern;
 
 procedure sst_r_pas_var_init (         {process VAR_INITIALIZER syntax}

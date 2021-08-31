@@ -6,7 +6,7 @@
 %include 'util.ins.pas';
 %include 'string.ins.pas';
 %include 'file.ins.pas';
-%include 'syn.ins.pas';
+%include 'syo.ins.pas';
 %include 'sst.ins.pas';
 
 const
@@ -93,7 +93,7 @@ procedure sst_out_name_sym (           {set output name for an existing symbol}
   extern;
 
 procedure sst_out_notify_src_range (   {declare source chars range for new output}
-  in      str_h: syn_string_t);        {new out chars related to these in chars}
+  in      str_h: syo_string_t);        {new out chars related to these in chars}
   extern;
 
 procedure sst_out_tab_indent;          {tab to current indentation level}

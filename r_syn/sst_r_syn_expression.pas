@@ -13,16 +13,16 @@ procedure sst_r_syn_expression (       {process EXPRESSION syntax}
 
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syn_string_t;                 {handle to string from input file}
+  str_h: syo_string_t;                 {handle to string from input file}
   jt: jump_targets_t;                  {jump targets for nested routines}
 
 begin
-  syn_level_down;                      {down into EXPRESSION syntax}
-  syn_push_pos;                        {save current syntax position}
+  syo_level_down;                      {down into EXPRESSION syntax}
+  syo_push_pos;                        {save current syntax position}
 
-  syn_get_tag_msg (                    {get expression format tag}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  syn_pop_pos;                         {restore position to start of EXPRESSION}
+  syo_get_tag_msg (                    {get expression format tag}
+    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+  syo_pop_pos;                         {restore position to start of EXPRESSION}
   case tag of
 {
 **************************************
@@ -40,8 +40,8 @@ begin
   sst_r_syn_item (jt, sym_mflag);      {process ITEM syntax}
   sst_r_syn_jtargets_done (jt);        {define any implicit labels}
 
-  syn_get_tag_msg (                    {get tag for nested expression}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
+  syo_get_tag_msg (                    {get tag for nested expression}
+    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
   sst_r_syn_expression (jtarg, sym_mflag); {process EXPRESSION after ITEM}
   end;
 {
@@ -60,8 +60,8 @@ begin
   sst_r_syn_item (jt, sym_mflag);      {process ITEM syntax}
   sst_r_syn_jtargets_done (jt);        {define any implicit labels}
 
-  syn_get_tag_msg (                    {get tag for nested expression}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
+  syo_get_tag_msg (                    {get tag for nested expression}
+    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
   sst_r_syn_expression (jtarg, sym_mflag); {process EXPRESSION after ITEM}
   end;
 {
@@ -79,8 +79,8 @@ begin
 *   Unexpected expression format tag value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of expression format cases}
 
-  syn_level_up;                        {back up from EXPRESSION syntax}
+  syo_level_up;                        {back up from EXPRESSION syntax}
   end;

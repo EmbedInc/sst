@@ -814,7 +814,7 @@ sst_ifunc_setinv_k: begin
 }
 otherwise
     sys_msg_parm_int (msg_parm[1], ord(term.ifunc_id));
-    syn_error (term.str_h, 'sst', 'func_intrinsic_unknown', msg_parm, 1);
+    syo_error (term.str_h, 'sst', 'func_intrinsic_unknown', msg_parm, 1);
     end;                               {end of intrinsic function ID cases}
 {
 **********************

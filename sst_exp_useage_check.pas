@@ -53,10 +53,10 @@ sst_vtype_var_k,                       {these "variable" types definately have v
 sst_vtype_rout_k,
 sst_vtype_const_k: goto has_value;
 sst_vtype_dtype_k: begin               {variable is a data type}
-            syn_error (exp.str_h, 'sst', 'dtype_useage_bad', nil, 0);
+            syo_error (exp.str_h, 'sst', 'dtype_useage_bad', nil, 0);
             end;
 sst_vtype_com_k: begin                 {variable is a common block}
-            syn_error (exp.str_h, 'sst', 'common_block_useage_bad', nil, 0);
+            syo_error (exp.str_h, 'sst', 'common_block_useage_bad', nil, 0);
             end;
           end;                         {end of variable descriptor type cases}
         end;                           {end of term is a variable descriptor case}
@@ -66,13 +66,13 @@ sst_term_exp_k: begin                  {term is a nested expression}
         end;
 otherwise
       sys_msg_parm_int (msg_parm[1], ord(exp.term1.ttype));
-      syn_error (exp.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
+      syo_error (exp.str_h, 'sst', 'term_type_unknown', msg_parm, 1);
       end;                             {end of term type cases}
 has_value:                             {jump here if exp definately has a value}
     end;                               {done with case where exp needs a value}
 
   sst_rwcheck (rw, exp.rwflag, stat);  {check read/write permission}
-  syn_error_abort (stat, exp.str_h, '', '', nil, 0);
+  syo_error_abort (stat, exp.str_h, '', '', nil, 0);
 
   if dtype.dtype = sst_dtype_undef_k   {data type indicates universal match ?}
     then return;
@@ -82,7 +82,7 @@ has_value:                             {jump here if exp definately has a value}
         exp.dtype_p^,                  {input data type}
         dtype)                         {data type must be convertable to}
         then begin
-      syn_error (exp.str_h, 'sst', 'dtype_exp_mismatch', nil, 0);
+      syo_error (exp.str_h, 'sst', 'dtype_exp_mismatch', nil, 0);
       end;
     end;
 
@@ -91,7 +91,7 @@ has_value:                             {jump here if exp definately has a value}
         dtype,                         {input data type}
         exp.dtype_p^)                  {data type must be convertable to}
         then begin
-      syn_error (exp.str_h, 'sst', 'dtype_exp_mismatch', nil, 0);
+      syo_error (exp.str_h, 'sst', 'dtype_exp_mismatch', nil, 0);
       end;
     end;
   end;

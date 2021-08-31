@@ -12,9 +12,9 @@ procedure sst_r_pas_item (             {create compiled item from input stream}
 
 var
   tag: sys_int_machine_t;              {syntax tag ID}
-  str_h: syn_string_t;                 {handle to string associated with TAG}
+  str_h: syo_string_t;                 {handle to string associated with TAG}
   tag2: sys_int_machine_t;             {extra syntax tag to avoid corrupting TAG}
-  str2_h: syn_string_t;                {handle to string associated with TAG2}
+  str2_h: syo_string_t;                {handle to string associated with TAG2}
   token: string_var8192_t;             {scratch token for number conversion, etc}
   sz: sys_int_adr_t;                   {amount of memory to allocate}
   sym_p: sst_symbol_p_t;               {points to symbol descriptor}
@@ -35,8 +35,8 @@ begin
 
   term.val_eval := false;              {init to not attempted to evaluate this term}
   term.dtype_p := nil;                 {init to data type is not known yet}
-  syn_level_down;                      {down into ITEM syntax level}
-  syn_get_tag_msg (                    {get unadic operator tag}
+  syo_level_down;                      {down into ITEM syntax level}
+  syo_get_tag_msg (                    {get unadic operator tag}
     tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
   case tag of                          {unadic operator cases}
 1:  term.op1 := sst_op1_none_k;        {none}
@@ -45,9 +45,9 @@ begin
 4:  term.op1 := sst_op1_not_k;         {not}
 5:  term.op1 := sst_op1_1comp_k;       {~}
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of unadic operator cases}
-  syn_get_tag_msg (                    {get item type tag}
+  syo_get_tag_msg (                    {get item type tag}
     tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
   case tag of
 {
@@ -57,9 +57,9 @@ otherwise
 }
 1: begin
   term.ttype := sst_term_const_k;      {this item is a constant}
-  syn_get_tag_string (str_h, token);   {get floating point number string}
+  syo_get_tag_string (str_h, token);   {get floating point number string}
   string_t_fp2 (token, term.val.float_val, stat);
-  syn_error_abort (stat, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
+  syo_error_abort (stat, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
   term.val.dtype := sst_dtype_float_k;
   end;
 {
@@ -112,12 +112,12 @@ otherwise
 }
 5: begin
   term.ttype := sst_term_set_k;        {indicate item is a SET expression}
-  syn_level_down;                      {down into SET_VALUE syntax}
+  syo_level_down;                      {down into SET_VALUE syntax}
   term.set_first_p := nil;             {init to no element expressions in set}
   set_ele_pp := addr(term.set_first_p); {set pointer to current end of ranges chain}
 
 loop_set:                              {back here each new tag in SET_VALUE syntax}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {get next syntax tag}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {get next syntax tag}
   case tag of
 {
 *   Tag is for new SET_VALUE_RANGE syntax.
@@ -127,40 +127,40 @@ loop_set:                              {back here each new tag in SET_VALUE synt
   set_ele_pp^ := set_ele_p;            {link new descriptor to end of chain}
   set_ele_p^.next_p := nil;            {indicate new descriptor is at end of chain}
   set_ele_pp := addr(set_ele_p^.next_p); {update pointer to end of chain pointer}
-  syn_level_down;                      {down into SET_VALUE_RANGE syntax}
+  syo_level_down;                      {down into SET_VALUE_RANGE syntax}
 
-  syn_get_tag_msg                      {get tag for ele value or start val of range}
+  syo_get_tag_msg                      {get tag for ele value or start val of range}
     (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
-  if tag <> 1 then syn_error_tag_unexp (tag, str_h);
+  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   sst_r_pas_exp (str_h, false, set_ele_p^.first_p); {process start val expression}
 
-  syn_get_tag_msg                      {get tag for end of ele range expression}
+  syo_get_tag_msg                      {get tag for end of ele range expression}
     (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
   case tag of
 1: begin                               {tag is for end of range expression}
       sst_r_pas_exp (str_h, false, set_ele_p^.last_p);
       end;
-syn_tag_end_k: begin                   {descriptor is for one value, not a range}
+syo_tag_end_k: begin                   {descriptor is for one value, not a range}
       set_ele_p^.last_p := nil;        {indicate no end of range expression present}
       end;
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
 
-  syn_level_up;                        {back up from SET_VALUE_RANGE syntax}
+  syo_level_up;                        {back up from SET_VALUE_RANGE syntax}
   end;
 {
 *   Tag incidates end of SET_VALUE syntax.
 }
-syn_tag_end_k: begin
-  syn_level_up;                        {back up from SET_VALUE syntax}
+syo_tag_end_k: begin
+  syo_level_up;                        {back up from SET_VALUE syntax}
   goto leave;                          {all done processing set value expression}
   end;
 {
 *   Unexepected TAG value in SET_VALUE syntax.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   goto loop_set;                       {back for next tag in SET_VALUE syntax}
   end;
@@ -172,18 +172,18 @@ otherwise
 *   since it will be handled differently.
 }
 6: begin
-  syn_push_pos;                        {save current syntax position on stack}
-  syn_level_down;                      {down into VARIABLE syntax}
-  syn_get_tag_msg (                    {get tag for intrinsic function name}
+  syo_push_pos;                        {save current syntax position on stack}
+  syo_level_down;                      {down into VARIABLE syntax}
+  syo_get_tag_msg (                    {get tag for intrinsic function name}
     tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
-  syn_get_tag_msg (                    {must be syntax end for intrinsic function}
+  syo_get_tag_msg (                    {must be syntax end for intrinsic function}
     tag2, str2_h, 'sst_pas_read', 'exp_bad', nil, 0);
-  if tag2 <> syn_tag_end_k then goto not_ifunc; {not intrinsic function ?}
+  if tag2 <> syo_tag_end_k then goto not_ifunc; {not intrinsic function ?}
   sst_symbol_lookup (str_h, sym_p, stat); {look up symbol name}
-  syn_error_abort (stat, str_h, '', '', nil, 0);
+  syo_error_abort (stat, str_h, '', '', nil, 0);
   if sym_p^.symtype <> sst_symtype_front_k {not right sym type for intrinsic func ?}
     then goto not_ifunc;
-  syn_pop_pos;                         {pop old syntax position from stack}
+  syo_pop_pos;                         {pop old syntax position from stack}
 {
 *   This item is an intrinsic function reference.  SYM_P is pointing to the
 *   symbol descriptor for the intrinsic function.  The syntax position is
@@ -196,10 +196,10 @@ otherwise
 *   The item is not an intrinsic function.
 }
 not_ifunc:                             {go here if "variable" wasn't intrinsic func}
-  syn_pop_pos;                         {restore syntax parsing position}
+  syo_pop_pos;                         {restore syntax parsing position}
   sst_r_pas_variable (var_p);          {process VARIABLE syntax and build descriptor}
   sst_var_funcname (var_p^);           {call func instead of stuff return value}
-  syn_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {var/func tag}
+  syo_get_tag_msg (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0); {var/func tag}
   case tag of
 {
 *   Item looks syntactically like a variable reference.  No () follows.
@@ -217,7 +217,7 @@ sst_vtype_rout_k: begin                {routine name}
           goto isa_routine;
           end;
 otherwise
-        syn_error (term.str_h, 'sst_pas_read', 'exp_symbol_type_bad', nil, 0);
+        syo_error (term.str_h, 'sst_pas_read', 'exp_symbol_type_bad', nil, 0);
         end;
       end;                             {end of syntactic variable reference}
 {
@@ -228,33 +228,33 @@ otherwise
 sst_vtype_dtype_k: begin               {item is a type-casting function}
           term.ttype := sst_term_type_k;
           term.type_dtype_p := var_p^.dtype_p;
-          syn_level_down;              {down into FUNCTION_ARGUMENTS syntax}
-          syn_get_tag_msg              {get tag to argument expression}
+          syo_level_down;              {down into FUNCTION_ARGUMENTS syntax}
+          syo_get_tag_msg              {get tag to argument expression}
             (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
           if tag <> 1 then begin
-            syn_error_tag_unexp (tag, str_h);
+            syo_error_tag_unexp (tag, str_h);
             end;
           sst_r_pas_exp (str_h, false, term.type_exp_p); {make expression descriptor}
-          syn_get_tag_msg              {get tag to "next" argument (should be none)}
+          syo_get_tag_msg              {get tag to "next" argument (should be none)}
             (tag, str_h, 'sst_pas_read', 'exp_bad', nil, 0);
-          if tag <> syn_tag_end_k then begin
-            syn_error_tag_unexp (tag, str_h);
+          if tag <> syo_tag_end_k then begin
+            syo_error_tag_unexp (tag, str_h);
             end;
-          syn_level_up;                {back up from FUNCTION_ARGUMENTS syntax}
+          syo_level_up;                {back up from FUNCTION_ARGUMENTS syntax}
           end;
 sst_vtype_rout_k: begin                {item is a function reference}
           args_here := true;           {this function definately has arguments}
           goto isa_routine;            {to common code for all functions}
           end;
 otherwise                              {wrong item type to have () following}
-        syn_error (var_p^.mod1.top_str_h, 'sst_pas_read', 'exp_symbol_not_func', nil, 0);
+        syo_error (var_p^.mod1.top_str_h, 'sst_pas_read', 'exp_symbol_not_func', nil, 0);
         end;                           {end of "variable" type cases followed by ()}
       end;                             {end of item has () following case}
 {
 *   Unexpected syntax tag value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;
   goto leave;                          {all done with item is a symbol}
 
@@ -268,7 +268,7 @@ isa_routine:                           {item is a routine, ARGS_HERE has been se
 *   arguments.
 }
     if args_here then begin            {definately bad if arguments exists}
-      syn_error (term.str_h, 'sst_pas_read', 'exp_rout_not_func', nil, 0);
+      syo_error (term.str_h, 'sst_pas_read', 'exp_rout_not_func', nil, 0);
       end;
     term.ttype := sst_term_var_k;      {flag term as a variable reference}
     term.dtype_p := var_p^.dtype_p;    {term takes on variable's data type}
@@ -328,11 +328,11 @@ isa_routine:                           {item is a routine, ARGS_HERE has been se
 *   Unexpected TAG value.
 }
 otherwise
-    syn_error_tag_unexp (tag, str_h);
+    syo_error_tag_unexp (tag, str_h);
     end;                               {end of item type TAG cases}
 
 leave:                                 {common exit point}
-  syn_level_up;                        {back up from ITEM syntax level}
+  syo_level_up;                        {back up from ITEM syntax level}
 
   if term.op1 = sst_op1_1comp_k then begin {term preceeded by ~ operator ?}
     term.op1 := sst_op1_none_k;        {temporarily disable unary operator}

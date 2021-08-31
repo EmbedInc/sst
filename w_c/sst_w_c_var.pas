@@ -253,7 +253,7 @@ array_pnt_first_k: begin               {pointer to first ele, need to re-cast}
   end;
 otherwise
             sys_msg_parm_int (msg_parm[1], ord(array_mode));
-            syn_error (
+            syo_error (
               v.mod1.top_str_h, 'sst_c_write', 'array_mode_unexpeted', msg_parm, 1);
             end;
           end;

@@ -51,7 +51,7 @@ begin
   enc := enclose;                      {init our enclose flag to caller's}
 
   if not exp.val_fnd then begin        {expression has no constant value ?}
-    syn_error (exp.str_h, 'sst', 'exp_not_const_val', nil, 0);
+    syo_error (exp.str_h, 'sst', 'exp_not_const_val', nil, 0);
     end;
 
   if exp.term1.ttype = sst_term_field_k then begin {exp is record constant ?}
@@ -105,7 +105,7 @@ sst_dtype_char_k: begin                {constant is a character}
           end;
 otherwise                              {incompatible data type}
         sys_msg_parm_int (msg_parm[1], ord(exp.val.dtype));
-        syn_error (exp.str_h, 'sst_c_write', 'dtype_exp_unexpected', msg_parm, 1);
+        syo_error (exp.str_h, 'sst_c_write', 'dtype_exp_unexpected', msg_parm, 1);
         end;
       string_pad (str);                {pad to max length by adding blanks}
       val.dtype := sst_dtype_array_k;  {create const descriptor for final string}
