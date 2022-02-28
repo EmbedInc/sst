@@ -2,7 +2,7 @@
 rem
 rem   BUILD_LIB
 rem
-rem   Build the SST_R_SYN library.
+rem   Build the SST_R_SYO library.
 rem
 setlocal
 call build_pasinit
@@ -27,4 +27,4 @@ call src_pas %srcdir% %libname%_opc
 call src_pas %srcdir% %libname%_utitem
 
 call src_lib %srcdir% %libname%
-call src_msg %srcdir% sst_syn_read
+call src_msg %srcdir% sst_syo_read
