@@ -1,0 +1,17 @@
+sst_r_syo_comblock.obj
+sst_r_syo_command.obj
+sst_r_syo_compare.obj
+sst_r_syo_declare.obj
+sst_r_syo_define.obj
+sst_r_syo_doit.obj
+sst_r_syo_expression.obj
+sst_r_syo_goto.obj
+sst_r_syo_init.obj
+sst_r_syo_int.obj
+sst_r_syo_item.obj
+sst_r_syo_jtargets_done.obj
+sst_r_syo_jtargets_make.obj
+sst_r_syo_jtarget_sym.obj
+sst_r_syo_opc.obj
+sst_r_syo_utitem.obj
+syn.obj
