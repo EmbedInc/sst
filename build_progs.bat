@@ -7,5 +7,5 @@ rem
 setlocal
 call build_pasinit
 
-call src_prog %srcdir% sst
+rem call src_prog %srcdir% sst
 call src_prog %srcdir% syn

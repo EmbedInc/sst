@@ -52,7 +52,7 @@
 *     same name as the leafname of an include file, the local file will
 *     be used instead of the include file actually specified.
 }
-program sst;
+program syn;
 %include 'sst2.ins.pas';
 
 const
