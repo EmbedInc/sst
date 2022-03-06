@@ -17,7 +17,7 @@ begin
   sys_error_none (stat);               {init to no errors}
 
   syo_level_down;                      {down into COMMAND syntax level}
-  syo_get_tag_msg (tag, str_h, 'sst_syo_read', 'syerr_command', nil, 0);
+  syo_get_tag_msg (tag, str_h, 'sst_syn_read', 'syerr_command', nil, 0);
   case tag of
 {
 *   End of input data.

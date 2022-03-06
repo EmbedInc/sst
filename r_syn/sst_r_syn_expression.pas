@@ -21,7 +21,7 @@ begin
   syo_push_pos;                        {save current syntax position}
 
   syo_get_tag_msg (                    {get expression format tag}
-    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   syo_pop_pos;                         {restore position to start of EXPRESSION}
   case tag of
 {
@@ -41,7 +41,7 @@ begin
   sst_r_syn_jtargets_done (jt);        {define any implicit labels}
 
   syo_get_tag_msg (                    {get tag for nested expression}
-    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   sst_r_syn_expression (jtarg, sym_mflag); {process EXPRESSION after ITEM}
   end;
 {
@@ -61,7 +61,7 @@ begin
   sst_r_syn_jtargets_done (jt);        {define any implicit labels}
 
   syo_get_tag_msg (                    {get tag for nested expression}
-    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   sst_r_syn_expression (jtarg, sym_mflag); {process EXPRESSION after ITEM}
   end;
 {

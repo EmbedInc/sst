@@ -1,7 +1,9 @@
 {   Subroutine SST_R_SYN_DOIT (FNAM, GNAM, STAT)
 *
-*   Process one top level SYN language input file.  FNAM is the input file
-*   name.  GNAM is returned as the generic name of FNAM.
+*   Process one top level SYN language input file.  FNAM is the input file name
+*   GNAM is returned as the generic name of FNAM.  Each call to this routine
+*   adds to the single module that was created when this SST front end was
+*   initialized (SST_R_SYN_INIT called).
 }
 module sst_r_syn_doit;
 define sst_r_syn_doit;
@@ -62,16 +64,6 @@ begin
   string_copy (gnam, prefix);          {use generic name as subroutine prefix}
   syo_infile_top_set (fnam, '.syn');   {set name of top level input file}
 
-  string_hash_create (                 {create hash table for SYN file symbols}
-    table_sym,                         {hash table to initialize}
-    64,                                {number of buckets in hash table}
-    32,                                {max length of any entry name}
-    sizeof(symbol_data_t),             {amount of user data per entry}
-    [string_hashcre_nodel_k],          {won't need to deallocate individual entries}
-    sst_scope_root_p^.mem_p^);         {parent memory context for hash table}
-
-  seq_subr := 1;                       {init sequence num for next default subr name}
-  def_syo_p := nil;                    {init to no syntax currently being defined}
 {
 *   Main loop.  Come back here each new command from SYN file.  This loop
 *   terminates either on an error or end of data.
@@ -135,7 +127,7 @@ eod:
         not (sst_symflag_used_k in data_p^.sym_p^.flags)
         then begin
       if not unused_syms then begin    {this is first unused symbol ?}
-        sys_message ('sst_syo_read', 'symbols_unused_show');
+        sys_message ('sst_syn_read', 'symbols_unused_show');
         unused_syms := true;           {flag that unused symbols were encountered}
         end;
       writeln ('  ', name_p^.str:name_p^.len); {write name of unused symbol}
@@ -159,7 +151,7 @@ eod:
         (not (sst_symflag_extern_k in data_p^.sym_p^.flags)) {not external ?}
         then begin
       if not undefined_syms then begin {this is first undefined symbol ?}
-        sys_message ('sst_syo_read', 'symbols_undefined_show');
+        sys_message ('sst_syn_read', 'symbols_undefined_show');
         undefined_syms := true;        {flag that undefined symbols were encountered}
         end;
       writeln ('  ', name_p^.str:name_p^.len); {write name of undefined symbol}
@@ -170,6 +162,6 @@ eod:
   string_hash_delete (table_sym);      {delete table for this SYN file symbols}
 
   if undefined_syms then begin         {some undefined symbols were found ?}
-    sys_message_bomb ('sst_syo_read', 'symbols_undefined_abort', nil, 0);
+    sys_message_bomb ('sst_syn_read', 'symbols_undefined_abort', nil, 0);
     end;
   end;

@@ -40,7 +40,7 @@ begin
   syo_level_down;                      {down into UNTAGGED_ITEM syntax}
 
   syo_get_tag_msg (                    {get tag to identify type of item}
-    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   case tag of
 {
 **************************************
@@ -96,7 +96,7 @@ comp_char_sym2:                        {compare char value to SYM2_P^}
   string_hash_ent_lookup (table_sym, token, name_p, data_p); {look up name in table}
   if data_p = nil then begin           {no such entry in table ?}
     sys_msg_parm_vstr (msg_parm[1], token);
-    syo_error (str_h, 'sst_syo_read', 'symbol_not_declared', msg_parm, 1);
+    syo_error (str_h, 'sst_syn_read', 'symbol_not_declared', msg_parm, 1);
     end;
 {
 *   Add called syntax to list of syntaxes called by this parent, if not
@@ -134,7 +134,7 @@ in_list:                               {jump here if called syntax already in li
 4: begin
   syo_level_down;                      {down into STRING syntax}
   syo_get_tag_msg (                    {get tag for string contents}
-    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
   syo_get_tag_string (str_h, token);   {get string value}
   syo_level_up;                        {back up from STRING syntax}
 
@@ -158,7 +158,7 @@ in_list:                               {jump here if called syntax already in li
 }
 5: begin
   syo_get_tag_msg (                    {get tag for range start character}
-    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
   if tag <> 1 then begin
     syo_error_tag_unexp (tag, str_h);
     end;
@@ -166,7 +166,7 @@ in_list:                               {jump here if called syntax already in li
   i := ord(token.str[2]) & 127;        {get character value for start of range}
 
   syo_get_tag_msg (                    {get tag for range start character}
-    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
   if tag <> 1 then begin
     syo_error_tag_unexp (tag, str_h);
     end;
@@ -323,7 +323,7 @@ in_list:                               {jump here if called syntax already in li
 }
 6: begin
   syo_get_tag_msg (                    {get tag for min occurrence number}
-    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
   if tag <> 1 then begin
     syo_error_tag_unexp (tag, str_h);
     end;
@@ -331,19 +331,19 @@ in_list:                               {jump here if called syntax already in li
   string_t_int (token, i, stat);       {get min occurrence number}
   syo_error_abort (stat, str_h, '', '', nil, 0);
   if i < 0 then begin                  {negative min occurrence limit not allowed}
-    syo_error (str_h, 'sst_syo_read', 'occurs_limit_low_bad', nil, 0);
+    syo_error (str_h, 'sst_syn_read', 'occurs_limit_low_bad', nil, 0);
     end;
 
   syo_level_down;                      {down into END_RANGE syntax}
   syo_get_tag_msg (                    {get tag for min occurrence number}
-    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
   case tag of
 1:  begin                              {tag was for max occurrence integer value}
       syo_get_tag_string (str_h, token); {get string value}
       string_t_int (token, j, stat);   {get max occurrence number}
       syo_error_abort (stat, str_h, '', '', nil, 0);
       if j < i then begin
-        syo_error (str_h, 'sst_syo_read', 'occurs_limit_high_below', nil, 0);
+        syo_error (str_h, 'sst_syn_read', 'occurs_limit_high_below', nil, 0);
         end;
       end;
 2:  begin                              {tag was for infinite occurrences}
@@ -675,7 +675,7 @@ done_occurs:                           {all done processing OCCURS item}
 }
 8: begin
   syo_get_tag_msg (                    {get tag for character case select}
-    tag, str_h, 'sst_syo_read', 'syerr_string', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_string', nil, 0);
   case tag of
 1:  begin                              {upper case}
       sym_p := sym_charcase_up_p;

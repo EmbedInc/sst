@@ -1,20 +1,21 @@
 {   Private include file for SYN front end to SST.
 }
-%natural_alignment;
 %include 'sys.ins.pas';
 %include 'util.ins.pas';
 %include 'string.ins.pas';
 %include 'file.ins.pas';
+%include 'fline.ins.pas';
+%include 'syn.ins.pas';
 %include 'syo.ins.pas';
 %include 'sst.ins.pas';
 
+const
+  sst_r_syn_nbuck_k = 64;              {number of buckets in syntax constr names table}
+
 type
-  symbol_data_p_t =                    {pointer to data stored in private sym table}
-    ^symbol_data_t;
+  call_p_t = ^call_t;                  {pointer to data about nested syntax call}
 
-  call_p_t =                           {pointer to data about nested syntax call}
-    ^call_t;
-
+  symbol_data_p_t = ^symbol_data_t;
   symbol_data_t = record               {data in private symbol table per symbol}
     sym_p: sst_symbol_p_t;             {pointer to SST symbol for procedure}
     name_p: string_var_p_t;            {points to SYN file symbol name}
@@ -38,9 +39,7 @@ type
     jtarg_err_k);                      {error end of syntax on reparse}
   jtarg_t = set of jtarg_k_t;
 
-  jump_target_p_t =                    {pointer to a jump target descriptor}
-    ^jump_target_t;
-
+  jump_target_p_t = ^jump_target_t;
   jump_target_t = record               {describes where execution should jump to}
     flags: jflag_t;                    {set of modifier flags}
     case integer of
@@ -59,52 +58,45 @@ type
     end;
 
 var (sst_r_syn)
+  syn_p: syn_p_t;                      {points to our SYN library use state}
   table_sym: string_hash_handle_t;     {handle to SYN symbols symbol table}
-  seq_mflag: sys_int_machine_t;        {sequence number of next MFLAG variable}
-  seq_label: sys_int_machine_t;        {sequence number of next YES label}
+  prefix: string_var32_t;              {prefix for default subroutine names}
   seq_subr: sys_int_machine_t;         {sequence number of next syntax subroutine}
-  seq_int: sys_int_machine_t;          {sequence number of next integer variable}
+  def_syn_p: symbol_data_p_t;          {points to data about symbol curr defining}
   lab_fall_k: sst_symbol_p_t;          {"constant" for fall thru jump target}
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
-  prefix: string_var32_t;              {prefix for default subroutine names}
-  def_syo_p: symbol_data_p_t;          {points to data about symbol curr defining}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
-  sym_start_routine_p: sst_symbol_p_t; {pnt to SYO_P_START_ROUTINE symbol}
-  sym_end_routine_p: sst_symbol_p_t;   {pnt to SYO_P_END_ROUTINE symbol}
-  sym_cpos_push_p: sst_symbol_p_t;     {pnt to SYO_P_CPOS_PUSH symbol}
-  sym_cpos_pop_p: sst_symbol_p_t;      {pnt to SYO_P_CPOS_POP symbol}
-  sym_tag_start_p: sst_symbol_p_t;     {pnt to SYO_P_TAG_START symbol}
-  sym_tag_end_p: sst_symbol_p_t;       {pnt to SYO_P_TAG_END symbol}
-  sym_charcase_p: sst_symbol_p_t;      {pnt to SYO_P_CHARCASE symbol}
-  sym_get_ichar_p: sst_symbol_p_t;     {pnt to SYO_P_GET_ICHAR symbol}
-  sym_test_eod_p: sst_symbol_p_t;      {pnt to SYO_P_TEST_EOD symbol}
-  sym_test_eof_p: sst_symbol_p_t;      {pnt to SYO_P_TEST_EOF symbol}
-  sym_test_string_p: sst_symbol_p_t;   {pnt to SYO_P_TEST_STRING symbol}
+  sym_constr_start_p: sst_symbol_p_t;  {pnt to SYN_P_CONSTR_START symbol}
+  sym_constr_end_p: sst_symbol_p_t;    {pnt to SYN_P_CONSTR_END symbol}
+  sym_cpos_push_p: sst_symbol_p_t;     {pnt to SYN_P_CPOS_PUSH symbol}
+  sym_cpos_pop_p: sst_symbol_p_t;      {pnt to SYN_P_CPOS_POP symbol}
+  sym_cpos_get_p: sst_symbol_p_t;      {pnt to SYN_P_CPOS_GET symbol}
+  sym_cpos_set_p: sst_symbol_p_t;      {pnt to SYN_P_CPOS_SET symbol}
+  sym_tag_start_p: sst_symbol_p_t;     {pnt to SYN_P_TAG_START symbol}
+  sym_tag_end_p: sst_symbol_p_t;       {pnt to SYN_P_TAG_END symbol}
+  sym_ichar_p: sst_symbol_p_t;         {pnt to SYN_P_ICHAR symbol}
+  sym_test_string_p: sst_symbol_p_t;   {pnt to SYN_P_TEST_STRING symbol}
+  sym_test_eol_p: sst_symbol_p_t;      {pnt to SYN_P_TEST_EOL symbol}
+  sym_test_eof_p: sst_symbol_p_t;      {pnt to SYN_P_TEST_EOF symbol}
+  sym_test_eod_p: sst_symbol_p_t;      {pnt to SYN_P_TEST_EOD symbol}
+  sym_charcase_p: sst_symbol_p_t;      {pnt to SYN_P_CHARCASE symbol}
 {
 *   Pointers to pre-defined data types we may want to reference.
 }
   sym_int_machine_t_p: sst_symbol_p_t; {pnt to SYS_INT_MACHINE_T symbol}
-  sym_mflag_t_p: sst_symbol_p_t;       {pnt to SYO_MFLAG_K_T symbol}
-  sym_charcase_t_p: sst_symbol_p_t;    {pnt to SYO_CHARCASE_K_T symbol}
+  sym_charcase_t_p: sst_symbol_p_t;    {pnt to SYN_CHARCASE_K_T symbol}
 {
 *   Pointers to pre-defined constants we may want to use.
 }
-  sym_mflag_yes_p: sst_symbol_p_t;     {pnt to SYO_MFLAG_YES_K symbol}
-  sym_mflag_no_p: sst_symbol_p_t;      {pnt to SYO_MFLAG_NO_K symbol}
+  sym_charcase_down_p: sst_symbol_p_t; {pnt to SYN_CHARCASE_DOWN_K symbol}
+  sym_charcase_up_p: sst_symbol_p_t;   {pnt to SYN_CHARCASE_UP_K symbol}
+  sym_charcase_asis_p: sst_symbol_p_t; {pnt to SYN_CHARCASE_ASIS_K symbol}
 
-  sym_charcase_down_p: sst_symbol_p_t; {pnt to SYO_CHARCASE_DOWN_K symbol}
-  sym_charcase_up_p: sst_symbol_p_t;   {pnt to SYO_CHARCASE_UP_K symbol}
-  sym_charcase_asis_p: sst_symbol_p_t; {pnt to SYO_CHARCASE_ASIS_K symbol}
-
-  sym_ichar_eol_p: sst_symbol_p_t;     {pnt to SYO_ICHAR_EOL_K symbol}
-  sym_ichar_eof_p: sst_symbol_p_t;     {pnt to SYO_ICHAR_EOF_K symbol}
-  sym_ichar_eod_p: sst_symbol_p_t;     {pnt to SYO_ICHAR_EOD_K symbol}
-{
-*   Pointers to pre-defined variables we may want to use.
-}
-  sym_error_p: sst_symbol_p_t;         {pnt to ERROR symbol}
+  sym_ichar_eol_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOL_K symbol}
+  sym_ichar_eof_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOF_K symbol}
+  sym_ichar_eod_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOD_K symbol}
 {
 *********************************************
 *

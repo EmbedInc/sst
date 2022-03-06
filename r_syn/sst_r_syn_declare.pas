@@ -39,7 +39,7 @@ begin
   syo_level_down;                      {down into DECLARE syntax}
 
   syo_get_tag_msg (                    {get symbol name tag}
-    tag, str_h, 'sst_syo_read', 'syerr_declare', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_declare', nil, 0);
   if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   syo_get_tag_string (str_h, syname);  {get name of symbol being declared}
 {
@@ -52,7 +52,7 @@ begin
 }
 opt_tag:
   syo_get_tag_msg (                    {get tag for next option, if any}
-    tag, str2_h, 'sst_syo_read', 'syerr_declare', nil, 0);
+    tag, str2_h, 'sst_syn_read', 'syerr_declare', nil, 0);
   case tag of
 1:  begin                              {tag is for subroutine name}
       syo_get_tag_string (str2_h, prname);
@@ -73,7 +73,7 @@ syo_tag_end_k: begin                   {done processing all the optional tags}
           3,                           {field width}
           [string_fi_leadz_k, string_fi_unsig_k], {write leading zeros, no sign}
           stat);
-        syo_error_abort (stat, str2_h, 'sst_syo_read', 'seq_subr_err', nil, 0);
+        syo_error_abort (stat, str2_h, 'sst_syn_read', 'seq_subr_err', nil, 0);
         string_append (prname, token); {make full subroutine name}
         seq_subr := seq_subr + 1;      {update sequence number for next time}
         string_downcase (prname);      {default subroutine names are lower case}
@@ -100,7 +100,7 @@ done_opt_tags:                         {done processing optional tags}
     table_sym, syname, hpos, found);
   if found then begin                  {this symbol already declared ?}
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syo_error (str_h, 'sst_syo_read', 'symbol_already_used', msg_parm, 1);
+    syo_error (str_h, 'sst_syn_read', 'symbol_already_used', msg_parm, 1);
     end;
   string_hash_ent_add (                {add new symbol to the SYN symbol table}
     hpos,                              {handle to hash table position}

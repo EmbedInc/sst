@@ -35,7 +35,7 @@ begin
 *   to the symbol subroutine.
 }
   syo_get_tag_msg (                    {get symbol name tag}
-    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   if tag <> 1 then syo_error_tag_unexp (tag, str_h);
   syo_get_tag_string (str_h, syname);  {get name of symbol being defined}
   string_upcase (syname);              {SYN symbol names are case-insensitive}
@@ -44,15 +44,15 @@ begin
     table_sym, syname, name_p, data_p);
   if data_p = nil then begin           {symbol not previously declared ?}
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syo_error (str_h, 'sst_syo_read', 'symbol_not_declared', msg_parm, 1);
+    syo_error (str_h, 'sst_syn_read', 'symbol_not_declared', msg_parm, 1);
     end;
   if sst_symflag_extern_k in data_p^.sym_p^.flags then begin
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syo_error (str_h, 'sst_syo_read', 'symbol_external', msg_parm, 1);
+    syo_error (str_h, 'sst_syn_read', 'symbol_external', msg_parm, 1);
     end;
   if sst_symflag_def_k in data_p^.sym_p^.flags then begin
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syo_error (str_h, 'sst_syo_read', 'symbol_already_defined', msg_parm, 1);
+    syo_error (str_h, 'sst_syn_read', 'symbol_already_defined', msg_parm, 1);
     end;
 
   %debug; writeln ('Defining ', syname.str:syname.len);
@@ -117,7 +117,7 @@ begin
 *   Process EXPRESSION syntax.
 }
   syo_get_tag_msg (                    {get tag for symbol expression}
-    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   if tag <> 1 then syo_error_tag_unexp (tag, str_h);
 
   sst_r_syn_expression (               {process EXPRESSION syntax}

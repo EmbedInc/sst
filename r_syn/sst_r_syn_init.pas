@@ -1,6 +1,11 @@
 {   Subroutine SST_R_SYN_INIT
 *
 *   Init the SST front end for reading SYN files.
+*
+*   The internal state of the SYN front end is initialized, and system resources
+*   allocated.  The module that will contain the syntax parsing code is created.
+*   Subsequent calls to the DOIT entry point for this SST front end will add to
+*   this module.
 }
 module sst_r_syn_init;
 define sst_r_syn_init;
@@ -36,7 +41,7 @@ begin
 
   string_vstring (vname, name, sizeof(name)); {make var string symbol name}
   sst_symbol_lookup_name (vname, sym_p, stat); {try to look up name in symbol table}
-  sys_error_abort (stat, 'sst_syo_read', 'symbol_predef_not_found', nil, 0);
+  sys_error_abort (stat, 'sst_syn_read', 'symbol_predef_not_found', nil, 0);
   lookup_symbol := sym_p;              {return pointer to symbol descriptor}
   end;
 {
@@ -47,10 +52,12 @@ begin
 begin
   gnam.max := sizeof(gnam.str);        {init local var strings}
   fnam_synstart.max := sizeof(fnam_synstart.str);
-  prefix.max := sizeof(prefix.str);    {init var string in common block}
-
-  sys_cognivis_dir ('lib', fnam_synstart); {make pathname of SYO_SYN.INS.PAS}
-  string_appends (fnam_synstart, '/syo_syn.ins.pas');
+{
+*   Read the SYN_SYN.INS.PAS file.  This declares all the routines and other
+*   symbols that the syntax parsing code we will generate needs to reference.
+}
+  sys_cognivis_dir ('lib', fnam_synstart); {make pathname of SYN_SYN.INS.PAS}
+  string_appends (fnam_synstart, '/syn_syn.ins.pas');
 
   sst_r_pas_init;                      {init for reading Pascal syntax}
   sst_r.doit^ (                        {run Pascal front end}
@@ -62,48 +69,72 @@ begin
     end;
   sys_error_abort (stat, 'sst', 'readin', nil, 0);
 {
-*   The symbol table has been seeded with all the general utility symbols
-*   we might want to use.  Now switch setup for reading SYN files.
+*   Set up the SST front end for reading the user's syntax definition file.
 }
-  syo_preproc_set (nil);               {de-install Pascal front end preprocessor}
+  syo_preproc_set (nil);               {de-install any Pascal front end preprocessor}
   sst_r.doit := addr(sst_r_syn_doit);  {set up front end call table}
 {
 *   Save pointers to all the pre-defined symbols we might need later.
 }
-  sym_start_routine_p := lookup_symbol ('syo_p_start_routine');
-  sym_end_routine_p := lookup_symbol ('syo_p_end_routine');
-  sym_cpos_push_p := lookup_symbol ('syo_p_cpos_push');
-  sym_cpos_pop_p := lookup_symbol ('syo_p_cpos_pop');
-  sym_tag_start_p := lookup_symbol ('syo_p_tag_start');
-  sym_tag_end_p := lookup_symbol ('syo_p_tag_end');
-  sym_charcase_p := lookup_symbol ('syo_p_charcase');
-  sym_get_ichar_p := lookup_symbol ('syo_p_get_ichar');
-  sym_test_eod_p := lookup_symbol ('syo_p_test_eod');
-  sym_test_eof_p := lookup_symbol ('syo_p_test_eof');
-  sym_test_string_p := lookup_symbol ('syo_p_test_string');
+  {
+  *   Routines to call from syntax parsing code.
+  }
+  sym_constr_start_p := lookup_symbol ('syn_p_constr_start');
+  sym_constr_end_p := lookup_symbol ('syn_p_constr_end');
+  sym_cpos_push_p := lookup_symbol ('syn_p_cpos_push');
+  sym_cpos_pop_p := lookup_symbol ('syn_p_cpos_pop');
+  sym_cpos_get_p := lookup_symbol ('syn_p_cpos_get');
+  sym_cpos_set_p := lookup_symbol ('syn_p_cpos_set');
+  sym_tag_start_p := lookup_symbol ('syn_p_tag_start');
+  sym_tag_end_p := lookup_symbol ('syn_p_tag_end');
+  sym_ichar_p := lookup_symbol ('syn_p_ichar');
+  sym_test_string_p := lookup_symbol ('syn_p_test_string');
+  sym_test_eol_p := lookup_symbol ('syn_p_test_eol');
+  sym_test_eof_p := lookup_symbol ('syn_p_test_eof');
+  sym_test_eod_p := lookup_symbol ('syn_p_test_eod');
+  sym_charcase_p := lookup_symbol ('syn_p_charcase');
+  {
+  *   Data types.
+  }
   sym_int_machine_t_p := lookup_symbol ('sys_int_machine_t');
-  sym_mflag_t_p := lookup_symbol ('syo_mflag_k_t');
-  sym_charcase_t_p := lookup_symbol ('syo_charcase_k_t');
-  sym_mflag_yes_p := lookup_symbol ('syo_mflag_yes_k');
-  sym_mflag_no_p := lookup_symbol ('syo_mflag_no_k');
-  sym_charcase_down_p := lookup_symbol ('syo_charcase_down_k');
-  sym_charcase_up_p := lookup_symbol ('syo_charcase_up_k');
-  sym_charcase_asis_p := lookup_symbol ('syo_charcase_asis_k');
-  sym_ichar_eol_p := lookup_symbol ('syo_ichar_eol_k');
-  sym_ichar_eof_p := lookup_symbol ('syo_ichar_eof_k');
-  sym_ichar_eod_p := lookup_symbol ('syo_ichar_eod_k');
-  sym_error_p := lookup_symbol ('error');
+  sym_charcase_t_p := lookup_symbol ('syn_charcase_t');
+  {
+  *   Constants.
+  }
+  sym_charcase_down_p := lookup_symbol ('syn_charcase_down_k');
+  sym_charcase_up_p := lookup_symbol ('syn_charcase_up_k');
+  sym_charcase_asis_p := lookup_symbol ('syn_charcase_asis_k');
+  sym_ichar_eol_p := lookup_symbol ('syn_ichar_eol_k');
+  sym_ichar_eof_p := lookup_symbol ('syn_ichar_eof_k');
+  sym_ichar_eod_p := lookup_symbol ('syn_ichar_eod_k');
 {
-*   Create special "constants" in common block.
+*   Initialize the rest of the SYN front end static state (SST_R_SYN common
+*   block).
 }
+  syn_lib_new (                        {start new use of the SYN library}
+    sst_scope_root_p^.mem_p^,          {parent memory context}
+    syn_p);                            {returne pointer to new library use state}
+
+  string_hash_create (                 {create hash table for SYN file symbols}
+    table_sym,                         {hash table to initialize}
+    sst_r_syn_nbuck_k,                 {number of buckets in hash table}
+    syn_name_maxlen_k,                 {max length of any entry name}
+    sizeof(symbol_data_t),             {amount of user data per entry}
+    [string_hashcre_nodel_k],          {won't need to deallocate individual entries}
+    syn_p^.mem_p^);                    {parent memory context for hash table}
+
+  prefix.max := size_char(prefix.str); {init subroutines prefix to empty}
+  prefix.len := 0;
+  seq_subr := 1;                       {init sequence num for next default subr name}
+  def_syn_p := nil;                    {not currently defining a symbol}
   lab_fall_k := univ_ptr(addr(lab_fall_k));
   lab_same_k := univ_ptr(addr(lab_same_k));
 {
-*   Create "module" for all the routines generated from the SYN file.
+*   Create the module for all the routines generated from the SYN file.
 }
   sst_symbol_new_name (                {create module name symbol}
     string_v('module_syn'(0)), sym_p, stat);
-  sys_error_abort (stat, 'sst_syo_read', 'module_symbol_create', nil, 0);
+  sys_error_abort (stat, 'sst_syn_read', 'module_symbol_create', nil, 0);
 
   sst_scope_new;                       {create new subordinate scope for module}
   sst_scope_p^.symbol_p := sym_p;

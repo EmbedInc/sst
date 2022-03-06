@@ -25,7 +25,7 @@ begin
 
   syo_push_pos;                        {save position at start of ITEM}
   syo_get_tag_msg (                    {tag for whether item is tagged or not}
-    tag, str_h, 'sst_syo_read', 'syerr_define', nil, 0);
+    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   syo_pop_pos;                         {restore position to start of ITEM}
   case tag of
 {
