@@ -15,8 +15,9 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
   out     stat: sys_err_t);            {completion status code}
 
 var
-  mflag: syo_mflag_k_t;                {syntax matched yes/no flag}
-  eflag: syo_mflag_k_t;                {scratch flag for error re-parse}
+  fline_p: fline_p_t;                  {to FLINE library use state}
+  coll_p: fline_coll_p_t;              {the input file lines in FLINE collection}
+  match: boolean;                      {syntax matched}
   hpos: string_hash_pos_t;             {position handle into our hash table}
   found: boolean;                      {TRUE when hash table entry found}
   name_p: string_var_p_t;              {pointer to name in hash table entry}
@@ -26,12 +27,18 @@ var
 
 label
   loop_cmd, eod;
+
+function syn_ch_toplev (               {declare the top level syntax parsing routine}
+  in out  syn: syn_t)                  {SYN library use state}
+  :boolean;                            {syntax matched}
+  val_param; extern;
 {
-***********************************************************
+********************************************************************************
 *
 *   Local subroutine FOLLOW_SYM (DATA)
 *
-*   Propagate USED flag to all symbols ultimately referenced by this symbol.
+*   Propagate USED flag to all symbols ultimately referenced by the syntax
+*   construction with the symbol table data DATA.
 }
 procedure follow_sym (
   in      data: symbol_data_t);        {data about symbol to follow}
@@ -55,40 +62,68 @@ begin
     end;
   end;
 {
-***********************************************************
+********************************************************************************
 *
 *   Start of main routine.
 }
 begin
   string_generic_fnam (fnam, '.syn', gnam); {make generic input file name}
   string_copy (gnam, prefix);          {use generic name as subroutine prefix}
-  syo_infile_top_set (fnam, '.syn');   {set name of top level input file}
+{
+*   Read the input file into a collection of text lines managed by the FLINE
+*   library.  COLL_P will be set pointing to the collection.
+}
+  fline_lib_new (                      {open the FLINE library}
+    util_top_mem_context,              {parent memory context}
+    fline_p,                           {returned pointer to new library use state}
+    stat);
+  if sys_error(stat) then return;
 
+  fline_file_get_suff (                {read the input file into a collection}
+    fline_p^,                          {FLINE library use state}
+    fnam, '.syn',                      {file name and mandatory suffix}
+    coll_p,                            {returned pointer to the collection}
+    stat);
+  if sys_error(stat) then return;
+
+  syn_parse_pos_coll (syn_p^, coll_p^); {init parse position to start of collection}
 {
 *   Main loop.  Come back here each new command from SYN file.  This loop
 *   terminates either on an error or end of data.
 }
 loop_cmd:
-  syo_tree_clear;                      {set up for parsing}
-
-  sst_r_syn_sy_command (mflag);        {try to parse one top level syntax}
-  if mflag <> syo_mflag_yes_k then begin {syntax didn't match ?}
-    syo_tree_err;                      {set up for error re-parse}
-    sst_r_syn_sy_command (eflag);      {do error re-parse}
+  match := not syn_parse_next (        {parse next command from input file}
+    syn_p^,                            {our SYN library use state}
+    addr(syn_ch_toplev));              {top level parsing routine to call}
+  if not match then begin              {syntax error encountered ?}
+    syn_parse_err_reparse (syn_p^);    {do error re-parse}
     end;
 
-  syo_tree_setup;                      {set up syntax tree for getting tags}
   sst_r_syn_command (stat);            {process this SYN file command}
-
   if sys_stat_match (sst_subsys_k, sst_stat_eod_k, stat) {hit end of input data ?}
     then goto eod;
   if sys_error(stat) then return;      {encountered hard error ?}
-  if mflag <> syo_mflag_yes_k then begin {syntax error not caught as content error ?}
+
+  if not match then begin              {syntax error not caught as content error ?}
+
+
+
+*** CONTINUE HERE ***
+
+
+
+
+
+
+
+
+
     syo_error_print ('', '', nil, 0);  {complain about syntax error}
     sys_exit_error;                    {exit program with error condition}
     end;
   goto loop_cmd;                       {back for next command from SYN file}
-eod:
+
+eod:                                   {reached end of all input data}
 {
 *   End of input data encountered.
 *
