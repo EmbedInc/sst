@@ -1,6 +1,6 @@
 {   Subroutine SST_R_SYN_DOIT (FNAM, GNAM, STAT)
 *
-*   Process one top level SYN language input file.  FNAM is the input file name
+*   Process one top level SYN language input file.  FNAM is the input file name.
 *   GNAM is returned as the generic name of FNAM.  Each call to this routine
 *   adds to the single module that was created when this SST front end was
 *   initialized (SST_R_SYN_INIT called).
@@ -28,7 +28,7 @@ var
 label
   loop_cmd, eod;
 
-function syn_ch_toplev (               {declare the top level syntax parsing routine}
+function sst_r_syn_sy_command (        {declare the top level syntax parsing routine}
   in out  syn: syn_t)                  {SYN library use state}
   :boolean;                            {syntax matched}
   val_param; extern;
@@ -88,13 +88,13 @@ begin
 
   syn_parse_pos_coll (syn_p^, coll_p^); {init parse position to start of collection}
 {
-*   Main loop.  Come back here each new command from SYN file.  This loop
+*   Main loop.  Come back here each new command in the SYN file.  This loop
 *   terminates either on an error or end of data.
 }
 loop_cmd:
-  match := not syn_parse_next (        {parse next command from input file}
+  match := syn_parse_next (            {parse next command from input file}
     syn_p^,                            {our SYN library use state}
-    addr(syn_ch_toplev));              {top level parsing routine to call}
+    addr(sst_r_syn_sy_command));       {top level parsing routine to call}
   if not match then begin              {syntax error encountered ?}
     syn_parse_err_reparse (syn_p^);    {do error re-parse}
     end;
@@ -105,21 +105,10 @@ loop_cmd:
   if sys_error(stat) then return;      {encountered hard error ?}
 
   if not match then begin              {syntax error not caught as content error ?}
-
-
-
-*** CONTINUE HERE ***
-
-
-
-
-
-
-
-
-
-    syo_error_print ('', '', nil, 0);  {complain about syntax error}
-    sys_exit_error;                    {exit program with error condition}
+    syn_parse_err_show (syn_p^);       {show the syntax error}
+    sys_stat_set (                     {indicate error, already handled}
+      sst_subsys_k, sst_stat_err_handled_k, stat);
+    return;                            {return with error condition}
     end;
   goto loop_cmd;                       {back for next command from SYN file}
 
