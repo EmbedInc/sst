@@ -9,16 +9,16 @@ define sst_r_syn_command;
 procedure sst_r_syn_command (          {process COMMAND syntax}
   out     stat: sys_err_t);            {completion status code}
 
-var
-  tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syo_string_t;                 {handle to string from input file}
+label
+  err;
 
 begin
   sys_error_none (stat);               {init to no errors}
 
-  syo_level_down;                      {down into COMMAND syntax level}
-  syo_get_tag_msg (tag, str_h, 'sst_syn_read', 'syerr_command', nil, 0);
-  case tag of
+  if not syn_trav_down (syn_p^)        {down into COMMAND syntax level}
+    then goto err;
+
+  case syn_trav_next_tag(syn_p^) of    {which tag ?}
 {
 *   End of input data.
 }
@@ -39,8 +39,14 @@ begin
       end;
 
 otherwise
-    syo_error_tag_unexp (tag, str_h);
+    syn_trav_tag_err (syn_p^, 'sst_syn_read', 'syerr_command', nil, 0);
+    sys_bomb;
     end;                               {end of top level tag cases}
 
-  syo_level_up;                        {back up from COMMAND syntax level}
+  if not syn_trav_up (syn_p^)          {back up from COMMAND syntax level}
+    then goto err;
+  return;
+
+err:
+  sys_message_bomb ('sst_syn_read', 'syerr_command', nil, 0);
   end;
