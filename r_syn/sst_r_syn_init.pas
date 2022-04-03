@@ -96,7 +96,7 @@ begin
   {
   *   Data types.
   }
-  sym_int_machine_t_p := lookup_symbol ('sys_int_machine_t');
+  sym_syn_t_p := lookup_symbol ('syn_t');
   sym_charcase_t_p := lookup_symbol ('syn_charcase_t');
   {
   *   Constants.

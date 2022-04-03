@@ -85,7 +85,7 @@ var (sst_r_syn)
 {
 *   Pointers to pre-defined data types we may want to reference.
 }
-  sym_int_machine_t_p: sst_symbol_p_t; {pnt to SYS_INT_MACHINE_T symbol}
+  sym_syn_t_p: sst_symbol_p_t;         {pnt to SYN library use state symbol}
   sym_charcase_t_p: sst_symbol_p_t;    {pnt to SYN_CHARCASE_K_T symbol}
 {
 *   Pointers to pre-defined constants we may want to use.

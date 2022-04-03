@@ -10,13 +10,13 @@ procedure sst_r_syn_command (          {process COMMAND syntax}
   out     stat: sys_err_t);            {completion status code}
 
 label
-  err;
+  trerr;
 
 begin
   sys_error_none (stat);               {init to no errors}
 
   if not syn_trav_down (syn_p^)        {down into COMMAND syntax level}
-    then goto err;
+    then goto trerr;
 
   case syn_trav_next_tag(syn_p^) of    {which tag ?}
 {
@@ -39,14 +39,18 @@ begin
       end;
 
 otherwise
-    syn_trav_tag_err (syn_p^, 'sst_syn_read', 'syerr_command', nil, 0);
-    sys_bomb;
+    syn_msg_tag_bomb (syn_p^, 'sst_syn_read', 'syerr_command', nil, 0);
     end;                               {end of top level tag cases}
 
   if not syn_trav_up (syn_p^)          {back up from COMMAND syntax level}
-    then goto err;
+    then goto trerr;
   return;
-
-err:
-  sys_message_bomb ('sst_syn_read', 'syerr_command', nil, 0);
+{
+*   The syntax tree is not as expected.  We assume this is due to a syntax
+*   error.
+}
+trerr:
+  sys_message ('sst_syn_read', 'syerr_command');
+  syn_parse_err_show (syn_p^);
+  sys_bomb;
   end;

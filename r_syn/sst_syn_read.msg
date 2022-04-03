@@ -1,6 +1,6 @@
 /*   Error and other messages used by SYN front end to SST.
 /*
-msg module_sumbol_create
+msg module_symbol_create
   lan english -def
     Error occurred on attempt to create name symbol for top module
 msg occurs_limit_high_below
@@ -14,7 +14,7 @@ msg occurs_limit_low_bad
 msg seq_subr_err
   lan english -def
     Error on attempt to make seqence number string for default subroutine
-    name for this symbol.
+    name for symbol "%p1s".  Error at:
 msg syerr_command
   lan english -def
     Unrecognized command.
