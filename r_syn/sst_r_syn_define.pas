@@ -13,52 +13,60 @@ const
 
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syo_string_t;                 {handle to string from input file}
   syname: string_var32_t;              {name of syntax symbol being defined}
+  sym_p: sst_symbol_p_t;               {scratch pointer to SST symbol}
   name_p: string_var_p_t;              {pointer to name in hash table entry}
   data_p: symbol_data_p_t;             {pointer to user data in hash table entry}
   scope_old_p: sst_scope_p_t;          {saved pointer to scope before subroutine}
   names_old_p: sst_scope_p_t;          {saved pointer to names space before subr}
-  mflag_p: sst_symbol_p_t;             {points to MFLAG dummy argument symbol}
   jtarg: jump_targets_t;               {jump targets for subordinate syntax routines}
   msg_parm:                            {parameter references for messages}
     array[1..max_msg_parms] of sys_parm_msg_t;
+  stat: sys_err_t;                     {completion status}
+
+label
+  trerr;
 
 begin
   syname.max := sizeof(syname.str);    {init local var strings}
 
-  syo_level_down;                      {down into DEFINE syntax}
+  if not syn_trav_next_down (syn_p^)   {down into DEFINE syntax}
+    then goto trerr;
 {
 **************************************
 *
-*   Get name of symbol being defined, and set up state for writing code
-*   to the symbol subroutine.
+*   Find syntax construction symbol being defined and set up state for defining
+*   it.  DATA_P set set pointing to the data for this symbol in our private
+*   symbol table.
 }
-  syo_get_tag_msg (                    {get symbol name tag}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
-  syo_get_tag_string (str_h, syname);  {get name of symbol being defined}
+  tag := syn_trav_next_tag (syn_p^);   {get symbol name tag}
+  if tag <> 1 then begin               {unexpected tag ?}
+    syn_msg_tag_bomb (syn_p^, 'sst_syn_read', 'syerr_define', nil, 0);
+    end;
+  syn_trav_tag_string (syn_p^, syname); {get name of symbol being defined}
   string_upcase (syname);              {SYN symbol names are case-insensitive}
 
   string_hash_ent_lookup (             {look up name in SYN symbol table}
     table_sym, syname, name_p, data_p);
   if data_p = nil then begin           {symbol not previously declared ?}
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syo_error (str_h, 'sst_syn_read', 'symbol_not_declared', msg_parm, 1);
+    syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'symbol_not_declared', msg_parm, 1);
     end;
   if sst_symflag_extern_k in data_p^.sym_p^.flags then begin
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syo_error (str_h, 'sst_syn_read', 'symbol_external', msg_parm, 1);
+    syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'symbol_external', msg_parm, 1);
     end;
   if sst_symflag_def_k in data_p^.sym_p^.flags then begin
     sys_msg_parm_vstr (msg_parm[1], syname);
-    syo_error (str_h, 'sst_syn_read', 'symbol_already_defined', msg_parm, 1);
+    syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'symbol_already_defined', msg_parm, 1);
     end;
-
-  %debug; writeln ('Defining ', syname.str:syname.len);
-
-  def_syo_p := data_p;                 {save pnt to data about syntax being defined}
-
+  def_syn_p := data_p;                 {save pnt to data about syntax being defined}
+  if debug >= 1 then begin
+    writeln ('Defining ', syname.str:syname.len);
+    end;
+{
+*   Set up for writing the syntax parsing subroutine.
+}
   sst_opcode_new;                      {create opcode for this routine definition}
   sst_opc_p^.opcode := sst_opc_rout_k;
   sst_opc_p^.str_h.first_char := data_p^.sym_p^.char_h;
@@ -85,20 +93,49 @@ begin
   sst_opc_p^.str_h.last_char := sst_opc_p^.str_h.first_char;
   sst_opcode_pos_push (sst_opc_p^.exec_p); {future opcodes will be on exec list}
 
-  seq_mflag := 1;                      {init SYN common block state}
+  seq_mflag := 1;                      {init seq numbers for making unique symbols}
   seq_label := 1;
   seq_int := 1;
-
-  mflag_p :=                           {get pointer to MFLAG dummy argument}
-    data_p^.sym_p^.proc.first_arg_p^.sym_p;
 {
 **************************************
 *
 *   Write code for mandatory initialization before any syntax checking is done.
 }
-  sst_call (sym_start_routine_p^);     {create call to SYO_P_START_ROUTINE}
+  {
+  *   Create local boolean variable MATCH.
+  }
+  sst_symbol_new_name (                {create the local variable MATCH symbol}
+    string_v('match'(0)),              {name of symbol to create}
+    sym_p,                             {returned pointer to the new symbol}
+    stat);
+  syn_error_bomb (syn_p^, stat, '', '', nil, 0);
+  sym_p^.symtype := sst_symtype_var_k; {this symbol is a variable}
+  sym_p^.var_dtype_p := sst_dtype_bool_p; {set pointer to the data type}
+  sym_p^.var_val_p := nil;             {no initial value expression}
+  sym_p^.var_arg_p := nil;             {this variable is not a dummy argument}
+  sym_p^.var_proc_p := nil;
+  sym_p^.var_com_p := nil;             {not in a common block}
+  sym_p^.var_next_p := nil;
+
+  match_var.mod1.top_sym_p := sym_p;   {set symbol for curr local MATCH variable}
+  {
+  *   Call SYN_P_CONSTR_START.
+  }
+  sst_call (sym_constr_start_p^);      {create call to SYN_P_CONSTR_START}
+
+  sst_call_arg_var (                   {add SYN argument}
+    sst_opc_p^,                        {opcode to add call argument to}
+    data_p^.sym_p^.proc.first_arg_p^.sym_p^); {variable being passed}
+
   sst_call_arg_str (sst_opc_p^, syname.str, syname.len); {add syntax name argument}
   sst_call_arg_int (sst_opc_p^, syname.len); {add syntax name length argument}
+  {
+  *   Initialize MATCH to FALSE.
+  }
+  sst_opcode_new;                      {create new empty opcode, make current}
+  sst_opc_p^.opcode := sst_opc_assign_k; {opcode is assignment to variable}
+  sst_opc_p^.assign_var_p := addr(match_var); {the variable to assign to}
+  sst_opc_p^.assign_exp_p := exp_false_p; {the expression to assign to it}
 {
 **************************************
 *
@@ -107,6 +144,20 @@ begin
 *   Set up root jump targets.  These will all be "fall thru" with MFLAG
 *   properly set.
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   jtarg.yes.flags := [jflag_fall_k, jflag_mfset_k];
   jtarg.yes.lab_p := nil;
   jtarg.no.flags := [jflag_fall_k, jflag_mfset_k];
@@ -144,4 +195,13 @@ begin
   sst_names_p := names_old_p;
   syo_level_up;                        {back up from DEFINE syntax}
   def_syo_p := nil;                    {no syntax currently being defined}
+  return;
+{
+*   The syntax tree is not as expected.  We assume this is due to a syntax
+*   error.
+}
+trerr:
+  sys_message ('sst_syn_read', 'syerr_define');
+  syn_parse_err_show (syn_p^);
+  sys_bomb;
   end;

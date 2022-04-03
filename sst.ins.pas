@@ -1067,12 +1067,17 @@ procedure sst_exp_const_enum (         {create const expression with ENUM value}
 procedure sst_exp_const_float (        {create const expression with FLOAT value}
   in      f: double;                   {floating point value}
   out     exp_p: sst_exp_p_t);         {pointer to new expression descriptor}
-  extern;
+  val_param; extern;
 
 procedure sst_exp_const_int (          {create const expression with INTEGER value}
   in      i: sys_int_max_t;            {integer value}
   out     exp_p: sst_exp_p_t);         {pointer to new expression descriptor}
-  extern;
+  val_param; extern;
+
+procedure sst_exp_const_bool (         {create const expression with BOOLEAN value}
+  in      b: boolean;                  {boolean value}
+  out     exp_p: sst_exp_p_t);         {pointer to new expression descriptor}
+  val_param; extern;
 
 procedure sst_exp_const_str (          {create const expression with STRING value}
   in      str: univ string;            {string value}

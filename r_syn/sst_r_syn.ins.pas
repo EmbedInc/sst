@@ -29,7 +29,7 @@ type
 
   jflag_k_t = (                        {independent flags in jump target descriptor}
     jflag_fall_k,                      {fall thru, no jump required}
-    jflag_mfset_k,                     {MFLAG variable must be set before jump}
+    jflag_mset_k,                      {MATCHED variable must be set before jump}
     jflag_indir_k);                    {indirect, resolve with INDIR_P field}
   jflag_t = set of jflag_k_t;
 
@@ -59,12 +59,17 @@ type
 
 var (sst_r_syn)
   syn_p: syn_p_t;                      {points to our SYN library use state}
+  debug: sys_int_machine_t;            {debug output level, 0 = none}
   table_sym: string_hash_handle_t;     {handle to SYN symbols symbol table}
   prefix: string_var32_t;              {prefix for default subroutine names}
+  def_syn_p: symbol_data_p_t;          {to sym data for syntax being defined}
   seq_subr: sys_int_machine_t;         {sequence number of next syntax subroutine}
-  def_syn_p: symbol_data_p_t;          {points to data about symbol curr defining}
+  seq_mflag: sys_int_machine_t;        {sequence number of next MFLAG variable}
+  seq_label: sys_int_machine_t;        {sequence number of next YES label}
+  seq_int: sys_int_machine_t;          {sequence number of next integer variable}
   lab_fall_k: sst_symbol_p_t;          {"constant" for fall thru jump target}
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
+  match_var: sst_var_t;                {data for MATCH local boolean variable}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
@@ -87,6 +92,7 @@ var (sst_r_syn)
 }
   sym_syn_t_p: sst_symbol_p_t;         {pnt to SYN library use state symbol}
   sym_charcase_t_p: sst_symbol_p_t;    {pnt to SYN_CHARCASE_K_T symbol}
+  sym_int_p: sst_symbol_p_t;           {pnt to machine integer data type}
 {
 *   Pointers to pre-defined constants we may want to use.
 }
@@ -97,6 +103,11 @@ var (sst_r_syn)
   sym_ichar_eol_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOL_K symbol}
   sym_ichar_eof_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOF_K symbol}
   sym_ichar_eod_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOD_K symbol}
+{
+*   Expressions with fixed values we may want to use.
+}
+  exp_true_p: sst_exp_p_t;             {pnt to expression with fixed TRUE value}
+  exp_false_p: sst_exp_p_t;            {pnt to expression with fixed FALSE value}
 {
 *********************************************
 *

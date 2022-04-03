@@ -5,6 +5,7 @@ module sst_exp_const;
 define sst_exp_const_enum;
 define sst_exp_const_float;
 define sst_exp_const_int;
+define sst_exp_const_bool;
 define sst_exp_const_str;
 define sst_exp_const_vstr;
 %include 'sst2.ins.pas';
@@ -70,6 +71,7 @@ begin
 procedure sst_exp_const_float (        {create const expression with FLOAT value}
   in      f: double;                   {floating point value}
   out     exp_p: sst_exp_p_t);         {pointer to new expression descriptor}
+  val_param;
 
 begin
   sst_exp_const (exp_p);               {create and init expression descriptor}
@@ -91,6 +93,7 @@ begin
 procedure sst_exp_const_int (          {create const expression with INTEGER value}
   in      i: sys_int_max_t;            {integer value}
   out     exp_p: sst_exp_p_t);         {pointer to new expression descriptor}
+  val_param;
 
 begin
   sst_exp_const (exp_p);               {create and init expression descriptor}
@@ -98,6 +101,28 @@ begin
   exp_p^.val.dtype := sst_dtype_int_k; {set values for top expression}
   exp_p^.val.int_val := i;
   exp_p^.dtype_p := sst_dtype_int_max_p;
+
+  exp_p^.term1.val := exp_p^.val;      {copy values to term descriptor}
+  exp_p^.term1.dtype_p := exp_p^.dtype_p;
+  end;
+{
+************************************************************
+*
+*   Subroutine SST_EXP_CONST_BOOL (B, EXP_P)
+*
+*   Create an expression descriptor with the constant integer value I.
+}
+procedure sst_exp_const_bool (         {create const expression with BOOLEAN value}
+  in      b: boolean;                  {boolean value}
+  out     exp_p: sst_exp_p_t);         {pointer to new expression descriptor}
+  val_param;
+
+begin
+  sst_exp_const (exp_p);               {create and init expression descriptor}
+
+  exp_p^.dtype_p := sst_dtype_bool_p;  {point to expression data type}
+  exp_p^.val.dtype := sst_dtype_bool_k; {set values for top expression}
+  exp_p^.val.bool_val := b;            {set expression value}
 
   exp_p^.term1.val := exp_p^.val;      {copy values to term descriptor}
   exp_p^.term1.dtype_p := exp_p^.dtype_p;

@@ -98,6 +98,7 @@ begin
   }
   sym_syn_t_p := lookup_symbol ('syn_t');
   sym_charcase_t_p := lookup_symbol ('syn_charcase_t');
+  sym_int_p := lookup_symbol ('sys_int_machine_t');
   {
   *   Constants.
   }
@@ -107,13 +108,20 @@ begin
   sym_ichar_eol_p := lookup_symbol ('syn_ichar_eol_k');
   sym_ichar_eof_p := lookup_symbol ('syn_ichar_eof_k');
   sym_ichar_eod_p := lookup_symbol ('syn_ichar_eod_k');
+  {
+  *   Expressions with fixed value.
+  }
+  sst_exp_const_bool (true, exp_true_p);
+  sst_exp_const_bool (false, exp_false_p);
 {
 *   Initialize the rest of the SYN front end static state (SST_R_SYN common
 *   block).
 }
   syn_lib_new (                        {start new use of the SYN library}
     sst_scope_root_p^.mem_p^,          {parent memory context}
-    syn_p);                            {returne pointer to new library use state}
+    syn_p);                            {return pointer to new library use state}
+
+  debug := 0;                          {init to no debug output messages}
 
   string_hash_create (                 {create hash table for SYN file symbols}
     table_sym,                         {hash table to initialize}
@@ -125,10 +133,24 @@ begin
 
   prefix.max := size_char(prefix.str); {init subroutines prefix to empty}
   prefix.len := 0;
-  seq_subr := 1;                       {init sequence num for next default subr name}
-  def_syn_p := nil;                    {not currently defining a symbol}
+  def_syn_p := nil;                    {init to not currently defining a symbol}
+  seq_subr := 1;                       {init sequence numbers to make unique names}
+  seq_mflag := 1;
+  seq_label := 1;
+  seq_int := 1;
   lab_fall_k := univ_ptr(addr(lab_fall_k));
   lab_same_k := univ_ptr(addr(lab_same_k));
+{
+*   Init the static fields of the descriptor for the variable MATCH that will be
+*   local to all syntax parsing routines.  The only field that needs to be
+*   updated each new routine is the pointer to the variable symbol,
+*   MATCH_VAR.MOD1.TOP_SYM_P.
+}
+  match_var.mod1.next_p := nil;        {no additional modifiers}
+  match_var.mod1.modtyp := sst_var_modtyp_top_k; {this is top level modifier}
+  match_var.mod1.top_sym_p := nil;     {var sym will be defined for each routine later}
+  match_var.dtype_p := sst_dtype_bool_p; {data type is boolean}
+  match_var.vtype := sst_vtype_var_k;  {this var reference is to a regular variable}
 {
 *   Create the module for all the routines generated from the SYN file.
 }
