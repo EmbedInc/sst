@@ -200,10 +200,3 @@ procedure sst_r_syn_utitem (           {process UTITEM syntax}
   in out  jtarg: jump_targets_t;       {execution block jump targets info}
   in      sym_mflag: sst_symbol_t);    {desc of parent MFLAG variable symbol}
   val_param; extern;
-{
-*   Entry points of routines resulting from the SYN.SYN file that we
-*   call explicitly.
-}
-procedure sst_r_syn_sy_command (       {process top level SYN file command}
-  out     mflag: syo_mflag_k_t);       {syntax matched yes/no, use SYO_MFLAG_xxx_K}
-  extern;

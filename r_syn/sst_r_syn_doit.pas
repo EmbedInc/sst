@@ -27,11 +27,6 @@ var
 
 label
   loop_cmd, eod;
-
-function sst_r_syn_sy_command (        {declare the top level syntax parsing routine}
-  in out  syn: syn_t)                  {SYN library use state}
-  :boolean;                            {syntax matched}
-  val_param; extern;
 {
 ********************************************************************************
 *
@@ -94,7 +89,7 @@ begin
 loop_cmd:
   match := syn_parse_next (            {parse next command from input file}
     syn_p^,                            {our SYN library use state}
-    addr(sst_r_syn_sy_command));       {top level parsing routine to call}
+    addr(syn_chsyn_command));          {top level parsing routine to call}
   if not match then begin              {syntax error encountered ?}
     syn_parse_err_reparse (syn_p^);    {do error re-parse}
     end;
