@@ -141,32 +141,30 @@ begin
 *
 *   Write syntax checking body of routine.
 *
-*   Set up root jump targets.  These will all be "fall thru" with MFLAG
+*   Set up root jump targets.  These will all be "fall thru" with MATCH
 *   properly set.
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-  jtarg.yes.flags := [jflag_fall_k, jflag_mfset_k];
+  jtarg.yes.flags := [jflag_fall_k, jflag_mset_k];
   jtarg.yes.lab_p := nil;
-  jtarg.no.flags := [jflag_fall_k, jflag_mfset_k];
+  jtarg.no.flags := [jflag_fall_k, jflag_mset_k];
   jtarg.no.lab_p := nil;
-  jtarg.err.flags := [jflag_fall_k, jflag_mfset_k];
+  jtarg.err.flags := [jflag_fall_k, jflag_mset_k];
   jtarg.err.lab_p := nil;
 {
 *   Process EXPRESSION syntax.
 }
+
+
+
+
+
+
+
+
+
+
+
+
   syo_get_tag_msg (                    {get tag for symbol expression}
     tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
   if tag <> 1 then syo_error_tag_unexp (tag, str_h);

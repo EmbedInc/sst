@@ -141,7 +141,7 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
 procedure sst_r_syn_goto (             {go to jump targets, as required}
   in out  jtarg: jump_targets_t;       {indicates where execution is to end up}
   in      flags: jtarg_t;              {indicates which jump targets to use}
-  in      sym_mflag: sst_symbol_t);    {handle to MFLAG symbol}
+  in      sym_mflag: sst_symbol_t);    {handle to MATCHED variable symbol}
   val_param; extern;
 
 procedure sst_r_syn_int (              {make new interger variable}
