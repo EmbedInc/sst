@@ -97,7 +97,7 @@ begin
   *   Data types.
   }
   sym_syn_t_p := lookup_symbol ('syn_t');
-  sym_charcase_t_p := lookup_symbol ('syn_charcase_t');
+  sym_charcase_t_p := lookup_symbol ('syn_charcase_k_t');
   sym_int_p := lookup_symbol ('sys_int_machine_t');
   {
   *   Constants.
