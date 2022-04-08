@@ -102,7 +102,12 @@ begin
 *   Write code for mandatory initialization before any syntax checking is done.
 }
   {
-  *   Create local boolean variable MATCH.
+  *   Create local boolean variable MATCH.  Since it is a local variable, MATCH
+  *   is created separately for each subroutine.  However, the variable
+  *   descriptor, MATCH_VAR, is static in the main common block, and is re-used
+  *   to be the descriptor for the variable in the subroutine being currently
+  *   defined.  The static state in MATCH_VAR was initialized once, with only
+  *   the pointer to the symbol changing for each use.
   }
   sst_symbol_new_name (                {create the local variable MATCH symbol}
     string_v('match'(0)),              {name of symbol to create}
@@ -153,35 +158,28 @@ begin
 {
 *   Process EXPRESSION syntax.
 }
+  tag := syn_trav_next_tag (syn_p^);   {get tag for symbol expression}
+  if tag <> 1 then begin
+    syn_msg_tag_bomb (syn_p^, '', '', nil, 0);
+    end;
 
-
-
-
-
-
-
-
-
-
-
-
-  syo_get_tag_msg (                    {get tag for symbol expression}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  if tag <> 1 then syo_error_tag_unexp (tag, str_h);
-
-  sst_r_syn_expression (               {process EXPRESSION syntax}
-    jtarg,                             {jump targets}
-    mflag_p^);                         {descriptor for MFLAG variable to set}
-
+  sst_r_syn_expression (jtarg);        {process EXPRESSION syntax}
   sst_r_syn_jtargets_done (jtarg);     {create any neccessary labels here}
 {
 **************************************
 *
-*   Create opcodes for the syntax routine exit code.  This will be a call
-*   to SYO_P_END_ROUTINE with the MFLAG variable.
+*   End this syntax construction.  This is done by adding a call to
+*   SYN_P_CONSTR_END.
 }
-  sst_call (sym_end_routine_p^);       {create call to SYO_P_END_ROUTINE}
-  sst_call_arg_var (sst_opc_p^, mflag_p^); {add call argument for MFLAG variable}
+  sst_call (sym_constr_start_p^);      {create call to SYN_P_CONSTR_START}
+
+  sst_call_arg_var (                   {add SYN argument}
+    sst_opc_p^,                        {opcode to add call argument to}
+    data_p^.sym_p^.proc.first_arg_p^.sym_p^); {variable being passed}
+
+  sst_call_arg_var (                   {pass the MATCH value resulting from this syntax}
+    sst_opc_p^,                        {opcode to add call argument to}
+    match_var.mod1.top_sym_p^);        {variable being passed}
 {
 **************************************
 *
@@ -192,7 +190,7 @@ begin
   sst_scope_p := scope_old_p;          {restore old scope and name space}
   sst_names_p := names_old_p;
   syo_level_up;                        {back up from DEFINE syntax}
-  def_syo_p := nil;                    {no syntax currently being defined}
+  def_syn_p := nil;                    {no syntax currently being defined}
   return;
 {
 *   The syntax tree is not as expected.  We assume this is due to a syntax

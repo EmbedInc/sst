@@ -69,7 +69,7 @@ var (sst_r_syn)
   seq_int: sys_int_machine_t;          {sequence number of next integer variable}
   lab_fall_k: sst_symbol_p_t;          {"constant" for fall thru jump target}
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
-  match_var: sst_var_t;                {data for MATCH local boolean variable}
+  match_var: sst_var_t;                {local MATCH var in curr subroutine}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
@@ -104,7 +104,7 @@ var (sst_r_syn)
   sym_ichar_eof_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOF_K symbol}
   sym_ichar_eod_p: sst_symbol_p_t;     {pnt to SYN_ICHAR_EOD_K symbol}
 {
-*   Expressions with fixed values we may want to use.
+*   Expressions with fixed values we will use.
 }
   exp_true_p: sst_exp_p_t;             {pnt to expression with fixed TRUE value}
   exp_false_p: sst_exp_p_t;            {pnt to expression with fixed FALSE value}
@@ -113,10 +113,14 @@ var (sst_r_syn)
 *
 *   Private entry points for SYN front end.
 }
-procedure sst_r_syn_opc_assign (       {make opcode to assign symbol to variable}
-  in      sym1: sst_symbol_t;          {variable to assign value to}
-  in      sym2: sst_symbol_t);         {symbol with value to assign}
-  extern;
+procedure sst_r_syn_assign_exp (       {make opcode to assign expression to variable}
+  in      var v: sst_var_t;            {variable to assign value to}
+  in      var exp: sst_exp_t);         {expression to assign to the variable}
+  val_param; extern;
+
+procedure sst_r_syn_assign_match (     {make opcode to assign true/false to MATCH}
+  in      tf: boolean);                {the value to assign to MATCH}
+  val_param; extern;
 
 procedure sst_r_syn_comp_var_int (     {create exp comparing var to integer constant}
   in      sym1: sst_symbol_t;          {variable for first term in comparison}
@@ -187,8 +191,7 @@ procedure sst_r_syn_define;            {process DEFINE syntax}
   extern;
 
 procedure sst_r_syn_expression (       {process EXPRESSION syntax}
-  in out  jtarg: jump_targets_t;       {execution block jump targets info}
-  in      sym_mflag: sst_symbol_t);    {desc of parent MFLAG variable symbol}
+  in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param; extern;
 
 procedure sst_r_syn_item (             {process ITEM syntax}

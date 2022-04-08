@@ -3,13 +3,13 @@ rem
 rem   Build everything from this source directory.
 rem
 setlocal
-call godir "(cog)source/sst/r_pas"
-call build
+rem call godir "(cog)source/sst/r_pas"
+rem call build
 call godir "(cog)source/sst/r_syn"
 call build
-call godir "(cog)source/sst/w_c"
-call build
+rem call godir "(cog)source/sst/w_c"
+rem call build
 
 call godir "(cog)source/sst"
-call build_lib
+rem call build_lib
 call build_progs

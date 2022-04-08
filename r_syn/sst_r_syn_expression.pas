@@ -1,4 +1,4 @@
-{   Subroutine SST_R_SYN_EXPRESSION (JTARG, SYM_MFLAG)
+{   Subroutine SST_R_SYN_EXPRESSION (JTARG)
 *
 *   Process EXPRESSION syntax.
 }
@@ -7,13 +7,23 @@ define sst_r_syn_expression;
 %include 'sst_r_syn.ins.pas';
 
 procedure sst_r_syn_expression (       {process EXPRESSION syntax}
-  in out  jtarg: jump_targets_t;       {execution block jump targets info}
-  in      sym_mflag: sst_symbol_t);    {desc of parent MFLAG variable symbol}
+  in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param;
 
+{***** TEMP DEBUG *****
+*
+*   Just set MATCH to TRUE.  This allows testing the higher levels.
+}
+begin
+  sst_r_syn_assign_match (true);
+  end;
+{
+*
+****** END DEBUG *****}
+
+(*
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syo_string_t;                 {handle to string from input file}
   jt: jump_targets_t;                  {jump targets for nested routines}
 
 begin
@@ -84,3 +94,4 @@ otherwise
 
   syo_level_up;                        {back up from EXPRESSION syntax}
   end;
+*)
