@@ -59,7 +59,6 @@ type
 
 var (sst_r_syn)
   syn_p: syn_p_t;                      {points to our SYN library use state}
-  debug: sys_int_machine_t;            {debug output level, 0 = none}
   table_sym: string_hash_handle_t;     {handle to SYN symbols symbol table}
   prefix: string_var32_t;              {prefix for default subroutine names}
   def_syn_p: symbol_data_p_t;          {to sym data for syntax being defined}

@@ -15,7 +15,7 @@ label
 begin
   sys_error_none (stat);               {init to no errors}
 
-  if not syn_trav_down (syn_p^)        {down into COMMAND syntax level}
+  if not syn_trav_next_down (syn_p^)   {down into COMMAND syntax level}
     then goto trerr;
 
   case syn_trav_next_tag(syn_p^) of    {which tag ?}

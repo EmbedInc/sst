@@ -94,6 +94,7 @@ loop_cmd:
     syn_parse_err_reparse (syn_p^);    {do error re-parse}
     end;
 
+  syn_trav_init (syn_p^);              {init for traversing syntax tree}
   sst_r_syn_command (stat);            {process this SYN file command}
   if sys_stat_match (sst_subsys_k, sst_stat_eod_k, stat) {hit end of input data ?}
     then goto eod;

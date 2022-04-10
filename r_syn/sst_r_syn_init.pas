@@ -121,8 +121,6 @@ begin
     sst_scope_root_p^.mem_p^,          {parent memory context}
     syn_p);                            {return pointer to new library use state}
 
-  debug := 0;                          {init to no debug output messages}
-
   string_hash_create (                 {create hash table for SYN file symbols}
     table_sym,                         {hash table to initialize}
     sst_r_syn_nbuck_k,                 {number of buckets in hash table}

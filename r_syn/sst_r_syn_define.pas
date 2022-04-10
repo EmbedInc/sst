@@ -45,6 +45,9 @@ begin
     end;
   syn_trav_tag_string (syn_p^, syname); {get name of symbol being defined}
   string_upcase (syname);              {SYN symbol names are case-insensitive}
+  if sst_level_debug >= 1 then begin
+    writeln ('Defining ', syname.str:syname.len);
+    end;
 
   string_hash_ent_lookup (             {look up name in SYN symbol table}
     table_sym, syname, name_p, data_p);
@@ -60,10 +63,15 @@ begin
     sys_msg_parm_vstr (msg_parm[1], syname);
     syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'symbol_already_defined', msg_parm, 1);
     end;
-  def_syn_p := data_p;                 {save pnt to data about syntax being defined}
-  if debug >= 1 then begin
-    writeln ('Defining ', syname.str:syname.len);
+
+  data_p^.sym_p^.flags :=              {subroutine symbol will now be defined}
+    data_p^.sym_p^.flags + [sst_symflag_def_k];
+  if sst_symflag_global_k in data_p^.sym_p^.flags then begin {subr globally known ?}
+    data_p^.sym_p^.flags :=            {explicitly flag this subroutine as used}
+      data_p^.sym_p^.flags + [sst_symflag_used_k];
     end;
+
+  def_syn_p := data_p;                 {save pnt to data about syntax being defined}
 {
 *   Set up for writing the syntax parsing subroutine.
 }
@@ -72,12 +80,6 @@ begin
   sst_opc_p^.str_h.first_char := data_p^.sym_p^.char_h;
   sst_opc_p^.str_h.last_char := sst_opc_p^.str_h.first_char;
   sst_opc_p^.rout_sym_p := data_p^.sym_p;
-  data_p^.sym_p^.flags :=              {subroutine symbol will now be defined}
-    data_p^.sym_p^.flags + [sst_symflag_def_k];
-  if sst_symflag_global_k in data_p^.sym_p^.flags then begin {subr globally known ?}
-    data_p^.sym_p^.flags :=            {explicitly flag this subroutine as used}
-      data_p^.sym_p^.flags + [sst_symflag_used_k];
-    end;
 
   scope_old_p := sst_scope_p;          {save current scope pointers}
   names_old_p := sst_names_p;
@@ -171,7 +173,7 @@ begin
 *   End this syntax construction.  This is done by adding a call to
 *   SYN_P_CONSTR_END.
 }
-  sst_call (sym_constr_start_p^);      {create call to SYN_P_CONSTR_START}
+  sst_call (sym_constr_end_p^);        {create call to SYN_P_CONSTR_END}
 
   sst_call_arg_var (                   {add SYN argument}
     sst_opc_p^,                        {opcode to add call argument to}
@@ -189,8 +191,12 @@ begin
   sst_opcode_pos_pop;                  {back from subroutine definition opcode}
   sst_scope_p := scope_old_p;          {restore old scope and name space}
   sst_names_p := names_old_p;
-  syo_level_up;                        {back up from DEFINE syntax}
+  if not syn_trav_up (syn_p^)          {back up from DEFINE syntax}
+    then goto trerr;
   def_syn_p := nil;                    {no syntax currently being defined}
+  if sst_level_debug >= 2 then begin
+    writeln ('  returning from DEFINE');
+    end;
   return;
 {
 *   The syntax tree is not as expected.  We assume this is due to a syntax
