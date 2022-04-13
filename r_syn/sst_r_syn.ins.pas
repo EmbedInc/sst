@@ -69,6 +69,7 @@ var (sst_r_syn)
   lab_fall_k: sst_symbol_p_t;          {"constant" for fall thru jump target}
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
   match_var: sst_var_t;                {local MATCH var in curr subroutine}
+  match_exp_p: sst_exp_p_t;            {pnt to expression for reading MATCH value}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }

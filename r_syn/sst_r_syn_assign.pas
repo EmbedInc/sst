@@ -7,7 +7,7 @@ define sst_r_syn_assign_match;
 {
 ********************************************************************************
 *
-*   Subroutine SST_R_SYN_ASSIGN_EXP (SYM, EXP)
+*   Subroutine SST_R_SYN_ASSIGN_EXP (V, EXP)
 *
 *   Write SST opcode to assign the expression EXP to the variable SYM.
 }
