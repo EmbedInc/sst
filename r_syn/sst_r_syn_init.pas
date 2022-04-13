@@ -139,17 +139,6 @@ begin
   lab_fall_k := univ_ptr(addr(lab_fall_k));
   lab_same_k := univ_ptr(addr(lab_same_k));
 {
-*   Init the static fields of the descriptor for the variable MATCH that will be
-*   local to all syntax parsing routines.  The only field that needs to be
-*   updated each new routine is the pointer to the variable symbol,
-*   MATCH_VAR.MOD1.TOP_SYM_P.
-}
-  match_var.mod1.next_p := nil;        {no additional modifiers}
-  match_var.mod1.modtyp := sst_var_modtyp_top_k; {this is top level modifier}
-  match_var.mod1.top_sym_p := nil;     {var sym will be defined for each routine later}
-  match_var.dtype_p := sst_dtype_bool_p; {data type is boolean}
-  match_var.vtype := sst_vtype_var_k;  {this var reference is to a regular variable}
-{
 *   Create the module for all the routines generated from the SYN file.
 }
   sst_symbol_new_name (                {create module name symbol}

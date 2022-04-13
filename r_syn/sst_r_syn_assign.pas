@@ -38,10 +38,10 @@ procedure sst_r_syn_assign_match (     {make opcode to assign true/false to MATC
 begin
   if tf
     then begin
-      sst_r_syn_assign_exp (match_var, exp_true_p^);
+      sst_r_syn_assign_exp (match_var_p^, exp_true_p^);
       end
     else begin
-      sst_r_syn_assign_exp (match_var, exp_false_p^);
+      sst_r_syn_assign_exp (match_var_p^, exp_false_p^);
       end
     ;
   end;

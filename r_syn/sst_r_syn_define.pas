@@ -107,11 +107,7 @@ begin
 }
   {
   *   Create local boolean variable MATCH.  Since it is a local variable, MATCH
-  *   is created separately for each subroutine.  However, the variable
-  *   descriptor, MATCH_VAR, is static in the main common block, and is re-used
-  *   to be the descriptor for the variable in the subroutine being currently
-  *   defined.  The static state in MATCH_VAR was initialized once, with only
-  *   the pointer to the symbol changing for each use.
+  *   is created separately for each subroutine.
   }
   sst_symbol_new_name (                {create the local variable MATCH symbol}
     string_v('match'(0)),              {name of symbol to create}
@@ -127,7 +123,18 @@ begin
   sym_p^.var_com_p := nil;             {not in a common block}
   sym_p^.var_next_p := nil;
 
-  match_var.mod1.top_sym_p := sym_p;   {set symbol for curr local MATCH variable}
+  sst_mem_alloc_scope (                {allocate mem for variable descriptor}
+    sizeof(match_var_p^), match_var_p);
+
+  match_var_p^.mod1.next_p := nil;     {no additional modifiers}
+  match_var_p^.mod1.modtyp := sst_var_modtyp_top_k; {this is top level modifier}
+  match_var_p^.mod1.top_str_h.first_char.crange_p := nil;
+  match_var_p^.mod1.top_sym_p := sym_p; {symbol being referenced}
+
+  match_var_p^.dtype_p := sst_dtype_bool_p; {data type is boolean}
+  match_var_p^.rwflag :=               {variable can be read and written}
+    [sst_rwflag_read_k, sst_rwflag_write_k];
+  match_var_p^.vtype := sst_vtype_var_k; {this var reference is to a regular variable}
 
   match_exp_p := sst_exp_make_var (sym_p^); {make expression for MATCH value}
   {
@@ -183,7 +190,7 @@ begin
 
   sst_call_arg_var (                   {pass the MATCH value resulting from this syntax}
     sst_opc_p^,                        {opcode to add call argument to}
-    match_var.mod1.top_sym_p^);        {variable being passed}
+    match_var_p^.mod1.top_sym_p^);     {variable being passed}
 {
 **************************************
 *
