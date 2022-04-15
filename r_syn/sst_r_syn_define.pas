@@ -21,7 +21,6 @@ var
   scope_old_p: sst_scope_p_t;          {saved pointer to scope before subroutine}
   names_old_p: sst_scope_p_t;          {saved pointer to names space before subr}
   jtarg: jump_targets_t;               {jump targets for subordinate syntax routines}
-  var_p: sst_var_p_t;                  {scratch pointer to SST variable}
   msg_parm:                            {parameter references for messages}
     array[1..max_msg_parms] of sys_parm_msg_t;
   stat: sys_err_t;                     {completion status}
@@ -107,7 +106,8 @@ begin
 }
   {
   *   Create local boolean variable MATCH.  Since it is a local variable, MATCH
-  *   is created separately for each subroutine.
+  *   is created separately for each subroutine.  The MATCH variable is also set
+  *   up to automatically supply the function return value.
   }
   sst_symbol_new_name (                {create the local variable MATCH symbol}
     string_v('match'(0)),              {name of symbol to create}
@@ -115,13 +115,13 @@ begin
     stat);
   syn_error_bomb (syn_p^, stat, '', '', nil, 0);
 
-  sym_p^.symtype := sst_symtype_var_k; {this symbol is a variable}
-  sym_p^.var_dtype_p := sst_dtype_bool_p; {set pointer to the data type}
-  sym_p^.var_val_p := nil;             {no initial value expression}
-  sym_p^.var_arg_p := nil;             {this variable is not a dummy argument}
-  sym_p^.var_proc_p := nil;
+  sym_p^.symtype := sst_symtype_var_k; {symbol looks like a variable inside routine}
+  sym_p^.var_dtype_p := func_p^.proc.dtype_func_p; {same a func return val data type}
+  sym_p^.var_val_p := nil;             {no initial value}
+  sym_p^.var_arg_p := nil;             {no dummy argument descriptor}
+  sym_p^.var_proc_p := addr(func_p^.proc); {point to the routine descriptor}
   sym_p^.var_com_p := nil;             {not in a common block}
-  sym_p^.var_next_p := nil;
+  sym_p^.var_next_p := nil;            {no next var in common block}
 
   sst_mem_alloc_scope (                {allocate mem for variable descriptor}
     sizeof(match_var_p^), match_var_p);
@@ -137,6 +137,8 @@ begin
   match_var_p^.vtype := sst_vtype_var_k; {this var reference is to a regular variable}
 
   match_exp_p := sst_exp_make_var (sym_p^); {make expression for MATCH value}
+
+  func_p^.proc_funcvar_p := sym_p;     {variable that is function return value inside routine}
   {
   *   Call SYN_P_CONSTR_START.
   }
@@ -194,25 +196,6 @@ begin
 {
 **************************************
 *
-*   Set the syntax construction function return value.  This is the same as
-*   the value of MATCH at this point.
-}
-  sst_mem_alloc_scope (                {allocate mem for variable descriptor}
-    sizeof(var_p^), var_p);
-
-  var_p^.mod1.next_p := nil;           {no subsequent modifier in chaing}
-  var_p^.mod1.modtyp := sst_var_modtyp_top_k; {this is top modifier}
-  var_p^.mod1.top_str_h.first_char.crange_p := nil;
-  var_p^.mod1.top_sym_p := func_p^.proc_funcvar_p; {symbol being referenced}
-
-  var_p^.dtype_p := var_p^.mod1.top_sym_p^.var_dtype_p; {data type}
-  var_p^.rwflag := [sst_rwflag_write_k];
-  var_p^.vtype := sst_vtype_var_k;
-
-  sst_r_syn_assign_exp (var_p^, match_exp_p^); {write the assignment}
-{
-**************************************
-*
 *   Restore state to before subroutine definition.
 }
   sst_opcode_pos_pop;                  {back from executable opcodes in subroutine}
@@ -225,6 +208,10 @@ begin
   if sst_level_debug >= 2 then begin
     writeln ('  returning from DEFINE');
     end;
+
+  match_var_p := nil;                  {local MATCH var doesn't exist anymore}
+  match_exp_p := nil;
+
   return;
 {
 *   The syntax tree is not as expected.  We assume this is due to a syntax

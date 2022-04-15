@@ -22,7 +22,6 @@ var
   name_p: string_var_p_t;              {pointer to name in hash table entry}
   data_p: symbol_data_p_t;             {pointer to user data in hash table entry}
   func_p: sst_symbol_p_t;              {pnt to syntax parsing function being defined}
-  fret_p: sst_symbol_p_t;              {pnt to local var that is function return value}
   sym_p: sst_symbol_p_t;               {scratch pointer to a SST symbol}
   arg_p: sst_proc_arg_p_t;             {pointer to info about subroutine argument}
   dt_p: sst_dtype_p_t;                 {scratch pointer to data type descriptor}
@@ -174,23 +173,6 @@ done_opt_tags:                         {done processing optional tags}
   dt_p^.size_align := 0;
   dt_p^.proc_p := addr(func_p^.proc);  {set pointer to procedure descriptor}
   {
-  *   Create the "variable" that is the function return value as seen inside the
-  *   routine.  FRET_P will be left pointing to the variable symbol.
-  }
-  sst_symbol_new_name (                {create symbol for function return "variable}
-    func_p^.name_in_p^,                {same name as the function name}
-    fret_p,                            {returned pointer to symbol descriptor}
-    stat);
-  sys_error_abort (stat, '', '', nil, 0);
-
-  fret_p^.symtype := sst_symtype_var_k; {symbol looks like a variable inside routine}
-  fret_p^.var_dtype_p := sst_dtype_bool_p; {set the data type}
-  fret_p^.var_val_p := nil;            {no initial value}
-  fret_p^.var_arg_p := nil;            {no dummy argument descriptor}
-  fret_p^.var_proc_p := addr(func_p^.proc); {point to the routine descriptor}
-  fret_p^.var_com_p := nil;            {not in a common block}
-  fret_p^.var_next_p := nil;           {no next var in common block}
-  {
   *   Fill in the procedure descriptor for the syntax parsing function that will
   *   be associated with the SYN symbol being declared.  FUNC_P is pointing to
   *   the procedure descriptor to fill in.
@@ -200,14 +182,14 @@ done_opt_tags:                         {done processing optional tags}
   func_p^.flags := flags;              {init EXTERN, etc, as known now}
 
   func_p^.proc.sym_p := func_p;        {point routine descriptor to name symbol}
-  func_p^.proc.dtype_func_p := fret_p^.var_dtype_p; {function value data type}
+  func_p^.proc.dtype_func_p := sst_dtype_bool_p; {function value data type}
   func_p^.proc.n_args := 1;            {number of arguments the routine takes}
   func_p^.proc.flags := [];            {init separate flags}
   func_p^.proc.first_arg_p := arg_p;   {point to first argument in list}
 
   func_p^.proc_scope_p := sst_scope_p; {scope inside the routine}
   func_p^.proc_dtype_p := dt_p;        {routine's "data type"}
-  func_p^.proc_funcvar_p := fret_p;    {variable that is function return value inside routine}
+  func_p^.proc_funcvar_p := nil;       {init to no var that is func ret value yet}
 
   sst_scope_old;                       {pop back from subroutine's scope}
   return;

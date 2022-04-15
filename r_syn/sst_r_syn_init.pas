@@ -138,6 +138,8 @@ begin
   seq_int := 1;
   lab_fall_k := univ_ptr(addr(lab_fall_k));
   lab_same_k := univ_ptr(addr(lab_same_k));
+  match_var_p := nil;
+  match_exp_p := nil;
 {
 *   Create the module for all the routines generated from the SYN file.
 }
