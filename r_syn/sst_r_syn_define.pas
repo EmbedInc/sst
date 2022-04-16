@@ -15,6 +15,10 @@ var
   tag: sys_int_machine_t;              {tag from syntax tree}
   syname: string_var32_t;              {name of syntax symbol being defined}
   sym_p: sst_symbol_p_t;               {scratch pointer to SST symbol}
+  fname: string_var32_t;               {name of field looking for}
+  field_p: sst_symbol_p_t;             {scratch pointer to field in record}
+  mod_p: sst_var_mod_p_t;              {scratch pointer to variable modifier}
+  var_p: sst_var_p_t;                  {scratch SST variable pointer}
   name_p: string_var_p_t;              {pnt to name in hash table entry}
   data_p: symbol_data_p_t;             {pnt to hash table data for syn constr symbol}
   func_p: sst_symbol_p_t;              {pnt to SST symbol for the syntax parsing function}
@@ -29,7 +33,8 @@ label
   trerr;
 
 begin
-  syname.max := sizeof(syname.str);    {init local var strings}
+  syname.max := size_char(syname.str); {init local var strings}
+  fname.max := size_char(fname.str);
 
   if not syn_trav_next_down (syn_p^)   {down into DEFINE syntax}
     then goto trerr;
@@ -100,15 +105,10 @@ begin
   seq_label := 1;
   seq_int := 1;
 {
-**************************************
-*
-*   Write code for mandatory initialization before any syntax checking is done.
+*   Create local boolean variable MATCH.  Since it is a local variable, MATCH is
+*   created separately for each subroutine.  The MATCH variable is also set up
+*   to automatically supply the function return value.
 }
-  {
-  *   Create local boolean variable MATCH.  Since it is a local variable, MATCH
-  *   is created separately for each subroutine.  The MATCH variable is also set
-  *   up to automatically supply the function return value.
-  }
   sst_symbol_new_name (                {create the local variable MATCH symbol}
     string_v('match'(0)),              {name of symbol to create}
     sym_p,                             {returned pointer to the new symbol}
@@ -139,6 +139,71 @@ begin
   match_exp_p := sst_exp_make_var (sym_p^); {make expression for MATCH value}
 
   func_p^.proc_funcvar_p := sym_p;     {variable that is function return value inside routine}
+{
+*   Create the expression that is the value of SYN.ERR_END in the parsing
+*   function being built.  SYM_ERROR_P is set pointing to the expression.
+}
+  string_vstring (fname, 'err_end'(0), -1); {make name of field looking for}
+  sym_p := func_p^.proc.first_arg_p^.sym_p; {get pointer to SYN call argument}
+
+  field_p := sym_p^.dtype_dtype_p^.rec_first_p; {init to first field in SYN}
+  while field_p <> nil do begin        {look for the ERR_END field}
+    if string_equal (field_p^.name_in_p^, fname) then exit;
+    field_p := field_p^.field_next_p;
+    end;
+  if field_p = nil then begin          {didn't find the field ?}
+    writeln ('INTERNAL ERROR: Unable to find field "', fname.str:fname.len, '" in SST_R_SYN_DEFINE.');
+    sys_bomb;
+    end;
+
+  sst_mem_alloc_scope (                {create top level variable descriptor}
+    sizeof(var_p^), var_p);
+  var_p^.mod1.modtyp := sst_var_modtyp_top_k; {top modifier in chain}
+  var_p^.mod1.top_str_h.first_char.crange_p := nil;
+  var_p^.mod1.top_sym_p := sym_p;      {set pointer to root symbol}
+  var_p^.dtype_p := sym_p^.var_dtype_p; {data type of the record}
+  var_p^.rwflag :=                     {only allowed to read the variable}
+    [sst_rwflag_read_k];
+  var_p^.vtype := sst_vtype_var_k;     {this var reference is to a regular variable}
+
+  sst_mem_alloc_scope (                {create second modifier, field within record}
+    sizeof(mod_p^), mod_p);
+  var_p^.mod1.next_p := mod_p;         {link to after the root modifier}
+  mod_p^.next_p := nil;                {no following modifier}
+  mod_p^.modtyp := sst_var_modtyp_field_k; {this mod is for field within record}
+  mod_p^.field_str_h.first_char.crange_p := nil;
+  mod_p^.field_sym_p := field_p;       {point to symbol for the specific field}
+
+  sst_mem_alloc_scope (                {create expression for SYN.ERR_END value}
+    sizeof(sym_error_p^), sym_error_p);
+  sym_error_p^.str_h.first_char.crange_p := nil;
+  sym_error_p^.dtype_p := var_p^.dtype_p; {expression data type}
+  sym_error_p^.dtype_hard := true;     {data type if known and fixed}
+  sym_error_p^.val_eval := false;      {didn't attempt to resolve value}
+  sym_error_p^.val_fnd := false;       {value is not set}
+  sym_error_p^.rwflag := [sst_rwflag_read_k]; {only allowed to read the expression}
+
+  sym_error_p^.term1.next_p := nil;    {no subsequent term in this expression}
+  sym_error_p^.term1.op2 := sst_op2_none_k; {no operator with next term}
+  sym_error_p^.term1.op1 := sst_op1_none_k; {no unary operator on this term}
+  sym_error_p^.term1.ttype := sst_term_var_k; {this term is a variable reference}
+  sym_error_p^.term1.str_h.first_char.crange_p := nil;
+  sym_error_p^.term1.dtype_p := var_p^.dtype_p; {data type of this term}
+  sym_error_p^.term1.dtype_hard := true; {data type is known and fixed}
+  sym_error_p^.term1.val_eval := false; {didn't attempt to resolve value}
+  sym_error_p^.term1.val_fnd := false; {value not set}
+  sym_error_p^.term1.rwflag := [sst_rwflag_read_k]; {only allowed to read}
+  sym_error_p^.term1.var_var_p := var_p; {point to the variable being referenced}
+{
+*   Do other initialization before writing code (creating opcodes) in the
+*   function being defined.
+}
+  sst_r_syn_jtarg_init (jtarg);        {init all jump targets to "fall thru"}
+{
+**************************************
+*
+*   Write code for mandatory initialization before any syntax checking is done.
+}
   {
   *   Call SYN_P_CONSTR_START.
   }
@@ -158,26 +223,18 @@ begin
 **************************************
 *
 *   Write syntax checking body of routine.
-*
-*   Set up root jump targets.  These will all be "fall thru" with MATCH
-*   properly set.
 }
-  jtarg.yes.flags := [jflag_fall_k, jflag_mset_k];
-  jtarg.yes.lab_p := nil;
-  jtarg.no.flags := [jflag_fall_k, jflag_mset_k];
-  jtarg.no.lab_p := nil;
-  jtarg.err.flags := [jflag_fall_k, jflag_mset_k];
-  jtarg.err.lab_p := nil;
-{
-*   Process EXPRESSION syntax.
-}
+  {
+  *   Process EXPRESSION syntax.
+  }
   tag := syn_trav_next_tag (syn_p^);   {get tag for symbol expression}
   if tag <> 1 then begin
     syn_msg_tag_bomb (syn_p^, '', '', nil, 0);
     end;
 
   sst_r_syn_expression (jtarg);        {process EXPRESSION syntax}
-  sst_r_syn_jtargets_done (jtarg);     {create any neccessary labels here}
+
+  sst_r_syn_jtarg_done (jtarg);        {create any neccessary labels here}
 {
 **************************************
 *

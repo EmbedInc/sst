@@ -33,12 +33,6 @@ type
     jflag_indir_k);                    {indirect, resolve with INDIR_P field}
   jflag_t = set of jflag_k_t;
 
-  jtarg_k_t = (                        {all the possible jump target types}
-    jtarg_yes_k,                       {syntax matched}
-    jtarg_no_k,                        {syntax didn't match}
-    jtarg_err_k);                      {error end of syntax on reparse}
-  jtarg_t = set of jtarg_k_t;
-
   jump_target_p_t = ^jump_target_t;
   jump_target_t = record               {describes where execution should jump to}
     flags: jflag_t;                    {set of modifier flags}
@@ -46,6 +40,12 @@ type
       1:(lab_p: sst_symbol_p_t);       {points to label sym, optional for fall thru}
       2:(indir_p: jump_target_p_t);    {points to real jump target descriptor to use}
     end;
+
+  jtarg_k_t = (                        {all the possible jump target types}
+    jtarg_yes_k,                       {syntax matched}
+    jtarg_no_k,                        {syntax didn't match}
+    jtarg_err_k);                      {error end of syntax on reparse}
+  jtarg_t = set of jtarg_k_t;
 
   jump_targets_t = record              {jump targets for each possible block end}
     case integer of
@@ -70,6 +70,7 @@ var (sst_r_syn)
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
   match_var_p: sst_var_p_t;            {pnt to local MATCH var in curr subroutine}
   match_exp_p: sst_exp_p_t;            {pnt to expression for reading MATCH value}
+  sym_error_p: sst_exp_p_t;            {pnt to expression TRUE iff error}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
@@ -142,31 +143,35 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
   out     stat: sys_err_t);            {completion status code}
   extern;
 
-procedure sst_r_syn_goto (             {go to jump targets, as required}
-  in out  jtarg: jump_targets_t;       {indicates where execution is to end up}
-  in      flags: jtarg_t;              {indicates which jump targets to use}
-  in      sym_mflag: sst_symbol_t);    {handle to MATCHED variable symbol}
-  val_param; extern;
-
 procedure sst_r_syn_int (              {make new interger variable}
   out     sym_p: sst_symbol_p_t);      {pointer to symbol descriptor of new var}
   extern;
 
-procedure sst_r_syn_jtarget_sym (      {get or make symbol for jump target label}
-  in out  jt: jump_target_t;           {descriptor for this jump target}
-  out     sym_p: sst_symbol_p_t);      {will point to label symbol descriptor}
-  extern;
-
-procedure sst_r_syn_jtargets_done (    {write implicit labels created by jump targs}
+procedure sst_r_syn_jtarg_done (       {write implicit labels created by jump targs}
   in      targ: jump_targets_t);       {jump targets descriptor now done with}
-  extern;
+  val_param; extern;
 
-procedure sst_r_syn_jtargets_make (    {make new jump targets from old and modifiers}
+procedure sst_r_syn_jtarg_goto (       {go to jump targets, as required}
+  in out  jtarg: jump_targets_t;       {indicates where execution is to end up}
+  in      flags: jtarg_t;              {indicates which jump targets to use}
+  in      sym_mflag: sst_symbol_t);    {handle to MFLAG symbol}
+  val_param; extern;
+
+procedure sst_r_syn_jtarg_init (       {initialize jump targets}
+  out     jtarg: jump_targets_t);      {the set of jump targets to initialize}
+  val_param; extern;
+
+procedure sst_r_syn_jtarg_make (       {make new jump targets from old and modifiers}
   in      targ_in: jump_targets_t;     {old jump targets}
   out     targ_out: jump_targets_t;    {resulting new jump targets}
   in      mod_yes: sst_symbol_p_t;     {modifier for YES branch}
   in      mod_no: sst_symbol_p_t;      {modifier for NO branch}
   in      mod_err: sst_symbol_p_t);    {modifier for ERR branch}
+  val_param; extern;
+
+procedure sst_r_syn_jtarg_sym (        {get or make symbol for jump target label}
+  in out  jt: jump_target_t;           {descriptor for this jump target}
+  out     sym_p: sst_symbol_p_t);      {will point to label symbol descriptor}
   val_param; extern;
 
 procedure sst_r_syn_set_mflag (        {set MFLAG YES if comparison TRUE, else NO}
