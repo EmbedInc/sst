@@ -152,9 +152,8 @@ procedure sst_r_syn_jtarg_done (       {write implicit labels created by jump ta
   val_param; extern;
 
 procedure sst_r_syn_jtarg_goto (       {go to jump targets, as required}
-  in out  jtarg: jump_targets_t;       {indicates where execution is to end up}
-  in      flags: jtarg_t;              {indicates which jump targets to use}
-  in      sym_mflag: sst_symbol_t);    {handle to MFLAG symbol}
+  in out  jtarg: jump_targets_t;       {where to go for the ERR, YES, and NO cases}
+  in      flags: jtarg_t);             {indicates which jump targets to use}
   val_param; extern;
 
 procedure sst_r_syn_jtarg_init (       {initialize jump targets}
