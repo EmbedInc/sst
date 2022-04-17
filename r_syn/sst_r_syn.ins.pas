@@ -124,15 +124,8 @@ procedure sst_r_syn_assign_match (     {make opcode to assign true/false to MATC
   val_param; extern;
 
 procedure sst_r_syn_comp_var_int (     {create exp comparing var to integer constant}
-  in      sym1: sst_symbol_t;          {variable for first term in comparison}
-  in      val: sys_int_machine_t;      {integer value to compare against}
-  in      op: sst_op2_k_t;             {comparison operator}
-  out     exp_p: sst_exp_p_t);         {returned pointer to new expression}
-  val_param; extern;
-
-procedure sst_r_syn_comp_var_sym (     {create exp comparing var to other symbol}
-  in      sym1: sst_symbol_t;          {variable for first term in comparison}
-  in      sym2: sst_symbol_t;          {symbol for second term in comparison}
+  in      sym: sst_symbol_t;           {variable for first term in comparison}
+  in      ival: sys_int_machine_t;     {integer value to compare against}
   in      op: sst_op2_k_t;             {comparison operator}
   out     exp_p: sst_exp_p_t);         {returned pointer to new expression}
   val_param; extern;
@@ -171,14 +164,6 @@ procedure sst_r_syn_jtarg_make (       {make new jump targets from old and modif
 procedure sst_r_syn_jtarg_sym (        {get or make symbol for jump target label}
   in out  jt: jump_target_t;           {descriptor for this jump target}
   out     sym_p: sst_symbol_p_t);      {will point to label symbol descriptor}
-  val_param; extern;
-
-procedure sst_r_syn_set_mflag (        {set MFLAG YES if comparison TRUE, else NO}
-  in      sym1: sst_symbol_t;          {variable for first term in comparison}
-  in      sym2: sst_symbol_t;          {symbol for second term in comparison}
-  in      op: sst_op2_k_t;             {comparison operator}
-  in      use_err: boolean;            {TRUE if OR error flag to comparison}
-  in      sym_mflag: sst_symbol_t);    {handle to MFLAG symbol}
   val_param; extern;
 {
 *

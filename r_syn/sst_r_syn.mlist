@@ -1,6 +1,7 @@
 sst_r_syn_assign.obj
 sst_r_syn_comblock.obj
 sst_r_syn_command.obj
+sst_r_syn_comp.obj
 sst_r_syn_declare.obj
 sst_r_syn_define.obj
 sst_r_syn_doit.obj

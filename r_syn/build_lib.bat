@@ -10,6 +10,7 @@ call build_pasinit
 call src_pas %srcdir% %libname%_assign
 call src_pas %srcdir% %libname%_comblock
 call src_pas %srcdir% %libname%_command
+call src_pas %srcdir% %libname%_comp
 call src_pas %srcdir% %libname%_declare
 call src_pas %srcdir% %libname%_define
 call src_pas %srcdir% %libname%_doit
@@ -18,7 +19,6 @@ call src_pas %srcdir% %libname%_init
 call src_pas %srcdir% %libname%_int
 call src_pas %srcdir% %libname%_jtarg
 
-rem call src_pas %srcdir% %libname%_compare
 rem call src_pas %srcdir% %libname%_item
 rem call src_pas %srcdir% %libname%_utitem
 
