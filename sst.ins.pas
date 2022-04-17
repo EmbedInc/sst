@@ -1011,13 +1011,6 @@ procedure sst_debug_dtype (            {print data about a data type}
   in      detail: boolean);            {TRUE if print detail, not just name}
   extern;
 
-procedure sst_debug_symbol (           {print data about a symbol}
-  in      s: sst_symbol_t);            {symbol to print data about}
-  extern;
-
-procedure sst_debug_symbols;           {list all symbols in symbol tables}
-  extern;
-
 procedure sst_dtype_align (            {set data type alignment}
   in out  dtype: sst_dtype_t;          {data type to set alignment for}
   in      rule_align: sys_int_machine_t); {alignment rule to apply}
@@ -1235,6 +1228,11 @@ procedure sst_sym_dtype_new_out (      {create output symbol that is a data type
   in      size: sys_int_adr_t;         {data type size in machine addresses}
   out     dt_p: sst_dtype_p_t);        {points to new data type descriptor}
   extern;
+
+procedure sst_sym_var (                {make variable descriptor from simple var symbol}
+  in      var sym: sst_symbol_t;       {symbol of a simple variable}
+  out     var_p: sst_var_p_t);         {returned pointer to new variable descriptor}
+  val_param; extern;
 
 procedure sst_sym_var_new_out (        {create output symbol that is a variable}
   in      dtype: sst_dtype_t;          {descriptor for variable's data type}

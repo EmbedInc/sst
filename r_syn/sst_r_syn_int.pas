@@ -9,6 +9,7 @@ define sst_r_syn_int;
 
 procedure sst_r_syn_int (              {make new interger variable}
   out     sym_p: sst_symbol_p_t);      {pointer to symbol descriptor of new var}
+  val_param;
 
 var
   name: string_var32_t;                {name of new variable}
@@ -29,7 +30,7 @@ begin
 
   sym_p^.symtype := sst_symtype_var_k;
   sym_p^.flags := [sst_symflag_def_k];
-  sym_p^.var_dtype_p := sym_int_machine_t_p^.dtype_dtype_p;
+  sym_p^.var_dtype_p := sym_int_p^.dtype_dtype_p;
   sym_p^.var_val_p := nil;
   sym_p^.var_arg_p := nil;
   sym_p^.var_proc_p := nil;

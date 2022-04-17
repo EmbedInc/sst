@@ -42,12 +42,13 @@ sst_set_dtypes_combine.obj
 sst_set_ele_find.obj
 sst_set_val_convert.obj
 sst_strh_info.obj
+sst_sym_dtype_new_out.obj
+sst_sym_var.obj
+sst_sym_var_new_out.obj
 sst_symbol_lookup.obj
 sst_symbol_lookup_name.obj
 sst_symbol_new.obj
 sst_symbol_new_name.obj
-sst_sym_dtype_new_out.obj
-sst_sym_var_new_out.obj
 sst_term_eval.obj
 sst_term_simple.obj
 sst_var_funcname.obj

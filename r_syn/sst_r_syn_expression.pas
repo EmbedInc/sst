@@ -10,12 +10,23 @@ procedure sst_r_syn_expression (       {process EXPRESSION syntax}
   in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param;
 
+var
+  sym_p: sst_symbol_p_t;               {pointer to local integer created here}
+  var_p: sst_var_p_t;                  {pointer to variable reference}
+  exp_p: sst_exp_p_t;                  {pointer to integer expression}
+
+
 {***** TEMP DEBUG *****
 *
-*   Just set MATCH to TRUE.  This allows testing the higher levels.
 }
 begin
-  sst_r_syn_assign_match (true);
+  sst_r_syn_assign_match (true);       {set MATCH to TRUE}
+
+  sst_r_syn_int (sym_p);               {create local integer variable symbol}
+  sst_sym_var (sym_p^, var_p);         {create variable reference from symbol}
+  sst_exp_const_int (27, exp_p);       {make expression for integer constant}
+  sst_r_syn_assign_exp (var_p^, exp_p^); {assign the constant to the variable}
+
   end;
 {
 *

@@ -145,7 +145,7 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
 
 procedure sst_r_syn_int (              {make new interger variable}
   out     sym_p: sst_symbol_p_t);      {pointer to symbol descriptor of new var}
-  extern;
+  val_param; extern;
 
 procedure sst_r_syn_jtarg_done (       {write implicit labels created by jump targs}
   in      targ: jump_targets_t);       {jump targets descriptor now done with}

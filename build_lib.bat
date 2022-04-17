@@ -51,12 +51,13 @@ call src_pas %srcdir% %libname%_set_dtypes_combine
 call src_pas %srcdir% %libname%_set_ele_find
 call src_pas %srcdir% %libname%_set_val_convert
 call src_pas %srcdir% %libname%_strh_info
+call src_pas %srcdir% %libname%_sym_dtype_new_out
+call src_pas %srcdir% %libname%_sym_var
+call src_pas %srcdir% %libname%_sym_var_new_out
 call src_pas %srcdir% %libname%_symbol_lookup
 call src_pas %srcdir% %libname%_symbol_lookup_name
 call src_pas %srcdir% %libname%_symbol_new
 call src_pas %srcdir% %libname%_symbol_new_name
-call src_pas %srcdir% %libname%_sym_dtype_new_out
-call src_pas %srcdir% %libname%_sym_var_new_out
 call src_pas %srcdir% %libname%_term_eval
 call src_pas %srcdir% %libname%_term_simple
 call src_pas %srcdir% %libname%_var_funcname
