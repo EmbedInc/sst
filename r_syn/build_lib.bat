@@ -14,6 +14,7 @@ call src_pas %srcdir% %libname%_comp
 call src_pas %srcdir% %libname%_declare
 call src_pas %srcdir% %libname%_define
 call src_pas %srcdir% %libname%_doit
+call src_pas %srcdir% %libname%_err
 call src_pas %srcdir% %libname%_expression
 call src_pas %srcdir% %libname%_init
 call src_pas %srcdir% %libname%_int

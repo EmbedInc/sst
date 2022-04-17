@@ -5,6 +5,7 @@ sst_r_syn_comp.obj
 sst_r_syn_declare.obj
 sst_r_syn_define.obj
 sst_r_syn_doit.obj
+sst_r_syn_err.obj
 sst_r_syn_expression.obj
 sst_r_syn_init.obj
 sst_r_syn_int.obj

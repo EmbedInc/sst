@@ -72,6 +72,7 @@ var (sst_r_syn)
   match_var_p: sst_var_p_t;            {pnt to local MATCH var in curr subroutine}
   match_exp_p: sst_exp_p_t;            {pnt to expression for reading MATCH value}
   match_not_exp_p: sst_exp_p_t;        {pnt to expression for NOT MATCH}
+  label_err_p: sst_symbol_p_t;         {pnt to error case label, created when needed}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
@@ -136,6 +137,9 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
   in out  gnam: univ string_var_arg_t; {returned as generic name of input file}
   out     stat: sys_err_t);            {completion status code}
   extern;
+
+procedure sst_r_syn_err_check;         {check for err reparse end in syntax checking code}
+  val_param; extern;
 
 procedure sst_r_syn_int (              {make new interger variable}
   out     sym_p: sst_symbol_p_t);      {pointer to symbol descriptor of new var}

@@ -206,6 +206,7 @@ begin
 *   function being defined.
 }
   sst_r_syn_jtarg_init (jtarg);        {init all jump targets to "fall thru"}
+  label_err_p := nil;                  {init to no explicit check for error written}
 {
 **************************************
 *
@@ -245,9 +246,11 @@ begin
 {
 **************************************
 *
-*   End this syntax construction.  This is done by adding a call to
-*   SYN_P_CONSTR_END.
+*   Write common ending code.
 }
+  {
+  *   End this syntax construction.
+  }
   sst_call (sym_constr_end_p^);        {create call to SYN_P_CONSTR_END}
 
   sst_call_arg_var (                   {add SYN argument}
@@ -257,6 +260,17 @@ begin
   sst_call_arg_var (                   {pass the MATCH value resulting from this syntax}
     sst_opc_p^,                        {opcode to add call argument to}
     match_var_p^.mod1.top_sym_p^);     {variable being passed}
+  {
+  *   Write error exit code if an error check was done at least once.
+  }
+  if label_err_p <> nil then begin     {error jump target symbol was created ?}
+    sst_opcode_new;                    {create opcode for the label}
+    sst_opc_p^.opcode := sst_opc_label_k;
+    sst_opc_p^.label_sym_p := label_err_p; {point to label to appear here}
+    label_err_p^.label_opc_p := sst_opc_p; {link label symbol to target opcode}
+
+    sst_r_syn_assign_match (false);    {set function return value to FALSE}
+    end;
 {
 **************************************
 *
