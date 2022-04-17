@@ -70,7 +70,7 @@ var (sst_r_syn)
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
   match_var_p: sst_var_p_t;            {pnt to local MATCH var in curr subroutine}
   match_exp_p: sst_exp_p_t;            {pnt to expression for reading MATCH value}
-  sym_error_p: sst_exp_p_t;            {pnt to expression TRUE iff error}
+  sym_error_p: sst_exp_p_t;            {pnt to exp for error reparse hit end}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
