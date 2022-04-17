@@ -123,6 +123,8 @@ begin
   sym_p^.var_com_p := nil;             {not in a common block}
   sym_p^.var_next_p := nil;            {no next var in common block}
 
+  func_p^.proc_funcvar_p := sym_p;     {variable that is function return value inside routine}
+
   sst_mem_alloc_scope (                {allocate mem for variable descriptor}
     sizeof(match_var_p^), match_var_p);
 
@@ -135,10 +137,15 @@ begin
   match_var_p^.rwflag :=               {variable can be read and written}
     [sst_rwflag_read_k, sst_rwflag_write_k];
   match_var_p^.vtype := sst_vtype_var_k; {this var reference is to a regular variable}
-
+{
+*   Create expressions for the value of MATCH and NOT MATCH.
+}
   match_exp_p := sst_exp_make_var (sym_p^); {make expression for MATCH value}
 
-  func_p^.proc_funcvar_p := sym_p;     {variable that is function return value inside routine}
+  match_not_exp_p := sst_exp_make_var (sym_p^); {init expression for NOT MATCH}
+  match_not_exp_p^.rwflag := [sst_rwflag_read_k]; {expression is only readable}
+  match_not_exp_p^.term1.op1 := sst_op1_not_k; {apply boolean NOT to this term}
+  match_not_exp_p^.term1.rwflag := [sst_rwflag_read_k]; {term is only readable}
 {
 *   Create the expression that is the value of SYN.ERR_END in the parsing
 *   function being built.  SYM_ERROR_P is set pointing to the expression.
@@ -266,8 +273,10 @@ begin
     writeln ('  returning from DEFINE');
     end;
 
-  match_var_p := nil;                  {local MATCH var doesn't exist anymore}
+  sym_error_p := nil;                  {invalidate references into local scope}
+  match_var_p := nil;
   match_exp_p := nil;
+  match_not_exp_p := nil;
 
   return;
 {

@@ -68,9 +68,10 @@ var (sst_r_syn)
   seq_int: sys_int_machine_t;          {sequence number of next integer variable}
   lab_fall_k: sst_symbol_p_t;          {"constant" for fall thru jump target}
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
+  sym_error_p: sst_exp_p_t;            {pnt to exp for error reparse hit end}
   match_var_p: sst_var_p_t;            {pnt to local MATCH var in curr subroutine}
   match_exp_p: sst_exp_p_t;            {pnt to expression for reading MATCH value}
-  sym_error_p: sst_exp_p_t;            {pnt to exp for error reparse hit end}
+  match_not_exp_p: sst_exp_p_t;        {pnt to expression for NOT MATCH}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }

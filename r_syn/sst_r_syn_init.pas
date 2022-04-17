@@ -138,6 +138,7 @@ begin
   seq_int := 1;
   lab_fall_k := univ_ptr(addr(lab_fall_k));
   lab_same_k := univ_ptr(addr(lab_same_k));
+  sym_error_p := nil;
   match_var_p := nil;
   match_exp_p := nil;
 {

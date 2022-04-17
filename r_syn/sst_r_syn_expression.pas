@@ -27,6 +27,8 @@ begin
   sst_exp_const_int (27, exp_p);       {make expression for integer constant}
   sst_r_syn_assign_exp (var_p^, exp_p^); {assign the constant to the variable}
 
+  sst_r_syn_assign_exp (               {assign NOT MATCH to MATCH}
+    match_var_p^, match_not_exp_p^);
   end;
 {
 *
