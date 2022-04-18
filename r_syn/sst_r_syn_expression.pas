@@ -11,92 +11,78 @@ procedure sst_r_syn_expression (       {process EXPRESSION syntax}
   val_param;
 
 var
-  sym_p: sst_symbol_p_t;               {pointer to local integer created here}
-  var_p: sst_var_p_t;                  {pointer to variable reference}
-  exp_p: sst_exp_p_t;                  {pointer to integer expression}
-
-
-{***** TEMP DEBUG *****
-*
-}
-begin
-  sst_r_syn_assign_match (true);       {set MATCH to TRUE}
-
-  sst_r_syn_int (sym_p);               {create local integer variable symbol}
-  sst_sym_var (sym_p^, var_p);         {create variable reference from symbol}
-  sst_exp_const_int (27, exp_p);       {make expression for integer constant}
-  sst_r_syn_assign_exp (var_p^, exp_p^); {assign the constant to the variable}
-
-  sst_r_syn_err_check;                 {add check for err reparse end hit}
-
-  sst_r_syn_assign_exp (               {assign NOT MATCH to MATCH}
-    match_var_p^, match_not_exp_p^);
-  end;
-{
-*
-****** END DEBUG *****}
-
-(*
-var
   tag: sys_int_machine_t;              {tag from syntax tree}
   jt: jump_targets_t;                  {jump targets for nested routines}
 
-begin
-  syo_level_down;                      {down into EXPRESSION syntax}
-  syo_push_pos;                        {save current syntax position}
+label
+  trerr;
 
-  syo_get_tag_msg (                    {get expression format tag}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  syo_pop_pos;                         {restore position to start of EXPRESSION}
-  case tag of
+begin
+  if not syn_trav_next_down (syn_p^)   {down into EXPRESSION syntax}
+    then goto trerr;
+
+  if syn_trav_next(syn_p^) <> syn_tent_sub_k {go to ITEM reference tree entry}
+    then goto trerr;
 {
-**************************************
+*   Temporarily skip over ITEM that always starts the expression, and get the
+*   next tag.  That determines the format of the overall expression, and thereby
+*   how the yes/no answer from ITEM is handled.
+}
+  syn_trav_push (syn_p^);              {save current syntax tree position}
+  tag := syn_trav_next_tag (syn_p^);   {get tag after ITEM}
+  syn_trav_pop (syn_p^);               {restore position to before ITEM}
+{
+*   TAG is the next tag after ITEM.  The syntax tree position is at ITEM.
+}
+  case tag of                          {what is the format of this expression ?}
+{
+****************************************
 *
 *   Expression form is:
 *   ITEM EXPRESSION
 }
 1: begin
-  sst_r_syn_jtargets_make (            {make jump targets for nested routine}
-    jtarg,                             {template jump targets}
-    jt,                                {output jump targets}
-    lab_fall_k,                        {YES action}
-    lab_same_k,                        {NO action}
-    lab_same_k);                       {ERR action}
-  sst_r_syn_item (jt, sym_mflag);      {process ITEM syntax}
-  sst_r_syn_jtargets_done (jt);        {define any implicit labels}
+  sst_r_syn_jtarg_sub (                {make subordinate jump targets for ITEM}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_same_k);                       {same as parent on NO}
+  sst_r_syn_item (jt);                 {process subordinate ITEM syntax}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
-  syo_get_tag_msg (                    {get tag for nested expression}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  sst_r_syn_expression (jtarg, sym_mflag); {process EXPRESSION after ITEM}
+  if syn_trav_next(syn_p^) <> syn_tent_sub_k {to EXPRESSION}
+    then goto trerr;
+
+  sst_r_syn_expression (jtarg);        {process subordinate EXPRESSION syntax}
   end;
 {
-**************************************
+****************************************
 *
 *   Expression form is:
 *   ITEM .or EXPRESSION
 }
 2: begin
-  sst_r_syn_jtargets_make (            {make jump targets for nested routine}
-    jtarg,                             {template jump targets}
-    jt,                                {output jump targets}
-    lab_same_k,                        {YES action}
-    lab_fall_k,                        {NO action}
-    lab_same_k);                       {ERR action}
-  sst_r_syn_item (jt, sym_mflag);      {process ITEM syntax}
-  sst_r_syn_jtargets_done (jt);        {define any implicit labels}
+  sst_r_syn_jtarg_sub (                {make subordinate jump targets for ITEM}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_same_k,                        {to parent on YES}
+    lab_fall_k);                       {continue here on NO}
+  sst_r_syn_item (jt);                 {process subordinate ITEM syntax}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
-  syo_get_tag_msg (                    {get tag for nested expression}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  sst_r_syn_expression (jtarg, sym_mflag); {process EXPRESSION after ITEM}
+  if syn_trav_next(syn_p^) <> syn_tent_sub_k {to EXPRESSION}
+    then goto trerr;
+
+  sst_r_syn_expression (jtarg);        {process subordinate EXPRESSION syntax}
   end;
 {
-**************************************
+****************************************
 *
 *   Expression form is:
 *   ITEM
 }
 3: begin
-  sst_r_syn_item (jtarg, sym_mflag);
+  sst_r_syn_item (jtarg);              {process the item as the whole expression}
   end;
 {
 **************************************
@@ -104,9 +90,19 @@ begin
 *   Unexpected expression format tag value.
 }
 otherwise
-    syo_error_tag_unexp (tag, str_h);
+    discard( syn_trav_next(syn_p^) );  {go to tree entry tag came from}
+    syn_msg_tag_bomb (syn_p^, 'sst_syn_read', 'syerr_expression', nil, 0);
     end;                               {end of expression format cases}
 
-  syo_level_up;                        {back up from EXPRESSION syntax}
+  if not syn_trav_up(syn_p^)           {back up from EXPRESSION syntax}
+    then goto trerr;
+  return;
+{
+*   The syntax tree is not as expected.  We assume this is due to a syntax
+*   error.
+}
+trerr:
+  sys_message ('sst_syn_read', 'syerr_expression');
+  syn_parse_err_show (syn_p^);
+  sys_bomb;
   end;
-*)

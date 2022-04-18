@@ -9,4 +9,6 @@ sst_r_syn_err.obj
 sst_r_syn_expression.obj
 sst_r_syn_init.obj
 sst_r_syn_int.obj
+sst_r_syn_item.obj
 sst_r_syn_jtarg.obj
+sst_r_syn_utitem.obj

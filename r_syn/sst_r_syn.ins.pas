@@ -181,11 +181,9 @@ procedure sst_r_syn_expression (       {process EXPRESSION syntax}
   val_param; extern;
 
 procedure sst_r_syn_item (             {process ITEM syntax}
-  in out  jtarg: jump_targets_t;       {execution block jump targets info}
-  in      sym_mflag: sst_symbol_t);    {desc of parent MFLAG variable symbol}
+  in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param; extern;
 
 procedure sst_r_syn_utitem (           {process UTITEM syntax}
-  in out  jtarg: jump_targets_t;       {execution block jump targets info}
-  in      sym_mflag: sst_symbol_t);    {desc of parent MFLAG variable symbol}
+  in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param; extern;

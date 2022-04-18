@@ -21,6 +21,9 @@ msg syerr_command
 msg syerr_declare
   lan english -def
     Syntax error in .SYMBOL command.
+msg syerr_expression
+  lan english -def
+    Syntax error in syntax expression.
 msg syerr_define
   lan english -def
     Syntax error in .DEFINE command.

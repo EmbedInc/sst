@@ -1,4 +1,4 @@
-{   Subroutine SST_R_SYN_ITEM (JTARG, SYM_MFLAG)
+{   Subroutine SST_R_SYN_ITEM (JTARG)
 *
 *   Process ITEM syntax.
 }
@@ -7,10 +7,22 @@ define sst_r_syn_item;
 %include 'sst_r_syn.ins.pas';
 
 procedure sst_r_syn_item (             {process ITEM syntax}
-  in out  jtarg: jump_targets_t;       {execution block jump targets info}
-  in      sym_mflag: sst_symbol_t);    {desc of parent MFLAG variable symbol}
+  in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param;
 
+var
+  sym_p: sst_symbol_p_t;               {scratch symbol pointer}
+  var_p: sst_var_p_t;                  {scratch variable pointer}
+  exp_p: sst_exp_p_t;                  {scratch expression pointer}
+
+begin
+  sst_r_syn_int (sym_p);               {create integer variable}
+  sst_sym_var (sym_p^, var_p);         {create reference to the variable}
+  sst_exp_const_int (55, exp_p);       {create constant integer expression}
+  sst_r_syn_assign_exp (var_p^, exp_p^); {assign the expression to the variable}
+  end;
+
+(*
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
   str_h: syo_string_t;                 {handle to string from input file}
@@ -77,3 +89,4 @@ otherwise
 
   syo_level_up;                        {back up from ITEM syntax}
   end;
+*)
