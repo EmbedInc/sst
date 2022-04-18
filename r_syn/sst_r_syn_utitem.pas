@@ -20,6 +20,7 @@ begin
   sst_sym_var (sym_p^, var_p);         {create reference to the variable}
   sst_exp_const_int (44, exp_p);       {create constant integer expression}
   sst_r_syn_assign_exp (var_p^, exp_p^); {assign the expression to the variable}
+  sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 
 (*

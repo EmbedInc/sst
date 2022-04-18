@@ -10,67 +10,77 @@ procedure sst_r_syn_item (             {process ITEM syntax}
   in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param;
 
-var
-  sym_p: sst_symbol_p_t;               {scratch symbol pointer}
-  var_p: sst_var_p_t;                  {scratch variable pointer}
-  exp_p: sst_exp_p_t;                  {scratch expression pointer}
+const
+  max_msg_parms = 1;                   {max parameters we can pass to a message}
 
-begin
-  sst_r_syn_int (sym_p);               {create integer variable}
-  sst_sym_var (sym_p^, var_p);         {create reference to the variable}
-  sst_exp_const_int (55, exp_p);       {create constant integer expression}
-  sst_r_syn_assign_exp (var_p^, exp_p^); {assign the expression to the variable}
-
-  sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
-  end;
-
-(*
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
-  str_h: syo_string_t;                 {handle to string from input file}
   jt: jump_targets_t;                  {jump targets for nested routines}
   itag: sys_int_machine_t;             {tag value if item is tagged}
   token: string_var32_t;               {scratch token for number conversion}
+  msg_parm:                            {parameter references for messages}
+    array[1..max_msg_parms] of sys_parm_msg_t;
   stat: sys_err_t;
+
+label
+  trerr;
 
 begin
   token.max := sizeof(token.str);      {init local var string}
-  syo_level_down;                      {down into ITEM syntax}
 
-  syo_push_pos;                        {save position at start of ITEM}
-  syo_get_tag_msg (                    {tag for whether item is tagged or not}
-    tag, str_h, 'sst_syn_read', 'syerr_define', nil, 0);
-  syo_pop_pos;                         {restore position to start of ITEM}
-  case tag of
+  if not syn_trav_next_down (syn_p^)   {down into ITEM syntax}
+    then goto trerr;
+{
+*   Temporarily skip over UNTAGGED_ITEM that always starts the item, and get the
+*   next tag.  That determines the format of the overall item, and thereby
+*   whether to create a tag or not.
+}
+  syn_trav_push (syn_p^);              {save current syntax tree position}
+  if syn_trav_next(syn_p^) <> syn_tent_sub_k {go to UNTAGGED_ITEM tree entry}
+    then goto trerr;
+  tag := syn_trav_next_tag (syn_p^);   {get tag after UNTAGGED_ITEM}
+{
+*   TAG is the next tag after UNTAGGED_ITEM.  The syntax tree position is at the
+*   tag, but the position before UNTAGGED_ITEM is on the stack.
+}
+  case tag of                          {is the item tagged or not ?}
 {
 **************************************
 *
 *   Item is tagged.
 }
 1: begin
-  syo_get_tag_string (str_h, token);   {get tag value string}
+  syn_trav_tag_string (syn_p^, token); {get the tagged string}
   string_t_int (token, itag, stat);    {make tag value in ITAG}
-  syo_error_abort (stat, str_h, '', '', nil, 0);
+  if sys_error(stat) then begin
+    sys_msg_parm_vstr (msg_parm[1], token);
+    syn_error_bomb (syn_p^, stat, 'sst_syn_read', 'tag_string_bad', msg_parm, 1);
+    end;
+  if itag < 1 then begin               {invalid tag value ?}
+    sys_msg_parm_int (msg_parm[1], itag);
+    syn_error_bomb (syn_p^, stat, 'sst_syn_read', 'tag_val_bad', msg_parm, 1);
+    end;
+  syn_trav_pop (syn_p^);               {restore position to UNTAGGED_ITEM}
 
-  sst_call (sym_tag_start_p^);         {create call to SYO_P_TAG_START}
+  sst_call (sym_tag_start_p^);         {write call to start tag}
+  sst_call_arg_var (sst_opc_p^, sym_syn_t_p^); {add SYN argument}
+  sst_call_arg_int (sst_opc_p^, itag); {pass the tag value}
 
-  sst_r_syn_jtargets_make (            {make jump targets for nested routine}
-    jtarg,                             {template jump targets}
-    jt,                                {output jump targets}
-    lab_fall_k,                        {YES action}
-    lab_fall_k,                        {NO action}
-    lab_fall_k);                       {ERR action}
-  sst_r_syn_utitem (jt, sym_mflag);    {process UNTAGGED_ITEM syntax}
-  sst_r_syn_jtargets_done (jt);        {define any implicit labels}
+  sst_r_syn_jtarg_sub (                {make subordinate jump targets for UNTAGGED_ITEM}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_fall_k);                       {fall thru on NO}
+  sst_r_syn_utitem (jt);               {process UNTAGGED_ITEM syntax}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
-  sst_call (sym_tag_end_p^);           {create call to SYO_P_TAG_END}
-  sst_call_arg_var (sst_opc_p^, sym_mflag); {add MFLAG call argument}
-  sst_call_arg_int (sst_opc_p^, itag); {add tag value argument}
+  sst_call (sym_tag_end_p^);           {write call to end tag}
+  sst_call_arg_var (sst_opc_p^, sym_syn_t_p^); {add SYN argument}
+  sst_call_arg_var (                   {pass MATCH}
+    sst_opc_p^,
+    match_var_p^.mod1.top_sym_p^);
 
-  sst_r_syn_goto (                     {go to jump targets, as required}
-    jtarg,                             {jump targets data}
-    [jtarg_yes_k, jtarg_no_k, jtarg_err_k], {which targets to process}
-    sym_mflag);                        {handle to MFLAG variable}
+  sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 **************************************
@@ -78,7 +88,8 @@ begin
 *   Item is untagged.
 }
 2: begin
-  sst_r_syn_utitem (jtarg, sym_mflag); {ITEM resolves to just this UNTAGGED_ITEM}
+  syn_trav_pop (syn_p^);               {restore position to UNTAGGED_ITEM}
+  sst_r_syn_utitem (jtarg);            {ITEM resolves to just this UNTAGGED_ITEM}
   end;
 {
 **************************************
@@ -86,9 +97,18 @@ begin
 *   Unexpected expression format tag value.
 }
 otherwise
-    syo_error_tag_unexp (tag, str_h);
+    syn_msg_tag_bomb (syn_p^, 'sst_syn_read', 'syerr_item', nil, 0);
     end;                               {end of item format cases}
 
-  syo_level_up;                        {back up from ITEM syntax}
+  if not syn_trav_up(syn_p^)           {back up from UNTAGGED_ITEM syntax}
+    then goto trerr;
+  return;
+{
+*   The syntax tree is not as expected.  We assume this is due to a syntax
+*   error.
+}
+trerr:
+  sys_message ('sst_syn_read', 'syerr_item');
+  syn_parse_err_show (syn_p^);
+  sys_bomb;
   end;
-*)

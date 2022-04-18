@@ -20,19 +20,20 @@ label
 begin
   if not syn_trav_next_down (syn_p^)   {down into EXPRESSION syntax}
     then goto trerr;
-
-  if syn_trav_next(syn_p^) <> syn_tent_sub_k {go to ITEM reference tree entry}
-    then goto trerr;
 {
 *   Temporarily skip over ITEM that always starts the expression, and get the
 *   next tag.  That determines the format of the overall expression, and thereby
 *   how the yes/no answer from ITEM is handled.
 }
   syn_trav_push (syn_p^);              {save current syntax tree position}
+
+  if syn_trav_next(syn_p^) <> syn_tent_sub_k {go to ITEM tree entry}
+    then goto trerr;
   tag := syn_trav_next_tag (syn_p^);   {get tag after ITEM}
+
   syn_trav_pop (syn_p^);               {restore position to before ITEM}
 {
-*   TAG is the next tag after ITEM.  The syntax tree position is at ITEM.
+*   TAG is the next tag after ITEM.  The syntax tree position is before ITEM.
 }
   case tag of                          {what is the format of this expression ?}
 {

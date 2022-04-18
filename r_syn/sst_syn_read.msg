@@ -21,12 +21,15 @@ msg syerr_command
 msg syerr_declare
   lan english -def
     Syntax error in .SYMBOL command.
-msg syerr_expression
-  lan english -def
-    Syntax error in syntax expression.
 msg syerr_define
   lan english -def
     Syntax error in .DEFINE command.
+msg syerr_item
+  lan english -def
+    Syntax error in ITEM syntax.
+msg syerr_expression
+  lan english -def
+    Syntax error in syntax expression.
 msg syerr_string
   lan english -def
     Syntax error in string constant.
@@ -60,3 +63,9 @@ msg symbols_unused_show
   lan english -def
     .nfill
     Unused symbols in syntax definition file:
+msg tag_string_bad
+  lan english -def
+    "%p1s" is not a valid tag.
+msg tag_val_bad
+  lan english -def
+    %p1i is not a valid tag value.
