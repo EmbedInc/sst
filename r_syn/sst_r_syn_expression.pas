@@ -50,10 +50,11 @@ begin
   sst_r_syn_item (jt);                 {process subordinate ITEM syntax}
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
-  if syn_trav_next(syn_p^) <> syn_tent_sub_k {to EXPRESSION}
+  if syn_trav_next(syn_p^) <> syn_tent_tag_k {skip over the tag}
     then goto trerr;
 
   sst_r_syn_expression (jtarg);        {process subordinate EXPRESSION syntax}
+  sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ****************************************
@@ -70,10 +71,11 @@ begin
   sst_r_syn_item (jt);                 {process subordinate ITEM syntax}
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
-  if syn_trav_next(syn_p^) <> syn_tent_sub_k {to EXPRESSION}
+  if syn_trav_next(syn_p^) <> syn_tent_tag_k {skip over the tag}
     then goto trerr;
 
   sst_r_syn_expression (jtarg);        {process subordinate EXPRESSION syntax}
+  sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ****************************************
