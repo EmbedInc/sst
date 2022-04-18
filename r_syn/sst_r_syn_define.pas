@@ -242,7 +242,7 @@ begin
 
   sst_r_syn_expression (jtarg);        {process EXPRESSION syntax}
 
-  sst_r_syn_jtarg_done (jtarg);        {create any neccessary labels here}
+  sst_r_syn_jtarg_here (jtarg);        {create any neccessary labels here}
 {
 **************************************
 *

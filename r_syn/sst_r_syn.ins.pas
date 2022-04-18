@@ -29,7 +29,6 @@ type
 
   jflag_k_t = (                        {independent flags in jump target descriptor}
     jflag_fall_k,                      {fall thru, no jump required}
-    jflag_mset_k,                      {MATCHED variable must be set before jump}
     jflag_indir_k);                    {indirect, resolve with INDIR_P field}
   jflag_t = set of jflag_k_t;
 
@@ -41,21 +40,15 @@ type
       2:(indir_p: jump_target_p_t);    {points to real jump target descriptor to use}
     end;
 
+  jump_targets_t = record              {jump targets for each possible block end}
+    yes: jump_target_t;                {where to go on syntax matched}
+    no: jump_target_t;                 {where to go on syntax did not match}
+    end;
+
   jtarg_k_t = (                        {all the possible jump target types}
     jtarg_yes_k,                       {syntax matched}
-    jtarg_no_k,                        {syntax didn't match}
-    jtarg_err_k);                      {error end of syntax on reparse}
+    jtarg_no_k);                       {syntax didn't match}
   jtarg_t = set of jtarg_k_t;
-
-  jump_targets_t = record              {jump targets for each possible block end}
-    case integer of
-      1: (
-        yes: jump_target_t;            {syntax matched}
-        no: jump_target_t;             {syntax did not match}
-        err: jump_target_t);           {error end of syntax encountered on reparse}
-      2: (
-        ar: array[firstof(jtarg_k_t)..lastof(jtarg_k_t)] of jump_target_t);
-    end;
 
 var (sst_r_syn)
   syn_p: syn_p_t;                      {points to our SYN library use state}
@@ -145,30 +138,29 @@ procedure sst_r_syn_int (              {make new interger variable}
   out     sym_p: sst_symbol_p_t);      {pointer to symbol descriptor of new var}
   val_param; extern;
 
-procedure sst_r_syn_jtarg_done (       {write implicit labels created by jump targs}
-  in      targ: jump_targets_t);       {jump targets descriptor now done with}
+procedure sst_r_syn_jtarg_goto (       {go to jump targets, as required}
+  in out  jtarg: jump_targets_t;       {where to go for each case}
+  in      flags: jtarg_t);             {which cases to write code for}
   val_param; extern;
 
-procedure sst_r_syn_jtarg_goto (       {go to jump targets, as required}
-  in out  jtarg: jump_targets_t;       {where to go for the ERR, YES, and NO cases}
-  in      flags: jtarg_t);             {indicates which jump targets to use}
+procedure sst_r_syn_jtarg_here (       {write implicit labels created by jump targs}
+  in      jtarg: jump_targets_t);      {jump targets descriptor now done with}
   val_param; extern;
 
 procedure sst_r_syn_jtarg_init (       {initialize jump targets}
   out     jtarg: jump_targets_t);      {the set of jump targets to initialize}
   val_param; extern;
 
-procedure sst_r_syn_jtarg_make (       {make new jump targets from old and modifiers}
-  in      targ_in: jump_targets_t;     {old jump targets}
-  out     targ_out: jump_targets_t;    {resulting new jump targets}
-  in      mod_yes: sst_symbol_p_t;     {modifier for YES branch}
-  in      mod_no: sst_symbol_p_t;      {modifier for NO branch}
-  in      mod_err: sst_symbol_p_t);    {modifier for ERR branch}
+procedure sst_r_syn_jtarg_sub (        {make new jump targets from old and modifiers}
+  in var  jtarg: jump_targets_t;       {old jump targets}
+  out     subtarg: jump_targets_t;     {resulting new jump targets}
+  in      lab_yes_p: sst_symbol_p_t;   {label to jump to for YES case, or LAB_xxx_K}
+  in      lab_no_p: sst_symbol_p_t);   {label to jump to for NO case, or LAB_xxx_K}
   val_param; extern;
 
 procedure sst_r_syn_jtarg_sym (        {get or make symbol for jump target label}
   in out  jt: jump_target_t;           {descriptor for this jump target}
-  out     sym_p: sst_symbol_p_t);      {will point to label symbol descriptor}
+  out     sym_p: sst_symbol_p_t);      {returned pointing to jump label symbol}
   val_param; extern;
 {
 *
