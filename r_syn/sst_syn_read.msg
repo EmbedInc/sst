@@ -30,6 +30,9 @@ msg syerr_item
 msg syerr_expression
   lan english -def
     Syntax error in syntax expression.
+msg syerr_utitem
+  lan english -def
+    Syntax error in syntax UNTAGGED_ITEM syntax.
 msg syerr_string
   lan english -def
     Syntax error in string constant.

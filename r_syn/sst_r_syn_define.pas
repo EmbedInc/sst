@@ -101,7 +101,6 @@ begin
   sst_opc_p^.str_h.last_char := sst_opc_p^.str_h.first_char;
   sst_opcode_pos_push (sst_opc_p^.exec_p); {future opcodes will be on exec list}
 
-  seq_mflag := 1;                      {init seq numbers for making unique symbols}
   seq_label := 1;
   seq_int := 1;
 {
@@ -146,6 +145,27 @@ begin
   match_not_exp_p^.rwflag := [sst_rwflag_read_k]; {expression is only readable}
   match_not_exp_p^.term1.op1 := sst_op1_not_k; {apply boolean NOT to this term}
   match_not_exp_p^.term1.rwflag := [sst_rwflag_read_k]; {term is only readable}
+{
+*   Create expression for the SYN call argument value.
+}
+  exp_syn_p := sst_exp_make_var (func_p^.proc.first_arg_p^.sym_p^);
+{
+*   Make SST structures for using the SYN_P_ICHAR function.  The variable
+*   reference is created first because it is needed to create the function
+*   value expression.
+}
+  sst_mem_alloc_scope (                {create var reference to SYN_P_ICHAR function}
+    sizeof(var_ichar_p^), var_ichar_p);
+  var_ichar_p^.mod1.next_p := nil;     {no second modifier}
+  var_ichar_p^.mod1.modtyp := sst_var_modtyp_top_k; {this is first (and only) modifier}
+  var_ichar_p^.mod1.top_str_h.first_char.crange_p := nil;
+  var_ichar_p^.mod1.top_sym_p := sym_ichar_p; {pointer to symbol being referenced}
+  var_ichar_p^.dtype_p := sym_ichar_p^.proc_dtype_p; {procedure data type}
+  var_ichar_p^.rwflag := [sst_rwflag_read_k]; {read-only}
+  var_ichar_p^.vtype := sst_vtype_rout_k; {this var reference is to procedure}
+  var_ichar_p^.rout_proc_p := addr(sym_ichar_p^.proc); {points to procedure definition}
+
+  exp_ichar_p := sst_r_syn_exp_ichar;  {expression for SYN_P_ICHAR function value}
 {
 *   Create the expression that is the value of SYN.ERR_END in the parsing
 *   function being built.  SYM_ERROR_P is set pointing to the expression.
@@ -264,6 +284,9 @@ begin
   *   Write error exit code if an error check was done at least once.
   }
   if label_err_p <> nil then begin     {error jump target symbol was created ?}
+    sst_opcode_new;                    {add RETURN to end of previous code}
+    sst_opc_p^.opcode := sst_opc_return_k;
+
     sst_opcode_new;                    {create opcode for the label}
     sst_opc_p^.opcode := sst_opc_label_k;
     sst_opc_p^.label_sym_p := label_err_p; {point to label to appear here}
@@ -286,11 +309,19 @@ begin
   if sst_level_debug >= 2 then begin
     writeln ('  returning from DEFINE');
     end;
-
-  sym_error_p := nil;                  {invalidate references into local scope}
+{
+*   Invalidate globally-visible reference to the local scope of this syntax
+*   parsing function.  This state is re-created for each new parsing function.
+}
+  def_syn_p := nil;
+  exp_syn_p := nil;
+  sym_error_p := nil;
   match_var_p := nil;
   match_exp_p := nil;
   match_not_exp_p := nil;
+  label_err_p := nil;
+  var_ichar_p := nil;
+  exp_ichar_p := nil;
 
   return;
 {

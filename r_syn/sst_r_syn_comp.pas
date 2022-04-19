@@ -2,8 +2,6 @@
 }
 module sst_r_syn_compare;
 define sst_r_syn_comp_var_int;
-define sst_r_syn_comp_var_sym;
-define sst_r_syn_set_mflag;
 %include 'sst_r_syn.ins.pas';
 {
 ********************************************************************************

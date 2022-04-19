@@ -133,7 +133,6 @@ begin
   prefix.len := 0;
   def_syn_p := nil;                    {init to not currently defining a symbol}
   seq_subr := 1;                       {init sequence numbers to make unique names}
-  seq_mflag := 1;
   seq_label := 1;
   seq_int := 1;
   lab_fall_k := univ_ptr(addr(lab_fall_k));

@@ -7,6 +7,7 @@ rem
 setlocal
 call build_pasinit
 
+call src_pas %srcdir% %libname%_arg
 call src_pas %srcdir% %libname%_assign
 call src_pas %srcdir% %libname%_comblock
 call src_pas %srcdir% %libname%_command
@@ -15,6 +16,7 @@ call src_pas %srcdir% %libname%_declare
 call src_pas %srcdir% %libname%_define
 call src_pas %srcdir% %libname%_doit
 call src_pas %srcdir% %libname%_err
+call src_pas %srcdir% %libname%_exp
 call src_pas %srcdir% %libname%_expression
 call src_pas %srcdir% %libname%_init
 call src_pas %srcdir% %libname%_int

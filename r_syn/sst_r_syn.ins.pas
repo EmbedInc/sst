@@ -54,18 +54,25 @@ var (sst_r_syn)
   syn_p: syn_p_t;                      {points to our SYN library use state}
   table_sym: string_hash_handle_t;     {handle to SYN symbols symbol table}
   prefix: string_var32_t;              {prefix for default subroutine names}
-  def_syn_p: symbol_data_p_t;          {to sym data for syntax being defined}
   seq_subr: sys_int_machine_t;         {sequence number of next syntax subroutine}
-  seq_mflag: sys_int_machine_t;        {sequence number of next MFLAG variable}
   seq_label: sys_int_machine_t;        {sequence number of next YES label}
   seq_int: sys_int_machine_t;          {sequence number of next integer variable}
   lab_fall_k: sst_symbol_p_t;          {"constant" for fall thru jump target}
   lab_same_k: sst_symbol_p_t;          {"constant" for no change to jump target}
+{
+*   Pointers to symbols, variables, expressions, and the like in the current
+*   syntax parsing function being built.  These are set by SST_R_SYN_DEFINE when
+*   the parsing function is first created.
+}
+  def_syn_p: symbol_data_p_t;          {to sym data for syntax being defined}
+  exp_syn_p: sst_exp_p_t;              {pnt to expression for SYN call argument}
   sym_error_p: sst_exp_p_t;            {pnt to exp for error reparse hit end}
   match_var_p: sst_var_p_t;            {pnt to local MATCH var in curr subroutine}
   match_exp_p: sst_exp_p_t;            {pnt to expression for reading MATCH value}
   match_not_exp_p: sst_exp_p_t;        {pnt to expression for NOT MATCH}
-  label_err_p: sst_symbol_p_t;         {pnt to error case label, created when needed}
+  label_err_p: sst_symbol_p_t;         {pnt to error case label, NIL until used}
+  var_ichar_p: sst_var_p_t;            {pnt to SYN_P_ICHAR variable reference}
+  exp_ichar_p: sst_exp_p_t;            {pnt to exp for SYN_P_ICHAR return value}
 {
 *   Pointers to pre-defined subroutines we may want to reference.
 }
@@ -109,6 +116,12 @@ var (sst_r_syn)
 *
 *   Private entry points for SYN front end.
 }
+procedure sst_r_syn_arg_match;         {add MATCH as next call argument}
+  val_param; extern;
+
+procedure sst_r_syn_arg_syn;           {add SYN as next call argument}
+  val_param; extern;
+
 procedure sst_r_syn_assign_exp (       {make opcode to assign expression to variable}
   in      var v: sst_var_t;            {variable to assign value to}
   in      var exp: sst_exp_t);         {expression to assign to the variable}
@@ -132,6 +145,10 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
   extern;
 
 procedure sst_r_syn_err_check;         {check for err reparse end in syntax checking code}
+  val_param; extern;
+
+function sst_r_syn_exp_ichar:          {create SST expression for SYN_P_ICHAR value}
+  sst_exp_p_t;                         {pointer to the new expression descriptor}
   val_param; extern;
 
 procedure sst_r_syn_int (              {make new interger variable}
@@ -184,6 +201,6 @@ procedure sst_r_syn_item (             {process ITEM syntax}
   in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param; extern;
 
-procedure sst_r_syn_utitem (           {process UTITEM syntax}
+procedure sst_r_syn_utitem (           {process UNTAGGED_ITEM syntax}
   in out  jtarg: jump_targets_t);      {execution block jump targets info}
   val_param; extern;
