@@ -63,7 +63,7 @@ begin
   syn_trav_pop (syn_p^);               {restore position to UNTAGGED_ITEM}
 
   sst_call (sym_tag_start_p^);         {write call to start tag}
-  sst_call_arg_var (sst_opc_p^, sym_syn_t_p^); {add SYN argument}
+  sst_r_syn_arg_syn;                   {add SYN argument}
   sst_call_arg_int (sst_opc_p^, itag); {pass the tag value}
 
   sst_r_syn_jtarg_sub (                {make subordinate jump targets for UNTAGGED_ITEM}
@@ -75,10 +75,8 @@ begin
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
   sst_call (sym_tag_end_p^);           {write call to end tag}
-  sst_call_arg_var (sst_opc_p^, sym_syn_t_p^); {add SYN argument}
-  sst_call_arg_var (                   {pass MATCH}
-    sst_opc_p^,
-    match_var_p^.mod1.top_sym_p^);
+  sst_r_syn_arg_syn;                   {add SYN argument}
+  sst_r_syn_arg_match;                 {pass MATCH}
 
   sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;

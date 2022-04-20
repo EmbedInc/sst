@@ -17,8 +17,8 @@ type
 
   symbol_data_p_t = ^symbol_data_t;
   symbol_data_t = record               {data in private symbol table per symbol}
-    sym_p: sst_symbol_p_t;             {pointer to SST symbol for procedure}
     name_p: string_var_p_t;            {points to SYN file symbol name}
+    sym_p: sst_symbol_p_t;             {pointer to SST symbol for procedure}
     call_p: call_p_t;                  {points to chain of called syntaxes}
     end;
 
@@ -178,6 +178,23 @@ procedure sst_r_syn_jtarg_sub (        {make new jump targets from old and modif
 procedure sst_r_syn_jtarg_sym (        {get or make symbol for jump target label}
   in out  jt: jump_target_t;           {descriptor for this jump target}
   out     sym_p: sst_symbol_p_t);      {returned pointing to jump label symbol}
+  val_param; extern;
+
+procedure sst_r_syn_sym_add (          {add new symbol to table, bomb if already exist}
+  in      name: univ string_var_arg_t; {name of symbol to add, case-insensitive}
+  out     data_p: symbol_data_p_t);    {pointer to data for new symbol in the table}
+  val_param; extern;
+
+procedure sst_r_syn_sym_called (       {symbol is called from curr syn parsing function}
+  in      name: univ string_var_arg_t); {name of called symbol, case-insensitive}
+  val_param; extern;
+
+procedure sst_r_syn_sym_init;          {create and initialize the SYN symbol table}
+  val_param; extern;
+
+procedure sst_r_syn_sym_lookup (       {look up name in table, bomb if not found}
+  in      name: univ string_var_arg_t; {name of symbol to look up, case-insensitive}
+  out     data_p: symbol_data_p_t);    {pointer to symbol data}
   val_param; extern;
 {
 *

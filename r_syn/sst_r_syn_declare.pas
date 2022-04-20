@@ -16,10 +16,7 @@ var
   syname: string_var32_t;              {name of syntax symbol being declared}
   prname: string_var32_t;              {name of procedure to run syntax}
   token: string_var16_t;               {scratch string for number conversion}
-  hpos: string_hash_pos_t;             {hash table position handle}
-  found: boolean;                      {TRUE if name found in hash table}
   flags: sst_symflag_t;                {flags for SST subroutine name symbol}
-  name_p: string_var_p_t;              {pointer to name in hash table entry}
   data_p: symbol_data_p_t;             {pointer to user data in hash table entry}
   func_p: sst_symbol_p_t;              {pnt to syntax parsing function being defined}
   sym_p: sst_symbol_p_t;               {scratch pointer to a SST symbol}
@@ -103,19 +100,7 @@ done_opt_tags:                         {done processing optional tags}
 *
 *   Create the new SYN symbol.
 }
-  string_hash_pos_lookup (             {get hash table position for new name}
-    table_sym, syname, hpos, found);
-  if found then begin                  {this symbol already declared ?}
-    sys_msg_parm_vstr (msg_parm[1], syname);
-    syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'symbol_already_used', msg_parm, 1);
-    end;
-  string_hash_ent_add (                {add new symbol to the SYN symbol table}
-    hpos,                              {handle to hash table position}
-    name_p,                            {points to name in hash table entry}
-    data_p);                           {points to data area in hash table entry}
-
-  data_p^.name_p := name_p;            {save pointer to hash entry name}
-  data_p^.call_p := nil;               {init list of called syntaxes to empty}
+  sst_r_syn_sym_add (syname, data_p);  {add name to table, bomb if already there}
 {
 *   Create the SST procedure.  FUNC_P will be left pointing to the procedure
 *   descriptor.

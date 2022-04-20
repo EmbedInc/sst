@@ -121,13 +121,7 @@ begin
     sst_scope_root_p^.mem_p^,          {parent memory context}
     syn_p);                            {return pointer to new library use state}
 
-  string_hash_create (                 {create hash table for SYN file symbols}
-    table_sym,                         {hash table to initialize}
-    sst_r_syn_nbuck_k,                 {number of buckets in hash table}
-    syn_name_maxlen_k,                 {max length of any entry name}
-    sizeof(symbol_data_t),             {amount of user data per entry}
-    [string_hashcre_nodel_k],          {won't need to deallocate individual entries}
-    syn_p^.mem_p^);                    {parent memory context for hash table}
+  sst_r_syn_sym_init;                  {create and init our symbol table}
 
   prefix.max := size_char(prefix.str); {init subroutines prefix to empty}
   prefix.len := 0;

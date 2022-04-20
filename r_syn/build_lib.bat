@@ -22,6 +22,7 @@ call src_pas %srcdir% %libname%_init
 call src_pas %srcdir% %libname%_int
 call src_pas %srcdir% %libname%_item
 call src_pas %srcdir% %libname%_jtarg
+call src_pas %srcdir% %libname%_sym
 call src_pas %srcdir% %libname%_utitem
 
 call src_lib %srcdir% %libname%

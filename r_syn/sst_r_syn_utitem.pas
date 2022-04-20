@@ -15,6 +15,7 @@ var
   sym_p: sst_symbol_p_t;               {scratch pointer to SST symbol}
   exp_p: sst_exp_p_t;                  {scratch pointer to SST expression}
   term_p: sst_exp_term_p_t;            {scratch pointer to SST term in expression}
+  data_p: symbol_data_p_t;             {pointer to symbol data in our symbol table}
   token: string_var8192_t;             {scratch token or string}
 
 label
@@ -113,6 +114,16 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is symbol reference
 }
 3: begin
+  syn_trav_tag_string (syn_p^, token); {get the symbol name string}
+  sst_r_syn_sym_lookup (token, data_p); {get data for this called syntax}
+
+
+
+
+
+
+
+
   end;
 {
 ********************************************************************************

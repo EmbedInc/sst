@@ -19,7 +19,6 @@ var
   field_p: sst_symbol_p_t;             {scratch pointer to field in record}
   mod_p: sst_var_mod_p_t;              {scratch pointer to variable modifier}
   var_p: sst_var_p_t;                  {scratch SST variable pointer}
-  name_p: string_var_p_t;              {pnt to name in hash table entry}
   data_p: symbol_data_p_t;             {pnt to hash table data for syn constr symbol}
   func_p: sst_symbol_p_t;              {pnt to SST symbol for the syntax parsing function}
   scope_old_p: sst_scope_p_t;          {saved pointer to scope before subroutine}
@@ -53,12 +52,7 @@ begin
     writeln ('Defining ', syname.str:syname.len);
     end;
 
-  string_hash_ent_lookup (             {look up name in SYN symbol table}
-    table_sym, syname, name_p, data_p);
-  if data_p = nil then begin           {symbol not previously declared ?}
-    sys_msg_parm_vstr (msg_parm[1], syname);
-    syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'symbol_not_declared', msg_parm, 1);
-    end;
+  sst_r_syn_sym_lookup (syname, data_p); {look up symbol, bomb on undefined}
   if sst_symflag_extern_k in data_p^.sym_p^.flags then begin {externally defined ?}
     sys_msg_parm_vstr (msg_parm[1], syname);
     syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'symbol_external', msg_parm, 1);
