@@ -189,12 +189,23 @@ procedure sst_r_syn_sym_called (       {symbol is called from curr syn parsing f
   in      name: univ string_var_arg_t); {name of called symbol, case-insensitive}
   val_param; extern;
 
+procedure sst_r_syn_sym_delete;        {delete the symbol table, dealloc resources}
+  val_param; extern;
+
 procedure sst_r_syn_sym_init;          {create and initialize the SYN symbol table}
   val_param; extern;
 
 procedure sst_r_syn_sym_lookup (       {look up name in table, bomb if not found}
   in      name: univ string_var_arg_t; {name of symbol to look up, case-insensitive}
   out     data_p: symbol_data_p_t);    {pointer to symbol data}
+  val_param; extern;
+
+procedure sst_r_syn_sym_loop_init;     {init loop over sym table entries, one thread only}
+  val_param; extern;
+
+function sst_r_syn_sym_loop_next (     {get next symbol table entry, one thread only}
+  out     data_p: symbol_data_p_t)     {pointer to next entry, NIL at end}
+  :boolean;                            {returning with entry, not hit end of table}
   val_param; extern;
 {
 *

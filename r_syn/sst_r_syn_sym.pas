@@ -3,10 +3,17 @@
 }
 module sst_r_syn_sym;
 define sst_r_syn_sym_init;
+define sst_r_syn_sym_delete;
 define sst_r_syn_sym_add;
 define sst_r_syn_sym_lookup;
 define sst_r_syn_sym_called;
+define sst_r_syn_sym_loop_init;
+define sst_r_syn_sym_loop_next;
 %include 'sst_r_syn.ins.pas';
+
+var
+  pos: string_hash_pos_t;              {table position when looping over entries}
+  notend: boolean;                     {not yet hit end of table when looping}
 {
 ********************************************************************************
 *
@@ -26,6 +33,19 @@ begin
     sizeof(symbol_data_t),             {amount of user data per entry}
     [string_hashcre_nodel_k],          {won't need to deallocate individual entries}
     sst_scope_root_p^.mem_p^);         {parent memory context for hash table}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SST_R_SYN_SYM_DELETE
+*
+*   Delete the symbol table and release its resources.
+}
+procedure sst_r_syn_sym_delete;        {delete the symbol table, dealloc resources}
+  val_param;
+
+begin
+  string_hash_delete (table_sym);
   end;
 {
 ********************************************************************************
@@ -155,4 +175,52 @@ begin
 
   call_p^.next_p := def_syn_p^.call_p; {link new entry to start of list}
   def_syn_p^.call_p := call_p;
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SST_R_SYN_SYM_LOOP_INIT
+*
+*   Initialize for looping over all symbol table entries.  Only one thread can
+*   use this looping feature at a time.
+}
+procedure sst_r_syn_sym_loop_init;     {init loop over sym table entries, one thread only}
+  val_param;
+
+begin
+  string_hash_pos_first (table_sym, pos, notend);
+  end;
+{
+********************************************************************************
+*
+*   Function SST_R_SYN_SYM_LOOP_NEXT (DATA_P)
+*
+*   Get the next table entry in the current loop.  Looping must have been
+*   previously initialized with SST_R_SYN_SYM_LOOP_INIT.
+*
+*   When there is a next entry, DATA_P is returned pointing to the data for that
+*   entry, and the function returns TRUE.  When the end of table is reached,
+*   DATA_P is returned NIL and the function returns FALSE.
+*
+*   Only one thread can use this looping mechanism at a time.
+}
+function sst_r_syn_sym_loop_next (     {get next symbol table entry, one thread only}
+  out     data_p: symbol_data_p_t)     {pointer to next entry, NIL at end}
+  :boolean;                            {returning with entry, not hit end of table}
+  val_param;
+
+var
+  name_p: string_var_p_t;              {pointer to entry name string in the table}
+
+begin
+  if not notend then begin             {at end of table ?}
+    data_p := nil;
+    sst_r_syn_sym_loop_next := false;
+    return;
+    end;
+
+  string_hash_ent_atpos (pos, name_p, data_p); {get info about this entry}
+  sst_r_syn_sym_loop_next := true;     {indicate returning with an entry}
+
+  string_hash_pos_next (pos, notend);  {advance saved state to next entry}
   end;

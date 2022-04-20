@@ -18,9 +18,6 @@ var
   fline_p: fline_p_t;                  {to FLINE library use state}
   coll_p: fline_coll_p_t;              {the input file lines in FLINE collection}
   match: boolean;                      {syntax matched}
-  hpos: string_hash_pos_t;             {position handle into our hash table}
-  found: boolean;                      {TRUE when hash table entry found}
-  name_p: string_var_p_t;              {pointer to name in hash table entry}
   data_p: symbol_data_p_t;             {pointer to our data in hash table entry}
   undefined_syms: boolean;             {TRUE if undefined symbols found}
   unused_syms: boolean;                {TRUE after first unused symbol encountered}
@@ -114,33 +111,23 @@ eod:                                   {reached end of all input data}
 *
 *   Propagate used flags to all appropriate SYN file symbols.
 }
-  string_hash_pos_first (table_sym, hpos, found); {go to first entry in hash table}
-
-  while found do begin                 {once for each entry in hash table}
-    string_hash_ent_atpos (            {get info about this hash table entry}
-      hpos,                            {handle to hash table position}
-      name_p,                          {returned pointing to name in table entry}
-      data_p);                         {returned pointing to our data area in entry}
+  sst_r_syn_sym_loop_init;             {init for looping over symbol table entries}
+  while sst_r_syn_sym_loop_next (data_p) do begin
     if                                 {this symbol used but not followed yet ?}
         (sst_symflag_used_k in data_p^.sym_p^.flags) and
         (not (sst_symflag_followed_k in data_p^.sym_p^.flags))
         then begin
       follow_sym (data_p^);            {propagate USED flag for this symbol}
       end;
-    string_hash_pos_next (hpos, found); {advance to next hash table entry}
-    end;                               {back and process this new hash table entry}
+    end;                               {back to process next symbol table entry}
 {
 *   List any unused SYN symbols and clear FOLLOWED flags left from previous
 *   pass over all the symbols.
 }
   unused_syms := false;                {init to no unused symbols found}
-  string_hash_pos_first (table_sym, hpos, found); {go to first entry in hash table}
 
-  while found do begin                 {once for each entry in hash table}
-    string_hash_ent_atpos (            {get info about this hash table entry}
-      hpos,                            {handle to hash table position}
-      name_p,                          {returned pointing to name in table entry}
-      data_p);                         {returned pointing to our data area in entry}
+  sst_r_syn_sym_loop_init;             {init for looping over symbol table entries}
+  while sst_r_syn_sym_loop_next (data_p) do begin
     data_p^.sym_p^.flags :=            {clear FOLLOWED flag}
       data_p^.sym_p^.flags - [sst_symflag_followed_k];
     if                                 {this symbol was never used ?}
@@ -150,21 +137,16 @@ eod:                                   {reached end of all input data}
         sys_message ('sst_syn_read', 'symbols_unused_show');
         unused_syms := true;           {flag that unused symbols were encountered}
         end;
-      writeln ('  ', name_p^.str:name_p^.len); {write name of unused symbol}
+      writeln ('  ', data_p^.name_p^.str:data_p^.name_p^.len); {show unused symbol}
       end;
-    string_hash_pos_next (hpos, found); {advance to next hash table entry}
-    end;                               {back and process this new hash table entry}
+    end;                               {back to process next symbol table entry}
 {
 *   Check for undefined SYN symbols.
 }
   undefined_syms := false;             {init to no undefined symbols found}
-  string_hash_pos_first (table_sym, hpos, found); {go to first entry in hash table}
 
-  while found do begin                 {once for each entry in hash table}
-    string_hash_ent_atpos (            {get info about this hash table entry}
-      hpos,                            {handle to hash table position}
-      name_p,                          {returned pointing to name in table entry}
-      data_p);                         {returned pointing to our data area in entry}
+  sst_r_syn_sym_loop_init;             {init for looping over symbol table entries}
+  while sst_r_syn_sym_loop_next (data_p) do begin
     if                                 {used but undefined symbol ?}
         (sst_symflag_used_k in data_p^.sym_p^.flags) and {symbol used ?}
         (not (sst_symflag_def_k in data_p^.sym_p^.flags)) and {not defined here?}
@@ -174,12 +156,11 @@ eod:                                   {reached end of all input data}
         sys_message ('sst_syn_read', 'symbols_undefined_show');
         undefined_syms := true;        {flag that undefined symbols were encountered}
         end;
-      writeln ('  ', name_p^.str:name_p^.len); {write name of undefined symbol}
+      writeln ('  ', data_p^.name_p^.str:data_p^.name_p^.len); {show undefined symbol}
       end;
-    string_hash_pos_next (hpos, found); {advance to next hash table entry}
-    end;                               {back and process this new hash table entry}
+    end;                               {back to process next symbol table entry}
 
-  string_hash_delete (table_sym);      {delete table for this SYN file symbols}
+  sst_r_syn_sym_delete;                {delete symbol table, release its resources}
 
   if undefined_syms then begin         {some undefined symbols were found ?}
     sys_message_bomb ('sst_syn_read', 'symbols_undefined_abort', nil, 0);
