@@ -116,14 +116,16 @@ comp_char_sym:                         {common code to compare next char to SYM_
 3: begin
   syn_trav_tag_string (syn_p^, token); {get the symbol name string}
   sst_r_syn_sym_lookup (token, data_p); {get data for this called syntax}
+  sst_r_syn_sym_called (token);        {make this syntax as called}
 
+  exp_p := sst_r_syn_exp_pfunc (data_p^.sym_p^); {get expression for parse func value}
+  sst_r_syn_assign_exp (               {assign expression to variable}
+    match_var_p^,                      {assign to local MATCH variable}
+    exp_p^);                           {expression to assign to the variable}
 
-
-
-
-
-
-
+  sst_r_syn_err_check;                 {abort parsing on end of error re-parse}
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ********************************************************************************
@@ -218,19 +220,3 @@ trerr:
   syn_parse_err_show (syn_p^);
   sys_bomb;
   end;
-
-
-(*
-var
-  sym_p: sst_symbol_p_t;               {scratch symbol pointer}
-  var_p: sst_var_p_t;                  {scratch variable pointer}
-  exp_p: sst_exp_p_t;                  {scratch expression pointer}
-
-begin
-  sst_r_syn_int (sym_p);               {create integer variable}
-  sst_sym_var (sym_p^, var_p);         {create reference to the variable}
-  sst_exp_const_int (44, exp_p);       {create constant integer expression}
-  sst_r_syn_assign_exp (var_p^, exp_p^); {assign the expression to the variable}
-  sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
-  end;
-*)

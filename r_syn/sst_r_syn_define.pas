@@ -228,10 +228,6 @@ begin
 
   sst_call_arg_str (sst_opc_p^, syname.str, syname.len); {add syntax name string arg}
   sst_call_arg_int (sst_opc_p^, syname.len); {add syntax name length arg}
-  {
-  *   Initialize MATCH to FALSE.
-  }
-  sst_r_syn_assign_match (false);      {init MATCH to false}
 {
 **************************************
 *
