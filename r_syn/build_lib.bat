@@ -24,6 +24,7 @@ call src_pas %srcdir% %libname%_item
 call src_pas %srcdir% %libname%_jtarg
 call src_pas %srcdir% %libname%_sym
 call src_pas %srcdir% %libname%_utitem
+call src_pas %srcdir% %libname%_var
 
 call src_lib %srcdir% %libname%
 call src_msg %srcdir% sst_syn_read

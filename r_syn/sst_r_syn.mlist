@@ -14,4 +14,5 @@ sst_r_syn_int.obj
 sst_r_syn_item.obj
 sst_r_syn_jtarg.obj
 sst_r_syn_sym.obj
+sst_r_syn_var.obj
 sst_r_syn_utitem.obj

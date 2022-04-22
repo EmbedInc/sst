@@ -148,16 +148,7 @@ begin
 *   reference is created first because it is needed to create the function
 *   value expression.
 }
-  sst_mem_alloc_scope (                {create var reference to SYN_P_ICHAR function}
-    sizeof(var_ichar_p^), var_ichar_p);
-  var_ichar_p^.mod1.next_p := nil;     {no second modifier}
-  var_ichar_p^.mod1.modtyp := sst_var_modtyp_top_k; {this is first (and only) modifier}
-  var_ichar_p^.mod1.top_str_h.first_char.crange_p := nil;
-  var_ichar_p^.mod1.top_sym_p := sym_ichar_p; {pointer to symbol being referenced}
-  var_ichar_p^.dtype_p := sym_ichar_p^.proc_dtype_p; {procedure data type}
-  var_ichar_p^.rwflag := [sst_rwflag_read_k]; {read-only}
-  var_ichar_p^.vtype := sst_vtype_rout_k; {this var reference is to procedure}
-  var_ichar_p^.rout_proc_p := addr(sym_ichar_p^.proc); {points to procedure definition}
+  var_ichar_p := sst_r_syn_var_proc (sym_ichar_p^); {create the var reference}
 
   exp_ichar_p := sst_r_syn_exp_ichar;  {expression for SYN_P_ICHAR function value}
 {
