@@ -219,7 +219,6 @@ otherwise                              {unexpected tag value}
 *   Item is .UPTO
 }
 10: begin
-(*
   sst_call (sym_cpos_push_p^);         {save current input position on stack}
   sst_r_syn_arg_syn;                   {pass SYN}
 
@@ -233,11 +232,10 @@ otherwise                              {unexpected tag value}
 
   sst_call (sym_cpos_pop_p^);          {restore input position if no match}
   sst_r_syn_arg_syn;                   {pass SYN}
-*)
+  sst_call_arg_exp (sst_opc_p^, exp_false_p^); {pass FALSE to always restore position}
 
-
-
-
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ********************************************************************************

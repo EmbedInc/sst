@@ -974,6 +974,11 @@ procedure sst_call_arg_enum (          {add constant enum call arg to call}
   in      sym: sst_symbol_t);          {symbol descriptor for enumerated value}
   val_param; extern;
 
+procedure sst_call_arg_exp (           {add expression as next argument to call}
+  in      opc: sst_opc_t;              {CALL opcode to add argument to}
+  in var  exp: sst_exp_t);             {expression for call argument value}
+  val_param; extern;
+
 procedure sst_call_arg_int (           {add constant integer call arg to call}
   in      opc: sst_opc_t;              {CALL opcode to add argument to}
   in      ival: sys_int_max_t);        {integer value for argument}

@@ -2,18 +2,20 @@
 }
 module sst_call_arg;
 define sst_call_arg_enum;
+define sst_call_arg_exp;
 define sst_call_arg_int;
 define sst_call_arg_str;
 define sst_call_arg_var;
 %include 'sst2.ins.pas';
 {
-***********************************************************
+********************************************************************************
 *
 *   Local subroutine MAKE_ARG_TEMPLATE (OPC, ARGT_P, ARG_P)
 *
-*   Given the opcode OPC for a subroutine call, return pointer to
-*   next call argument template (ARGT_P) and new called argument
-*   descriptor (ARG_P).  Some obvious errors are checked.
+*   Add an empty argument to a subroutine call.  OPC is the subroutine call
+*   opcode.  ARGT_P is returned pointing to the template for the new call
+*   argument.  A new call argument descriptor is created, linked to the opcode,
+*   and initialized from the template.  Some obvious errors are checked.
 }
 procedure make_arg_template (
   in      opc: sst_opc_t;              {opcode for subroutine call}
@@ -68,7 +70,34 @@ begin
   arg_p^.univ := argt_p^.univ;
   end;
 {
-***********************************************************
+********************************************************************************
+*
+*   Subroutine SST_CALL_ARG_EXP (OPC, EXP)
+*
+*   Add the expression EXP as the next argument to the subroutine call for which
+*   OPC is the opcode.
+}
+procedure sst_call_arg_exp (           {add expression as next argument to call}
+  in      opc: sst_opc_t;              {CALL opcode to add argument to}
+  in var  exp: sst_exp_t);             {expression for call argument value}
+  val_param;
+
+var
+  arg_p: sst_proc_arg_p_t;             {points to call argument descriptor}
+  argt_p: sst_proc_arg_p_t;            {points to call argument template}
+
+begin
+  make_arg_template (opc, argt_p, arg_p); {create and init argument descriptor}
+  arg_p^.exp_p := addr(exp);           {point to the expression to pass}
+  arg_p^.dtype_p := exp.dtype_p;       {argument data type is expression data type}
+
+  sst_exp_useage_check (               {check exp compatibility with arg template}
+    arg_p^.exp_p^,                     {expression to check}
+    argt_p^.rwflag_ext,                {neccessary read/write access to expression}
+    argt_p^.dtype_p^);                 {dtype expression must be compatible with}
+  end;
+{
+********************************************************************************
 }
 procedure sst_call_arg_enum (          {add constant enum call arg to call}
   in      opc: sst_opc_t;              {CALL opcode to add argument to}
@@ -89,7 +118,7 @@ begin
     argt_p^.dtype_p^);                 {dtype expression must be compatible with}
   end;
 {
-***********************************************************
+********************************************************************************
 }
 procedure sst_call_arg_int (           {add constant integer call arg to call}
   in      opc: sst_opc_t;              {CALL opcode to add argument to}
@@ -110,7 +139,7 @@ begin
     argt_p^.dtype_p^);                 {dtype expression must be compatible with}
   end;
 {
-***********************************************************
+********************************************************************************
 }
 procedure sst_call_arg_str (           {add constant string call arg to call}
   in      opc: sst_opc_t;              {CALL opcode to add argument to}
@@ -153,7 +182,7 @@ begin
     argt_p^.dtype_p^);                 {dtype expression must be compatible with}
   end;
 {
-***********************************************************
+********************************************************************************
 }
 procedure sst_call_arg_var (           {add variable call arg to call}
   in      opc: sst_opc_t;              {CALL opcode to add argument to}
