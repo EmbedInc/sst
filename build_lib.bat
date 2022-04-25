@@ -31,6 +31,7 @@ call src_pas %srcdir% %libname%_flag_used_opcodes
 call src_pas %srcdir% %libname%_flag_used_rout
 call src_pas %srcdir% %libname%_flag_used_symbol
 call src_pas %srcdir% %libname%_flag_used_var
+call src_pas %srcdir% %libname%_func
 call src_pas %srcdir% %libname%_init
 call src_pas %srcdir% %libname%_intrinsic_dtype
 call src_pas %srcdir% %libname%_mem_alloc_namesp

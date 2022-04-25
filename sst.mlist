@@ -22,6 +22,7 @@ sst_flag_used_opcodes.obj
 sst_flag_used_rout.obj
 sst_flag_used_symbol.obj
 sst_flag_used_var.obj
+sst_func.obj
 sst_init.obj
 sst_intrinsic_dtype.obj
 sst_mem_alloc_namesp.obj

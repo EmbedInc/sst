@@ -14,6 +14,7 @@ var
   tag: sys_int_machine_t;              {tag from syntax tree}
   sym_p: sst_symbol_p_t;               {scratch pointer to SST symbol}
   exp_p: sst_exp_p_t;                  {scratch pointer to SST expression}
+  arg_p: sst_exp_p_t;                  {scratch pointer to call argument expression}
   term_p: sst_exp_term_p_t;            {scratch pointer to SST term in expression}
   data_p: symbol_data_p_t;             {pointer to symbol data in our symbol table}
   token: string_var8192_t;             {scratch token or string}
@@ -133,6 +134,28 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is string constant
 }
 4: begin
+  if not syn_trav_next_down (syn_p^)   {down into STRING syntax}
+    then goto trerr;
+  if syn_trav_next_tag (syn_p^) <> 1   {get tag for raw string}
+    then goto trerr;
+  syn_trav_tag_string (syn_p^, token); {get the raw string}
+
+  exp_p := sst_func_exp (sym_test_string_p^); {init SYN_P_TEST_STRING function call}
+  sst_func_arg (exp_p^, exp_syn_p^);   {add SYN call argument}
+  sst_exp_const_vstr (token, arg_p);   {create string constant expression}
+  sst_func_arg (exp_p^, arg_p^);       {pass it}
+  sst_exp_const_int (token.len, arg_p); {create string length expression}
+  sst_func_arg (exp_p^, arg_p^);       {pass it}
+
+  sst_r_syn_assign_exp (               {assign SYN_P_TEST_STRING result to MATCH}
+    match_var_p^,                      {variable to assign to}
+    exp_p^);                           {expression to assign to it}
+
+  sst_r_syn_err_check;                 {abort parsing on end of error re-parse}
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
+  if not syn_trav_up (syn_p^)          {back up from STRING syntax}
+    then goto trerr;
   end;
 {
 ********************************************************************************

@@ -1124,6 +1124,16 @@ procedure sst_flag_used_var (          {flag symbols eventually used from var de
   in      v: sst_var_t);               {var descriptor that may reference symbols}
   extern;
 
+procedure sst_func_arg (               {add argument to function value expression}
+  in out  exp: sst_exp_t;              {function reference exp to add argument to}
+  in var  arg: sst_exp_t);             {argument expression}
+  val_param; extern;
+
+function sst_func_exp (                {make function value expression, no args}
+  in var  func: sst_symbol_t)          {function symbol}
+  :sst_exp_p_t;                        {pointer to new expression}
+  val_param; extern;
+
 procedure sst_init (                   {init translator data stuctures}
   in      symbol_len: sys_int_machine_t; {max length allowed for a symbol}
   in out  parent_mem: util_mem_context_t); {parent memory context to use}
