@@ -17,6 +17,7 @@ var
   arg_p: sst_exp_p_t;                  {scratch pointer to call argument expression}
   term_p: sst_exp_term_p_t;            {scratch pointer to SST term in expression}
   data_p: symbol_data_p_t;             {pointer to symbol data in our symbol table}
+  jt: jump_targets_t;                  {jump targets for subordinate syntax}
   token: string_var8192_t;             {scratch token or string}
 
 label
@@ -177,6 +178,7 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is nested expression in parenthesis.
 }
 7: begin
+  sst_r_syn_expression (jtarg);        {process the subordinate expression}
   end;
 {
 ********************************************************************************
@@ -184,6 +186,22 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is .CHARCASE
 }
 8: begin
+  tag := syn_trav_next_tag (syn_p^);   {get tag identifying the character case}
+  case tag of                          {which character case handling is it ?}
+1:  sym_p := sym_charcase_up_p;
+2:  sym_p := sym_charcase_down_p;
+3:  sym_p := sym_charcase_asis_p;
+otherwise                              {unexpected tag value}
+    syn_msg_tag_bomb (syn_p^, 'sst_syn_read', 'charcase_bad', nil, 0);
+    end;
+
+  sst_call (sym_charcase_p^);          {start call to SYN_P_CHARCASE}
+  sst_r_syn_arg_syn;                   {add SYN call argument}
+  sst_call_arg_enum (sst_opc_p^, sym_p^); {add char case handling choice argument}
+
+  sst_r_syn_assign_match (true);       {this item always matches}
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ********************************************************************************
@@ -191,6 +209,9 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is .NULL
 }
 9: begin
+  sst_r_syn_assign_match (true);       {this item always matches}
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ********************************************************************************
@@ -198,6 +219,25 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is .UPTO
 }
 10: begin
+(*
+  sst_call (sym_cpos_push_p^);         {save current input position on stack}
+  sst_r_syn_arg_syn;                   {pass SYN}
+
+  sst_r_syn_jtarg_sub (                {make subordinate jump targets for ITEM}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_fall_k);                       {fall thru on NO}
+  sst_r_syn_item (jt);                 {process the UPTO item}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
+
+  sst_call (sym_cpos_pop_p^);          {restore input position if no match}
+  sst_r_syn_arg_syn;                   {pass SYN}
+*)
+
+
+
+
   end;
 {
 ********************************************************************************
@@ -205,6 +245,20 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is .NOT
 }
 11: begin
+  sst_r_syn_jtarg_sub (                {make subordinate jump targets for ITEM}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_fall_k);                       {fall thru on NO}
+  sst_r_syn_item (jt);                 {process the item that will be negated}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
+
+  sst_r_syn_assign_exp (               {negate the local MATCH variable}
+    match_var_p^,                      {variable to assign to}
+    match_not_exp_p^);                 {expression to assign to the variable}
+
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ********************************************************************************

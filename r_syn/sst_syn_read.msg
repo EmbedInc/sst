@@ -1,5 +1,8 @@
 /*   Error and other messages used by SYN front end to SST.
 /*
+msg charcase_bad
+  lan english -def
+    Invalid character case handling name.
 msg module_symbol_create
   lan english -def
     Error occurred on attempt to create name symbol for top module
