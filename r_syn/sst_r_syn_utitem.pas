@@ -13,10 +13,12 @@ procedure sst_r_syn_utitem (           {process UNTAGGED_ITEM syntax}
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
   sym_p: sst_symbol_p_t;               {scratch pointer to SST symbol}
-  exp_p: sst_exp_p_t;                  {scratch pointer to SST expression}
+  exp_p, exp2_p, exp3_p: sst_exp_p_t;  {scratch pointers to SST expressions}
   arg_p: sst_exp_p_t;                  {scratch pointer to call argument expression}
+  var_p: sst_var_p_t;                  {scratch pointer to variable reference}
   term_p: sst_exp_term_p_t;            {scratch pointer to SST term in expression}
   data_p: symbol_data_p_t;             {pointer to symbol data in our symbol table}
+  ran1, ran2: sys_int_machine_t;       {start and end of range character codes}
   jt: jump_targets_t;                  {jump targets for subordinate syntax}
   token: string_var8192_t;             {scratch token or string}
 
@@ -164,6 +166,100 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is .RANGE
 }
 5: begin
+  if syn_trav_next_tag (syn_p^) <> 1   {get tag for start of range character}
+    then goto trerr;
+  if not sst_r_syn_char_get (ran1)     {get start of range character code}
+    then goto trerr;
+
+  if syn_trav_next_tag (syn_p^) <> 1   {get tag for end of range character}
+    then goto trerr;
+  if not sst_r_syn_char_get (ran2)     {get end of range character code}
+    then goto trerr;
+
+  sst_call (sym_cpos_push_p^);         {save current input position on stack}
+  sst_r_syn_arg_syn;                   {pass SYN}
+
+  exp_p := sst_func_exp (sym_ichar_p^); {init SYN_P_ICHAR result value expression}
+  sst_func_arg (exp_p^, exp_syn_p^);   {add SYN call argument}
+
+  sst_r_syn_int (sym_p);               {create new integer variable}
+  sst_sym_var (sym_p^, var_p);         {make variable descriptor for new var}
+  sst_r_syn_assign_exp (var_p^, exp_p^); {assign function value to the new var}
+  sst_r_syn_err_check;                 {abort on end of error re-parse}
+{
+*   Set MATCH according to whether the character code is within the range or
+*   not.  EXP_P is set pointing to the expression:
+*
+*     (VAR >= ran1) and (VAR <= ran2)
+*
+*   The first sub-expression is pointed to by EXP2_P, and the second by EXP3_P.
+}
+  sst_r_syn_comp_var_int (             {create first sub-expression}
+    sym_p^,                            {symbol of variable to compare}
+    ran1,                              {integer value to compare against}
+    sst_op2_ge_k,                      {compare operator}
+    exp2_p);                           {returned pointer to the new expresion}
+
+  sst_r_syn_comp_var_int (             {create second sub-expression}
+    sym_p^,                            {symbol of variable to compare}
+    ran2,                              {integer value to compare against}
+    sst_op2_le_k,                      {compare operator}
+    exp3_p);                           {returned pointer to the new expresion}
+  {
+  *   Create the high level expression, which is the AND of the two sub
+  *   expressions.
+  }
+  sst_mem_alloc_scope (                {create expression descriptor}
+    sizeof(exp_p^), exp_p);
+
+  exp_p^.str_h.first_char.crange_p := nil;
+  exp_p^.dtype_p := sst_dtype_bool_p;  {data type of whole expression}
+  exp_p^.dtype_hard := true;           {data type is known and fixed}
+  exp_p^.val_eval := true;             {indicated attempted to evaluate}
+  exp_p^.val_fnd := false;             {no fixed value found}
+  exp_p^.rwflag := [sst_rwflag_read_k]; {expression is read-only}
+
+  exp_p^.term1.op2 := sst_op2_none_k;  {no operation with previous term}
+  exp_p^.term1.op1 := sst_op1_none_k;  {no unary operation on this term}
+  exp_p^.term1.ttype := sst_term_exp_k; {this term is an expression}
+  exp_p^.term1.str_h.first_char.crange_p := nil;
+  exp_p^.term1.dtype_p := exp2_p^.dtype_p; {data type of this term}
+  exp_p^.term1.dtype_hard := true;     {data type is known and fixed}
+  exp_p^.term1.val_eval := true;       {tried to evaluate fixed value}
+  exp_p^.term1.val_fnd := false;       {no fixed value}
+  exp_p^.term1.rwflag := [sst_rwflag_read_k]; {term is read-only}
+  exp_p^.term1.exp_exp_p := exp2_p;    {the expression that is this term}
+
+  sst_mem_alloc_scope (                {create descriptor for second term}
+    sizeof(term_p^), term_p);
+  exp_p^.term1.next_p := term_p;       {link second term to after first}
+
+  term_p^.next_p := nil;               {this is last term in expression}
+  term_p^.op2 := sst_op2_and_k;        {AND operation between prev term and this}
+  term_p^.op1 := sst_op1_none_k;       {no unarty operation on this term}
+  term_p^.ttype := sst_term_exp_k;     {this term is an expression}
+  term_p^.str_h.first_char.crange_p := nil;
+  term_p^.dtype_p := exp3_p^.dtype_p;  {data type of this term}
+  term_p^.dtype_hard := true;          {data type is known and fixed}
+  term_p^.val_eval := true;            {tried to evaluate fixed value}
+  term_p^.val_fnd := false;            {no fixed value}
+  term_p^.rwflag := [sst_rwflag_read_k]; {term is read-only}
+  term_p^.exp_exp_p := exp3_p;         {the expression that is this term}
+  {
+  *   Assign the value of the top level expression to the local MATCH variable.
+  }
+  sst_r_syn_assign_exp (               {assign expression value to a variable}
+    match_var_p^,                      {variable to assign to}
+    exp_p^);                           {expression to assign to it}
+{
+*   MATCH is all set.  Handle the yes/no cases accordingly>
+}
+  sst_call (sym_cpos_pop_p^);          {restore input position if no match}
+  sst_r_syn_arg_syn;                   {pass SYN}
+  sst_r_syn_arg_match;                 {pass MATCH}
+
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ********************************************************************************

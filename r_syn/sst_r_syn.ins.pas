@@ -131,6 +131,11 @@ procedure sst_r_syn_assign_match (     {make opcode to assign true/false to MATC
   in      tf: boolean);                {the value to assign to MATCH}
   val_param; extern;
 
+function sst_r_syn_char_get (          {get the result of the SYN CHAR syntax}
+  out     ccode: sys_int_machine_t)    {0-N character code}
+  :boolean;                            {success, no syntax error encountered}
+  val_param; extern;
+
 procedure sst_r_syn_comp_var_int (     {create exp comparing var to integer constant}
   in      sym: sst_symbol_t;           {variable for first term in comparison}
   in      ival: sys_int_machine_t;     {integer value to compare against}

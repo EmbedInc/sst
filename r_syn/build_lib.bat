@@ -9,6 +9,7 @@ call build_pasinit
 
 call src_pas %srcdir% %libname%_arg
 call src_pas %srcdir% %libname%_assign
+call src_pas %srcdir% %libname%_char
 call src_pas %srcdir% %libname%_comblock
 call src_pas %srcdir% %libname%_command
 call src_pas %srcdir% %libname%_comp
