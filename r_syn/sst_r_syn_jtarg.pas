@@ -76,6 +76,10 @@
 module sst_r_syn_jtarg;
 define sst_r_syn_jtarg_init;
 define sst_r_syn_jtarg_sub;
+define sst_r_syn_jtarg_label;
+define sst_r_syn_jtarg_label_define;
+define sst_r_syn_jtarg_label_here;
+define sst_r_syn_jtarg_label_goto;
 define sst_r_syn_jtarg_sym;
 define sst_r_syn_jtarg_here;
 define sst_r_syn_jtarg_goto;
@@ -164,21 +168,18 @@ begin
 {
 ********************************************************************************
 *
-*   Subroutine SST_R_SYN_JTARG_SYM (JT, SYM_P)
+*   Subroutine SST_R_SYN_JTARG_LABEL (LAB_P)
 *
-*   Return pointer to the label corresponding to jump target JT.  A label is
-*   implicitly created, if one doesn't already exist.
+*   Create a new label and return LAB_P pointing to the symbol for that label.
 }
-procedure sst_r_syn_jtarg_sym (        {get or make symbol for jump target label}
-  in out  jt: jump_target_t;           {descriptor for this jump target}
-  out     sym_p: sst_symbol_p_t);      {returned pointing to jump label symbol}
+procedure sst_r_syn_jtarg_label (      {create a label symbol}
+  out     lab_p: sst_symbol_p_t);      {returned pointer to the label symbol}
   val_param;
 
 const
   max_msg_parms = 1;                   {max parameters we can pass to a message}
 
 var
-  jt_p: jump_target_p_t;               {pointer to base jump target descriptor}
   name: string_var32_t;                {label name}
   token: string_var32_t;               {scratch token for number conversion}
   msg_parm:                            {parameter references for messages}
@@ -189,6 +190,84 @@ begin
   name.max := sizeof(name.str);        {init local var strings}
   token.max := sizeof(token.str);
 
+  string_vstring (name, 'lab', 3);     {set static part of label name}
+  string_f_int (token, seq_label);     {make sequence number string}
+  seq_label := seq_label + 1;          {update sequence number for next time}
+  string_append (name, token);         {make full label name}
+  sst_symbol_new_name (name, lab_p, stat); {create the new symbol}
+  sys_msg_parm_vstr (msg_parm[1], name);
+  sys_error_abort (stat, 'sst_syn_read', 'symbol_label_create', msg_parm, 1);
+
+  lab_p^.symtype := sst_symtype_label_k; {fill in new label symbol descriptor}
+  lab_p^.label_opc_p := nil;           {opcode defining label not created yet}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SST_R_SYN_JTARG_LABEL_DEFINE (LAB)
+*
+*   Define the existing label LAB at the current position in the code being
+*   written.
+}
+procedure sst_r_syn_jtarg_label_define ( {define existing label at current position}
+  in var  lab: sst_symbol_t);          {label symbol}
+  val_param;
+
+begin
+  sst_opcode_new;                      {create label target opcode}
+  sst_opc_p^.opcode := sst_opc_label_k; {opcode is a label}
+  sst_opc_p^.label_sym_p := addr(lab); {point to the label symbol}
+  lab.label_opc_p := sst_opc_p;        {link label symbol to defining opcode}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SST_R_SYN_JTARG_LABEL_HERE (LAB_P)
+*
+*   Create a new label and define it at the current position in the code being
+*   written.  LAB_P is returned pointing to the symbol for the new label.
+}
+procedure sst_r_syn_jtarg_label_here ( {create a label symbol at the current location}
+  out     lab_p: sst_symbol_p_t);      {returned pointer to the label symbol}
+  val_param;
+
+begin
+  sst_r_syn_jtarg_label (lab_p);       {create the new label}
+  sst_r_syn_jtarg_label_define (lab_p^); {define it at the current position}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SST_R_SYN_JTARG_LABEL_GOTO (LAB)
+*
+*   Jump to the label LAB.
+}
+procedure sst_r_syn_jtarg_label_goto ( {unconditionally jump to a label}
+  in var  lab: sst_symbol_t);          {label to jump to}
+  val_param;
+
+begin
+  sst_opcode_new;                      {create new opcode}
+  sst_opc_p^.opcode := sst_opc_goto_k; {this opcode is a GOTO}
+  sst_opc_p^.goto_sym_p := addr(lab);  {set pointer to label to go to}
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SST_R_SYN_JTARG_SYM (JT, SYM_P)
+*
+*   Return pointer to the label corresponding to jump target JT.  A label is
+*   implicitly created, if one doesn't already exist.
+}
+procedure sst_r_syn_jtarg_sym (        {get or make symbol for jump target label}
+  in out  jt: jump_target_t;           {descriptor for this jump target}
+  out     sym_p: sst_symbol_p_t);      {returned pointing to jump label symbol}
+  val_param;
+
+var
+  jt_p: jump_target_p_t;               {pointer to base jump target descriptor}
+
+begin
   jt_p := addr(jt);                    {init base descriptor to first descriptor}
   while jflag_indir_k in jt_p^.flags do begin {this is an indirect descriptor ?}
     jt_p := jt_p^.indir_p;             {resolve one level of indirection}
@@ -204,16 +283,7 @@ begin
 *   No label symbol exists for this jump target.  Create one and pass back SYM_P
 *   pointing to it.
 }
-  string_vstring (name, 'lab', 3);     {set static part of label name}
-  string_f_int (token, seq_label);     {make sequence number string}
-  seq_label := seq_label + 1;          {update sequence number for next time}
-  string_append (name, token);         {make full label name}
-  sst_symbol_new_name (name, sym_p, stat); {create the new symbol}
-  sys_msg_parm_vstr (msg_parm[1], name);
-  sys_error_abort (stat, 'sst_syn_read', 'symbol_label_create', msg_parm, 1);
-
-  sym_p^.symtype := sst_symtype_label_k; {fill in new label symbol descriptor}
-  sym_p^.label_opc_p := nil;           {opcode defining label not created yet}
+  sst_r_syn_jtarg_label (sym_p);       {create the new label}
   jt_p^.lab_p := sym_p;                {save symbol pointer in jump descriptor}
   end;
 {
@@ -233,17 +303,14 @@ begin
   if not (jflag_fall_k in jt.flags) then return; {not fall thru case ?}
   if jt.lab_p = nil then return;       {no label used for this jump target ?}
 
-  sst_opcode_new;                      {create label target opcode}
-  sst_opc_p^.opcode := sst_opc_label_k; {opcode is a label}
-  sst_opc_p^.label_sym_p := jt.lab_p;  {point to the label symbol}
-  jt.lab_p^.label_opc_p := sst_opc_p;  {link label symbol to target opcode}
+  sst_r_syn_jtarg_label_define (jt.lab_p^); {define label at this location}
   end;
 {
 ********************************************************************************
 *
 *   Subroutine SST_R_SYN_JTARG_HERE (JTARG)
 *
-*   Write labels here for jump targets in JTARG that as appropriate.
+*   Write labels here for jump targets in JTARG as appropriate.
 }
 procedure sst_r_syn_jtarg_here (       {write implicit labels created by jump targs}
   in      jtarg: jump_targets_t);      {jump targets descriptor now done with}

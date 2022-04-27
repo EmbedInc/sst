@@ -13,18 +13,22 @@ procedure sst_r_syn_utitem (           {process UNTAGGED_ITEM syntax}
 var
   tag: sys_int_machine_t;              {tag from syntax tree}
   sym_p: sst_symbol_p_t;               {scratch pointer to SST symbol}
+  lab_loop_p: sst_symbol_p_t;          {pointer to label at start of loop}
   exp_p, exp2_p, exp3_p: sst_exp_p_t;  {scratch pointers to SST expressions}
   arg_p: sst_exp_p_t;                  {scratch pointer to call argument expression}
   var_p: sst_var_p_t;                  {scratch pointer to variable reference}
   term_p: sst_exp_term_p_t;            {scratch pointer to SST term in expression}
   data_p: symbol_data_p_t;             {pointer to symbol data in our symbol table}
   ran1, ran2: sys_int_machine_t;       {start and end of range character codes}
+  occ1, occ2: sys_int_machine_t;       {min and max occurance limits}
+  occinf: boolean;                     {max occur limit infinite, OCC2 irrelevant}
   jt: jump_targets_t;                  {jump targets for subordinate syntax}
   token: string_var8192_t;             {scratch token or string}
+  stat: sys_err_t;                     {completion status}
 
 label
-  comp_char_sym,
-  trerr;
+  comp_char_sym, occur_n, occur_dnmatch,
+  done_item, trerr;
 
 begin
   token.max := sizeof(token.str);      {init local var string}
@@ -205,46 +209,11 @@ comp_char_sym:                         {common code to compare next char to SYM_
     ran2,                              {integer value to compare against}
     sst_op2_le_k,                      {compare operator}
     exp3_p);                           {returned pointer to the new expresion}
-  {
-  *   Create the high level expression, which is the AND of the two sub
-  *   expressions.
-  }
-  sst_mem_alloc_scope (                {create expression descriptor}
-    sizeof(exp_p^), exp_p);
 
-  exp_p^.str_h.first_char.crange_p := nil;
-  exp_p^.dtype_p := sst_dtype_bool_p;  {data type of whole expression}
-  exp_p^.dtype_hard := true;           {data type is known and fixed}
-  exp_p^.val_eval := true;             {indicated attempted to evaluate}
-  exp_p^.val_fnd := false;             {no fixed value found}
-  exp_p^.rwflag := [sst_rwflag_read_k]; {expression is read-only}
-
-  exp_p^.term1.op2 := sst_op2_none_k;  {no operation with previous term}
-  exp_p^.term1.op1 := sst_op1_none_k;  {no unary operation on this term}
-  exp_p^.term1.ttype := sst_term_exp_k; {this term is an expression}
-  exp_p^.term1.str_h.first_char.crange_p := nil;
-  exp_p^.term1.dtype_p := exp2_p^.dtype_p; {data type of this term}
-  exp_p^.term1.dtype_hard := true;     {data type is known and fixed}
-  exp_p^.term1.val_eval := true;       {tried to evaluate fixed value}
-  exp_p^.term1.val_fnd := false;       {no fixed value}
-  exp_p^.term1.rwflag := [sst_rwflag_read_k]; {term is read-only}
-  exp_p^.term1.exp_exp_p := exp2_p;    {the expression that is this term}
-
-  sst_mem_alloc_scope (                {create descriptor for second term}
-    sizeof(term_p^), term_p);
-  exp_p^.term1.next_p := term_p;       {link second term to after first}
-
-  term_p^.next_p := nil;               {this is last term in expression}
-  term_p^.op2 := sst_op2_and_k;        {AND operation between prev term and this}
-  term_p^.op1 := sst_op1_none_k;       {no unarty operation on this term}
-  term_p^.ttype := sst_term_exp_k;     {this term is an expression}
-  term_p^.str_h.first_char.crange_p := nil;
-  term_p^.dtype_p := exp3_p^.dtype_p;  {data type of this term}
-  term_p^.dtype_hard := true;          {data type is known and fixed}
-  term_p^.val_eval := true;            {tried to evaluate fixed value}
-  term_p^.val_fnd := false;            {no fixed value}
-  term_p^.rwflag := [sst_rwflag_read_k]; {term is read-only}
-  term_p^.exp_exp_p := exp3_p;         {the expression that is this term}
+  sst_r_syn_exp_exp2 (                 {create top level expression}
+    exp2_p^, exp3_p^,                  {the two subexpressions}
+    sst_op2_and_k,                     {operator to combine subexpressions}
+    exp_p);                            {returned pointer to combined expression}
   {
   *   Assign the value of the top level expression to the local MATCH variable.
   }
@@ -267,6 +236,215 @@ comp_char_sym:                         {common code to compare next char to SYM_
 *   Item is .OCCURS
 }
 6: begin
+{
+*   Read the min/max occurance limits and set OCC1, OCC2, and OCCINF
+*   accordingly.
+}
+  {
+  *   Get the minimum number of occurance into OCC1.
+  }
+  if syn_trav_next_tag (syn_p^) <> 1   {get tag for first value integer}
+    then goto trerr;
+  syn_trav_tag_string (syn_p^, token); {get the raw string}
+  string_t_int (token, occ1, stat);    {get min occurance number}
+  syn_error_bomb (syn_p^, stat, 'sst_syn_read', 'occurs_limit_low_bad', nil, 0);
+  {
+  *   Get the maximum number of occurances into OCC2, or set OCCINF to indicate
+  *   there is no upper limit.  The value of OCC2 is irrelevant when OCCINF is
+  *   TRUE.
+  }
+  if not syn_trav_next_down (syn_p^)   {down into END_RANGE syntax}
+    then goto trerr;
+
+  case syn_trav_next_tag(syn_p^) of    {which type of end of range is it ?}
+1:  begin                              {explicit integer value}
+      syn_trav_tag_string (syn_p^, token); {get the raw string}
+      string_t_int (token, occ2, stat); {get max occurance number}
+      syn_error_bomb (syn_p^, stat, 'sst_syn_read', 'integer_bad', nil, 0);
+      occinf := false;                 {OCC2 contains the finite upper limit}
+      end;
+2:  begin                              {inifinite}
+      occ2 := 0;                       {set to fixed value, unused}
+      occinf := true;                  {indicate no upper limit on occurances}
+      end;
+otherwise
+    syn_msg_tag_bomb (                 {unexpected tag encountered}
+      syn_p^, 'sst_syn_read', 'occurs_limit_high_bad', nil, 0);
+    end;
+
+  if not syn_trav_up (syn_p^)          {back up from END_RANGE syntax}
+    then goto trerr;
+  {
+  *   Check for the upper limit is less than the lower limit.  The .OCCURS
+  *   condition is always FALSE then.
+  }
+  if                                   {check for impossible condition}
+      (not occinf) and                 {upper limit exists ?}
+      (occ2 < occ1)                    {both limits can't be met ?}
+      then begin
+    sst_r_syn_assign_match (false);    {indicate syntax doesn't match}
+    sst_r_syn_jtarg_goto (             {jump according to MATCH}
+      jtarg, [jtarg_yes_k, jtarg_no_k]);
+    goto done_item;                    {done procession this .OCCURS item}
+    end;
+  {
+  *   Check for the upper limit is 0 or less.  The .OCCURS condition is
+  *   always TRUE then.
+  }
+  if                                   {0 upper limit ?}
+      (not occinf) and                 {upper limit exists ?}
+      (occ2 <= 0)                      {limit is always met ?}
+      then begin
+    sst_r_syn_assign_match (true);     {indicate syntax matched}
+    sst_r_syn_jtarg_goto (             {jump according to MATCH}
+      jtarg, [jtarg_yes_k, jtarg_no_k]);
+    goto done_item;                    {done procession this .OCCURS item}
+    end;
+{
+*   The range for valid number of occurrances is known.  The following state is
+*   set:
+*
+*     OCC1  -  Minimum required number of occurances.
+*
+*     OCC2  -  Maximum allowed number of occurances.
+*
+*     OCCINF  -  There is no upper bound on the maximum number of occurances.
+*       When OOCINF is TRUE, then the OCC2 value is unused and irrelevant.
+*
+*   The above conditions have been verified to be possible to meet, and that the
+*   item must be run at least once.
+*
+*   The next syntax tree entry is for the subordinate item that is to be
+*   repeated.
+}
+occur_n:                               {OCC1, OCC2, OCCINF all set and valid}
+{
+*   Create the occurrance counter and initialize it to 0.
+}
+  sst_r_syn_int (sym_p);               {create new integer variable}
+  sst_sym_var (sym_p^, var_p);         {make reference to new variable}
+  sst_exp_const_int (0, exp_p);        {make constant 0 expression}
+  sst_r_syn_assign_exp (               {assign expression to variable}
+    var_p^,                            {variable}
+    exp_p^);                           {expression}
+{
+*   Create the label to jump to for repeating the loop.
+}
+  sst_r_syn_jtarg_label_here (lab_loop_p); {create and define top of loop label}
+{
+*   Process the subordinate ITEM syntax.
+}
+  sst_r_syn_jtarg_sub (                {make jump targets for subordinate item}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_fall_k);                       {fall thru on NO}
+
+  sst_r_syn_item (jt);                 {process the item, set MATCH accordingly}
+
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
+{
+*   Handle the case of the item not matching the syntax template.  In that case,
+*   the final MATCH answer is whether the number of iterations is within the
+*   min/max limits.  Since the loop is aborted whenever the number of iterations
+*   matches the upper limit, there is no need to check the upper limit.  The
+*   iteration count can't exceed the upper limit here.
+}
+  sst_opcode_new;                      {create new opcode for IF}
+  sst_opc_p^.opcode := sst_opc_if_k;
+  sst_opc_p^.if_exp_p := match_not_exp_p; {conditional expression is NOT MATCH}
+  sst_opc_p^.if_false_p := nil;        {there is no FALSE case code}
+  sst_opcode_pos_push (sst_opc_p^.if_true_p); {set up for writing TRUE code}
+  {
+  *   The item did not match.  Now set MATCH according to whether the number of
+  *   iterations meets the lower limit.
+  }
+  if occ1 <= 0
+    then begin                         {no lower limit, the result is always YES}
+      sst_r_syn_assign_match (true);   {indicate syntax matched}
+      sst_r_syn_jtarg_sym (            {make sure YES case has a label}
+        jtarg.yes, sym_p);
+      sst_r_syn_jtarg_label_goto (     {unconditionally jump to the label for YES}
+        jtarg.yes.lab_p^);
+      goto occur_dnmatch;              {done handling didn't match case}
+      end
+    else begin                         {need to check against the lower limit}
+      sst_r_syn_comp_var_int (         {make exp comparing count to lower limit}
+        var_p^.mod1.top_sym_p^,        {the variable to compare value of}
+        occ1,                          {integer to compare it with}
+        sst_op2_ge_k,                  {comparison operator}
+        exp_p);                        {returned pointer to the comparison expression}
+      sst_r_syn_assign_exp (           {set MATCH to the comparison result}
+        match_var_p^,                  {the variable to assign to}
+        exp_p^);                       {the expression to assign to it}
+      end
+    ;
+  {
+  *   Done with this item, jump according to MATCH.
+  }
+  sst_r_syn_jtarg_sub (                {make jump targets for subordinate item}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_same_k,                        {to same place as parent}
+    lab_same_k);                       {to same place as parent}
+  sst_r_syn_jtarg_goto (               {jump to yes/no labels according to MATCH}
+    jt, [jtarg_yes_k, jtarg_no_k]);
+
+occur_dnmatch:                         {done with didn't match case}
+  sst_opcode_pos_pop;                  {done writing TRUE case opcodes}
+{
+*   Increment the number of occurences.
+}
+  exp_p := sst_exp_make_var (          {init expression to be ref to the counter}
+    var_p^.mod1.top_sym_p^);
+
+  sst_mem_alloc_scope (sizeof(term_p^), term_p); {get mem for second term}
+  exp_p^.term1.next_p := term_p;       {link new term as second term in exp}
+
+  term_p^.next_p := nil;               {no additional terms in expression}
+  term_p^.op2 := sst_op2_add_k;        {operator with previous term}
+  term_p^.op1 := sst_op1_none_k;       {no unary operation on this term}
+  term_p^.ttype := sst_term_const_k;   {this term is a constant}
+  term_p^.str_h.first_char.crange_p := nil;
+  term_p^.dtype_p := sym_int_p^.dtype_dtype_p; {data type is machine integer}
+  term_p^.dtype_hard := true;          {data type is known and fixed}
+  term_p^.val_eval := true;            {tried to resolve value}
+  term_p^.val_fnd := true;             {found known fixed value}
+  term_p^.val.dtype := sst_dtype_int_k; {constant data type is integer}
+  term_p^.val.int_val := 1;            {the constant value}
+  term_p^.rwflag := [sst_rwflag_read_k]; {term is read-only}
+
+  sst_r_syn_assign_exp (               {assign incremented value to the counter}
+    var_p^,                            {the variable to assign to}
+    exp_p^);                           {the expression to assign to it}
+{
+*   Stop processing and return TRUE if the maximum number of occurences has been
+*   met.  It was previously verified to be at least the minimum number of
+*   allowed occurences.
+}
+  if not occinf then begin             {there is an upper limit ?}
+    sst_r_syn_comp_var_int (           {create expression comparing counter to limit}
+      var_p^.mod1.top_sym_p^,          {the variable to compare value of}
+      occ2,                            {integer to compare it with}
+      sst_op2_ge_k,                    {comparison operator}
+      exp_p);                          {returned pointer to the comparison expression}
+
+    sst_opcode_new;                    {create new opcode for IF}
+    sst_opc_p^.opcode := sst_opc_if_k;
+    sst_opc_p^.if_exp_p := exp_p;      {conditional expression}
+    sst_opc_p^.if_false_p := nil;      {there is no FALSE case code}
+
+    sst_opcode_pos_push (sst_opc_p^.if_true_p); {set up for writing TRUE code}
+    sst_r_syn_jtarg_sym (              {get label symbol for TRUE case}
+      jtarg.yes,                       {jump target for TRUE case}
+      sym_p);                          {returned pointer to TRUE case label}
+    sst_r_syn_jtarg_label_goto (sym_p^); {go to syntax matched location}
+    sst_opcode_pos_pop;                {done writing TRUE case opcodes}
+    end;                               {end of check for upper limit case}
+{
+*   Back to try another iteration.
+}
+  sst_r_syn_jtarg_label_goto (lab_loop_p^); {jump back to start of loop}
   end;
 {
 ********************************************************************************
@@ -379,6 +557,7 @@ otherwise
     syn_msg_tag_bomb (syn_p^, 'sst_syn_read', 'syerr_utitem', nil, 0);
     end;                               {end of item format cases}
 
+done_item:                             {done processing the item}
   if not syn_trav_up(syn_p^)           {back up from UNTAGGED_ITEM syntax}
     then goto trerr;
   return;

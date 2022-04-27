@@ -152,6 +152,13 @@ procedure sst_r_syn_doit (             {do SYN language front end phase}
 procedure sst_r_syn_err_check;         {check for err reparse end in syntax checking code}
   val_param; extern;
 
+procedure sst_r_syn_exp_exp2 (         {exp from operation on two sub-exp}
+  in var  exp1: sst_exp_t;             {first sub-expression}
+  in var  exp2: sst_exp_t;             {second sub-expression}
+  in      op: sst_op2_k_t;             {operator between the two sub-expressions}
+  out     exp_p: sst_exp_p_t);         {returned pointer to new combined expression}
+  val_param; extern;
+
 function sst_r_syn_exp_ichar:          {create SST expression for SYN_P_ICHAR value}
   sst_exp_p_t;                         {pointer to the new expression descriptor}
   val_param; extern;
@@ -176,6 +183,22 @@ procedure sst_r_syn_jtarg_here (       {write implicit labels created by jump ta
 
 procedure sst_r_syn_jtarg_init (       {initialize jump targets}
   out     jtarg: jump_targets_t);      {the set of jump targets to initialize}
+  val_param; extern;
+
+procedure sst_r_syn_jtarg_label (      {create a label symbol}
+  out     lab_p: sst_symbol_p_t);      {returned pointer to the label symbol}
+  val_param; extern;
+
+procedure sst_r_syn_jtarg_label_define ( {define existing label at current position}
+  in var  lab: sst_symbol_t);          {label symbol}
+  val_param; extern;
+
+procedure sst_r_syn_jtarg_label_goto ( {unconditionally jump to a label}
+  in var  lab: sst_symbol_t);          {label to jump to}
+  val_param; extern;
+
+procedure sst_r_syn_jtarg_label_here ( {create a label symbol at the current location}
+  out     lab_p: sst_symbol_p_t);      {returned pointer to the label symbol}
   val_param; extern;
 
 procedure sst_r_syn_jtarg_sub (        {make new jump targets from old and modifiers}

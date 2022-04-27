@@ -6,6 +6,9 @@ msg charcase_bad
 msg module_symbol_create
   lan english -def
     Error occurred on attempt to create name symbol for top module
+msg occurs_limit_high_bad
+  lan english -def
+    Bad upper limit in OCCURS operator.
 msg occurs_limit_high_below
   lan english -def
     The upper limit in OCCURS operator is set less than the lower
