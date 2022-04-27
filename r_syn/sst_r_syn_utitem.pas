@@ -547,6 +547,19 @@ otherwise                              {unexpected tag value}
 *   Item is .OPTIONAL
 }
 13: begin
+  sst_r_syn_jtarg_sub (                {make jump targets for subordinate item}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_fall_k);                       {fall thru on NO}
+  sst_r_syn_item (jt);                 {process the item, fall thru regardless of match}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
+
+  sst_r_syn_assign_match (true);       {.OPTIONAL always matches}
+  sst_r_syn_jtarg_sym (                {make sure YES case has a label}
+    jtarg.yes, sym_p);
+  sst_r_syn_jtarg_label_goto (         {unconditionally jump to the label for YES}
+    jtarg.yes.lab_p^);
   end;
 {
 ********************************************************************************
