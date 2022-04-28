@@ -177,6 +177,10 @@ procedure sst_r_syn_jtarg_goto (       {go to jump targets, as required}
   in      flags: jtarg_t);             {which cases to write code for}
   val_param; extern;
 
+procedure sst_r_syn_jtarg_goto_targ (  {unconditionally go as indicated by target}
+  in out  jt: jump_target_t);          {jump target for the specific case}
+  val_param; extern;
+
 procedure sst_r_syn_jtarg_here (       {write implicit labels created by jump targs}
   in      jtarg: jump_targets_t);      {jump targets descriptor now done with}
   val_param; extern;

@@ -82,6 +82,7 @@ define sst_r_syn_jtarg_label_here;
 define sst_r_syn_jtarg_label_goto;
 define sst_r_syn_jtarg_sym;
 define sst_r_syn_jtarg_here;
+define sst_r_syn_jtarg_goto_targ;
 define sst_r_syn_jtarg_goto;
 %include 'sst_r_syn.ins.pas';
 {
@@ -319,6 +320,30 @@ procedure sst_r_syn_jtarg_here (       {write implicit labels created by jump ta
 begin
   targ_here (jtarg.yes);               {write labels as needed for each case}
   targ_here (jtarg.no);
+  end;
+{
+********************************************************************************
+*
+*   Subroutine SST_R_SYN_JTARG_GOTO_TARG (JT)
+*
+*   Unconditionally go to the location specified by the jump target JT.  Nothing
+*   is done is the jump target is set to fall thru.
+}
+procedure sst_r_syn_jtarg_goto_targ (  {unconditionally go as indicated by target}
+  in out  jt: jump_target_t);          {jump target for the specific case}
+  val_param;
+
+begin
+  if                                   {just fall thru, nothing to do ?}
+      (jflag_fall_k in jt.flags) and   {fall thru indicated ?}
+      (not (jflag_indir_k in jt.flags)) {but not also indirect ?}
+    then return;
+
+  sst_opcode_new;                      {create GOTO opcode}
+  sst_opc_p^.opcode := sst_opc_goto_k;
+  sst_r_syn_jtarg_sym (                {get or make jump target symbol}
+    jt,                                {jump target descriptor}
+    sst_opc_p^.goto_sym_p);            {returned pointer to label symbol}
   end;
 {
 ********************************************************************************

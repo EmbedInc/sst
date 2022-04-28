@@ -21,20 +21,20 @@ begin
   if not syn_trav_next_down (syn_p^)   {down into EXPRESSION syntax}
     then goto trerr;
 {
-*   Temporarily skip over ITEM that always starts the expression, and get the
-*   next tag.  That determines the format of the overall expression, and thereby
-*   how the yes/no answer from ITEM is handled.
+*   Process the item that always starts the expression.
 }
-  syn_trav_push (syn_p^);              {save current syntax tree position}
-
-  if syn_trav_next(syn_p^) <> syn_tent_sub_k {go to ITEM tree entry}
-    then goto trerr;
-  tag := syn_trav_next_tag (syn_p^);   {get tag after ITEM}
-
-  syn_trav_pop (syn_p^);               {restore position to before ITEM}
+  sst_r_syn_jtarg_sub (                {make subordinate jump targets for ITEM}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_fall_k);                       {fall thru on NO}
+  sst_r_syn_item (jt);                 {process ITEM, set MATCH accordingly}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 {
-*   TAG is the next tag after ITEM.  The syntax tree position is before ITEM.
+*   Get the next tag, and handle the remainder of this syntax according to which
+*   form of expression it is.
 }
+  tag := syn_trav_next_tag(syn_p^);    {get tag identifying overall expression form}
   case tag of                          {what is the format of this expression ?}
 {
 ****************************************
@@ -48,11 +48,8 @@ begin
     jt,                                {new subordinate targets}
     lab_fall_k,                        {fall thru on YES}
     lab_same_k);                       {same as parent on NO}
-  sst_r_syn_item (jt);                 {process subordinate ITEM syntax}
-  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
-
-  if syn_trav_next(syn_p^) <> syn_tent_tag_k {skip over the tag}
-    then goto trerr;
+  sst_r_syn_jtarg_goto (jt, [jtarg_no_k]); {abort on ITEM failed}
+  sst_r_syn_jtarg_here (jt);           {define local jump target labels here}
 
   sst_r_syn_expression (jtarg);        {process subordinate EXPRESSION syntax}
   sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
@@ -69,11 +66,8 @@ begin
     jt,                                {new subordinate targets}
     lab_same_k,                        {to parent on YES}
     lab_fall_k);                       {continue here on NO}
-  sst_r_syn_item (jt);                 {process subordinate ITEM syntax}
+  sst_r_syn_jtarg_goto (jt, [jtarg_no_k]); {all done if ITEM matched}
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
-
-  if syn_trav_next(syn_p^) <> syn_tent_tag_k {skip over the tag}
-    then goto trerr;
 
   sst_r_syn_expression (jtarg);        {process subordinate EXPRESSION syntax}
   sst_r_syn_jtarg_goto (jtarg, [jtarg_yes_k, jtarg_no_k]);
@@ -85,7 +79,8 @@ begin
 *   ITEM
 }
 3: begin
-  sst_r_syn_item (jtarg);              {process the item as the whole expression}
+  sst_r_syn_jtarg_goto (               {ITEM was whole expression}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 **************************************

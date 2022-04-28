@@ -84,20 +84,20 @@ begin
 **************************************
 *
 *   Item is untagged.
-}
-2: begin
-  syn_trav_pop (syn_p^);               {restore position to UNTAGGED_ITEM}
-  sst_r_syn_utitem (jtarg);            {ITEM resolves to just this UNTAGGED_ITEM}
-  end;
-{
-**************************************
 *
-*   Unexpected expression format tag value.
+*   All other unexpected tag values are also processed here.  Unexpected tags
+*   are most likely due to a syntax error that caused the ITEM type tag not to
+*   be created.  Continuing with the UNTAGGED_ITEM will allow processing up to
+*   the error end of the syntax tree, which results in the best possible error
+*   message.
 }
 otherwise
-    syn_msg_tag_bomb (syn_p^, 'sst_syn_read', 'syerr_item', nil, 0);
-    end;                               {end of item format cases}
-
+    syn_trav_pop (syn_p^);             {restore position to UNTAGGED_ITEM}
+    sst_r_syn_utitem (jtarg);          {ITEM resolves to just this UNTAGGED_ITEM}
+    end;
+{
+**************************************
+}
   if not syn_trav_up(syn_p^)           {back up from UNTAGGED_ITEM syntax}
     then goto trerr;
   return;

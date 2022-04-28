@@ -54,28 +54,7 @@ comp_char_sym:                         {common code to compare next char to SYM_
 {
 *   Make expression comparing the next input character to the constant at SYM_P.
 }
-  sst_mem_alloc_scope (                {create expression descriptor}
-    sizeof(exp_p^), exp_p);
-
-  exp_p^.str_h.first_char.crange_p := nil;
-  exp_p^.dtype_p := sst_dtype_bool_p;  {data type of whole expression}
-  exp_p^.dtype_hard := true;           {data type is known and fixed}
-  exp_p^.val_eval := true;             {attempted to resolve value}
-  exp_p^.val_fnd := false;             {fixed value not found}
-  exp_p^.rwflag := [sst_rwflag_read_k]; {expression is read-only}
-
-  exp_p^.term1.op2 := sst_op2_none_k;  {no operator with previous term}
-  exp_p^.term1.op1 := sst_op1_none_k;  {no unary operator applying to this term}
-  exp_p^.term1.ttype := sst_term_func_k; {term is the value of a function}
-  exp_p^.term1.str_h.first_char.crange_p := nil;
-  exp_p^.term1.dtype_p := sym_int_p^.dtype_dtype_p; {term is machine integer}
-  exp_p^.term1.dtype_hard := true;     {data type is known and fixed}
-  exp_p^.term1.val_eval := true;       {tried to resolve value}
-  exp_p^.term1.val_fnd := false;       {not a known fixed value}
-  exp_p^.term1.rwflag := [sst_rwflag_read_k]; {term is read-only}
-  exp_p^.term1.func_var_p := var_ichar_p; {"variable" reference for calling the function}
-  exp_p^.term1.func_proc_p := exp_ichar_p^.term1.func_proc_p; {function call}
-  exp_p^.term1.func_proct_p := exp_ichar_p^.term1.func_proct_p; {function template}
+  exp_p := sst_r_syn_exp_ichar;        {init expression to result of SYN_P_ICHAR function}
 
   sst_mem_alloc_scope (sizeof(term_p^), term_p); {get mem for second term}
   exp_p^.term1.next_p := term_p;       {link new term as second term in exp}
@@ -157,8 +136,8 @@ comp_char_sym:                         {common code to compare next char to SYM_
   sst_r_syn_assign_exp (               {assign SYN_P_TEST_STRING result to MATCH}
     match_var_p^,                      {variable to assign to}
     exp_p^);                           {expression to assign to it}
+  sst_r_syn_err_check;                 {abort on end of error re-parse}
 
-  sst_r_syn_err_check;                 {abort parsing on end of error re-parse}
   sst_r_syn_jtarg_goto (               {jump according to MATCH}
     jtarg, [jtarg_yes_k, jtarg_no_k]);
   if not syn_trav_up (syn_p^)          {back up from STRING syntax}
@@ -283,8 +262,7 @@ otherwise
       (occ2 < occ1)                    {both limits can't be met ?}
       then begin
     sst_r_syn_assign_match (false);    {indicate syntax doesn't match}
-    sst_r_syn_jtarg_goto (             {jump according to MATCH}
-      jtarg, [jtarg_yes_k, jtarg_no_k]);
+    sst_r_syn_jtarg_goto_targ (jtarg.no); {go to the NO target}
     goto done_item;                    {done procession this .OCCURS item}
     end;
   {
@@ -296,8 +274,7 @@ otherwise
       (occ2 <= 0)                      {limit is always met ?}
       then begin
     sst_r_syn_assign_match (true);     {indicate syntax matched}
-    sst_r_syn_jtarg_goto (             {jump according to MATCH}
-      jtarg, [jtarg_yes_k, jtarg_no_k]);
+    sst_r_syn_jtarg_goto_targ (jtarg.yes); {go to the YES target}
     goto done_item;                    {done procession this .OCCURS item}
     end;
 {
@@ -323,6 +300,7 @@ occur_n:                               {OCC1, OCC2, OCCINF all set and valid}
 }
   sst_r_syn_int (sym_p);               {create new integer variable}
   sst_sym_var (sym_p^, var_p);         {make reference to new variable}
+
   sst_exp_const_int (0, exp_p);        {make constant 0 expression}
   sst_r_syn_assign_exp (               {assign expression to variable}
     var_p^,                            {variable}
@@ -350,6 +328,12 @@ occur_n:                               {OCC1, OCC2, OCCINF all set and valid}
 *   matches the upper limit, there is no need to check the upper limit.  The
 *   iteration count can't exceed the upper limit here.
 }
+  sst_r_syn_jtarg_sub (                {make jump targets for subordinate item}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_same_k,                        {to same place as parent}
+    lab_same_k);                       {to same place as parent}
+
   sst_opcode_new;                      {create new opcode for IF}
   sst_opc_p^.opcode := sst_opc_if_k;
   sst_opc_p^.if_exp_p := match_not_exp_p; {conditional expression is NOT MATCH}
@@ -362,10 +346,7 @@ occur_n:                               {OCC1, OCC2, OCCINF all set and valid}
   if occ1 <= 0
     then begin                         {no lower limit, the result is always YES}
       sst_r_syn_assign_match (true);   {indicate syntax matched}
-      sst_r_syn_jtarg_sym (            {make sure YES case has a label}
-        jtarg.yes, sym_p);
-      sst_r_syn_jtarg_label_goto (     {unconditionally jump to the label for YES}
-        jtarg.yes.lab_p^);
+      sst_r_syn_jtarg_goto_targ (jt.yes); {go to target for YES}
       goto occur_dnmatch;              {done handling didn't match case}
       end
     else begin                         {need to check against the lower limit}
@@ -382,11 +363,6 @@ occur_n:                               {OCC1, OCC2, OCCINF all set and valid}
   {
   *   Done with this item, jump according to MATCH.
   }
-  sst_r_syn_jtarg_sub (                {make jump targets for subordinate item}
-    jtarg,                             {parent jump targets}
-    jt,                                {new subordinate targets}
-    lab_same_k,                        {to same place as parent}
-    lab_same_k);                       {to same place as parent}
   sst_r_syn_jtarg_goto (               {jump to yes/no labels according to MATCH}
     jt, [jtarg_yes_k, jtarg_no_k]);
 
@@ -435,16 +411,15 @@ occur_dnmatch:                         {done with didn't match case}
     sst_opc_p^.if_false_p := nil;      {there is no FALSE case code}
 
     sst_opcode_pos_push (sst_opc_p^.if_true_p); {set up for writing TRUE code}
-    sst_r_syn_jtarg_sym (              {get label symbol for TRUE case}
-      jtarg.yes,                       {jump target for TRUE case}
-      sym_p);                          {returned pointer to TRUE case label}
-    sst_r_syn_jtarg_label_goto (sym_p^); {go to syntax matched location}
+    sst_r_syn_jtarg_goto_targ (jt.yes); {go to target for YES}
     sst_opcode_pos_pop;                {done writing TRUE case opcodes}
     end;                               {end of check for upper limit case}
 {
 *   Back to try another iteration.
 }
   sst_r_syn_jtarg_label_goto (lab_loop_p^); {jump back to start of loop}
+
+  sst_r_syn_jtarg_here (jt);           {define our local jump targets here}
   end;
 {
 ********************************************************************************
@@ -474,8 +449,7 @@ otherwise                              {unexpected tag value}
   sst_call_arg_enum (sst_opc_p^, sym_p^); {add char case handling choice argument}
 
   sst_r_syn_assign_match (true);       {this item always matches}
-  sst_r_syn_jtarg_goto (               {jump according to MATCH}
-    jtarg, [jtarg_yes_k, jtarg_no_k]);
+  sst_r_syn_jtarg_goto_targ (jtarg.yes); {go to target for YES case}
   end;
 {
 ********************************************************************************
@@ -484,8 +458,7 @@ otherwise                              {unexpected tag value}
 }
 9: begin
   sst_r_syn_assign_match (true);       {this item always matches}
-  sst_r_syn_jtarg_goto (               {jump according to MATCH}
-    jtarg, [jtarg_yes_k, jtarg_no_k]);
+  sst_r_syn_jtarg_goto_targ (jtarg.yes); {go to target for YES case}
   end;
 {
 ********************************************************************************
@@ -504,7 +477,7 @@ otherwise                              {unexpected tag value}
   sst_r_syn_item (jt);                 {process the UPTO item}
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
-  sst_call (sym_cpos_pop_p^);          {restore input position if no match}
+  sst_call (sym_cpos_pop_p^);          {restore input position}
   sst_r_syn_arg_syn;                   {pass SYN}
   sst_call_arg_exp (sst_opc_p^, exp_false_p^); {pass FALSE to always restore position}
 
@@ -517,6 +490,9 @@ otherwise                              {unexpected tag value}
 *   Item is .NOT
 }
 11: begin
+  sst_call (sym_cpos_push_p^);         {save current input position on stack}
+  sst_r_syn_arg_syn;                   {pass SYN}
+
   sst_r_syn_jtarg_sub (                {make subordinate jump targets for ITEM}
     jtarg,                             {parent jump targets}
     jt,                                {new subordinate targets}
@@ -524,6 +500,10 @@ otherwise                              {unexpected tag value}
     lab_fall_k);                       {fall thru on NO}
   sst_r_syn_item (jt);                 {process the item that will be negated}
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
+
+  sst_call (sym_cpos_pop_p^);          {restore input position}
+  sst_r_syn_arg_syn;                   {pass SYN}
+  sst_call_arg_exp (sst_opc_p^, exp_false_p^); {pass FALSE to always restore position}
 
   sst_r_syn_assign_exp (               {negate the local MATCH variable}
     match_var_p^,                      {variable to assign to}
@@ -547,6 +527,9 @@ otherwise                              {unexpected tag value}
 *   Item is .OPTIONAL
 }
 13: begin
+  sst_call (sym_cpos_push_p^);         {save current input position on stack}
+  sst_r_syn_arg_syn;                   {pass SYN}
+
   sst_r_syn_jtarg_sub (                {make jump targets for subordinate item}
     jtarg,                             {parent jump targets}
     jt,                                {new subordinate targets}
@@ -555,11 +538,12 @@ otherwise                              {unexpected tag value}
   sst_r_syn_item (jt);                 {process the item, fall thru regardless of match}
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
+  sst_call (sym_cpos_pop_p^);          {restore input position if no match}
+  sst_r_syn_arg_syn;                   {pass SYN}
+  sst_r_syn_arg_match;                 {pass MATCH}
+
   sst_r_syn_assign_match (true);       {.OPTIONAL always matches}
-  sst_r_syn_jtarg_sym (                {make sure YES case has a label}
-    jtarg.yes, sym_p);
-  sst_r_syn_jtarg_label_goto (         {unconditionally jump to the label for YES}
-    jtarg.yes.lab_p^);
+  sst_r_syn_jtarg_goto_targ (jtarg.yes); {jump to YES target}
   end;
 {
 ********************************************************************************
