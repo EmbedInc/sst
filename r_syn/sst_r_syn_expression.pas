@@ -66,7 +66,8 @@ begin
     jt,                                {new subordinate targets}
     lab_same_k,                        {to parent on YES}
     lab_fall_k);                       {continue here on NO}
-  sst_r_syn_jtarg_goto (jt, [jtarg_no_k]); {all done if ITEM matched}
+  sst_r_syn_jtarg_goto (               {all done if ITEM matched}
+    jt, [jtarg_yes_k, jtarg_no_k]);
   sst_r_syn_jtarg_here (jt);           {define jump target labels here}
 
   sst_r_syn_expression (jtarg);        {process subordinate EXPRESSION syntax}
