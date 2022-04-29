@@ -427,7 +427,23 @@ occur_dnmatch:                         {done with didn't match case}
 *   Item is nested expression in parenthesis.
 }
 7: begin
-  sst_r_syn_expression (jtarg);        {process the subordinate expression}
+  sst_call (sym_cpos_push_p^);         {save current input position on stack}
+  sst_r_syn_arg_syn;                   {pass SYN}
+
+  sst_r_syn_jtarg_sub (                {make jump targets for subordinate expression}
+    jtarg,                             {parent jump targets}
+    jt,                                {new subordinate targets}
+    lab_fall_k,                        {fall thru on YES}
+    lab_fall_k);                       {fall thru on NO}
+  sst_r_syn_expression (jt);           {process the subordinate expression}
+  sst_r_syn_jtarg_here (jt);           {define jump target labels here}
+
+  sst_call (sym_cpos_pop_p^);          {restore input position if no match}
+  sst_r_syn_arg_syn;                   {pass SYN}
+  sst_r_syn_arg_match;                 {pass MATCH}
+
+  sst_r_syn_jtarg_goto (               {jump according to MATCH}
+    jtarg, [jtarg_yes_k, jtarg_no_k]);
   end;
 {
 ********************************************************************************
