@@ -1298,6 +1298,9 @@ procedure sst_var_funcname (           {change var from func return val to func 
 procedure sst_r_pas_init;              {init front end state for reading PASCAL}
   extern;
 
+procedure sst_r_syo_init;              {init front end state for reading .syo files}
+  extern;
+
 procedure sst_r_syn_init;              {init front end state for reading .syn files}
   extern;
 

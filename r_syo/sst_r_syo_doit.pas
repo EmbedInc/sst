@@ -58,9 +58,9 @@ begin
 *   Start of main routine.
 }
 begin
-  string_generic_fnam (fnam, '.syn', gnam); {make generic input file name}
+  string_generic_fnam (fnam, '.syo', gnam); {make generic input file name}
   string_copy (gnam, prefix);          {use generic name as subroutine prefix}
-  syo_infile_top_set (fnam, '.syn');   {set name of top level input file}
+  syo_infile_top_set (fnam, '.syo');   {set name of top level input file}
 
   string_hash_create (                 {create hash table for SYN file symbols}
     table_sym,                         {hash table to initialize}
@@ -73,7 +73,7 @@ begin
   seq_subr := 1;                       {init sequence num for next default subr name}
   def_syo_p := nil;                    {init to no syntax currently being defined}
 {
-*   Main loop.  Come back here each new command from SYN file.  This loop
+*   Main loop.  Come back here each new command from SYO file.  This loop
 *   terminates either on an error or end of data.
 }
 loop_cmd:
@@ -86,7 +86,7 @@ loop_cmd:
     end;
 
   syo_tree_setup;                      {set up syntax tree for getting tags}
-  sst_r_syo_command (stat);            {process this SYN file command}
+  sst_r_syo_command (stat);            {process this SYO file command}
 
   if sys_stat_match (sst_subsys_k, sst_stat_eod_k, stat) {hit end of input data ?}
     then goto eod;
@@ -95,12 +95,12 @@ loop_cmd:
     syo_error_print ('', '', nil, 0);  {complain about syntax error}
     sys_exit_error;                    {exit program with error condition}
     end;
-  goto loop_cmd;                       {back for next command from SYN file}
+  goto loop_cmd;                       {back for next command from SYO file}
 eod:
 {
 *   End of input data encountered.
 *
-*   Propagate used flags to all appropriate SYN file symbols.
+*   Propagate used flags to all appropriate SYO file symbols.
 }
   string_hash_pos_first (table_sym, hpos, found); {go to first entry in hash table}
 
@@ -118,7 +118,7 @@ eod:
     string_hash_pos_next (hpos, found); {advance to next hash table entry}
     end;                               {back and process this new hash table entry}
 {
-*   List any unused SYN symbols and clear FOLLOWED flags left from previous
+*   List any unused SYO symbols and clear FOLLOWED flags left from previous
 *   pass over all the symbols.
 }
   unused_syms := false;                {init to no unused symbols found}
@@ -143,7 +143,7 @@ eod:
     string_hash_pos_next (hpos, found); {advance to next hash table entry}
     end;                               {back and process this new hash table entry}
 {
-*   Check for undefined SYN symbols.
+*   Check for undefined SYO symbols.
 }
   undefined_syms := false;             {init to no undefined symbols found}
   string_hash_pos_first (table_sym, hpos, found); {go to first entry in hash table}
@@ -167,7 +167,7 @@ eod:
     string_hash_pos_next (hpos, found); {advance to next hash table entry}
     end;                               {back and process this new hash table entry}
 
-  string_hash_delete (table_sym);      {delete table for this SYN file symbols}
+  string_hash_delete (table_sym);      {delete table for this SYO file symbols}
 
   if undefined_syms then begin         {some undefined symbols were found ?}
     sys_message_bomb ('sst_syo_read', 'symbols_undefined_abort', nil, 0);

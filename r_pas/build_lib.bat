@@ -7,7 +7,7 @@ rem
 setlocal
 call build_pasinit
 
-call src_syn pas
+call src_syo pas
 
 call src_pas %srcdir% %libname%_comblock
 call src_pas %srcdir% %libname%_data_type

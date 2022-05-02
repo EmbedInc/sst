@@ -14,4 +14,4 @@ sst_r_syo_jtargets_make.obj
 sst_r_syo_jtarget_sym.obj
 sst_r_syo_opc.obj
 sst_r_syo_utitem.obj
-syn.obj
+syo.obj

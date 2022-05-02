@@ -289,13 +289,16 @@ found_dot:                             {found suffix separator character}
   string_substr (fnam_in, i+1, fnam_in.len, parm); {extract file name suffix}
   string_upcase (parm);                {make suffix case-insensitive}
   string_tkpick80 (parm,               {pick suffix from supported list}
-    'PAS COG SYN',
+    'PAS COG SYO SYN',
     pick);
   case pick of
 1, 2: begin                            {PAS or COG}
       sst_r_pas_init;
       end;
-3:  begin                              {SYN}
+3:  begin                              {SYO}
+      sst_r_syo_init;
+      end;
+4:  begin                              {SYN}
       sst_r_syn_init;
       end;
 otherwise
