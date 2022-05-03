@@ -1,0 +1,817 @@
+                              Program SST
+                              2 May 2022
+
+sst <input file name> [<option 1> . . . <option n>]
+
+The SST program can translate a source code module from one language to
+another.  The input language is chosen by the suffix of the input file.
+Currently the following input file suffixes and languages are supported:
+
+  .pas
+
+    Apollo/Domain Pascal, with some difference.  See the section
+    "Differences from Apollo/Domain Pascal", later in this document.
+
+  .cog
+
+    The same as ".pas".  This suffix is only supported for legacy uses.
+
+  .syn
+
+    Embed syntax definition language.  See the "syn_file" documentation
+    file for a description of this language.  The resulting code is meant
+    to be used with the SYN library.
+
+  .syo
+
+    Embed syntax definition language.  The resulting code is for use with
+    the SYO library.  The SYO library is the "old" syntaxer.  This was
+    originally called SYN, but was renamed to SYO and replaced by the new
+    SYN library in early 2022.  The old syntax library (SYO) is not
+    recommended for new applications.
+
+The output language and other output configuration options are declared
+with a configuration file.  See the -CONFIG command line option, below.
+
+Command line option names are case-insensitive.  Valid command line
+options are:
+
+  -CONFIG <config file name>
+
+       Specify the target machine configuration file name.  The
+       configuration file content is described in a separate section,
+       below.  The default is lib/config_sst within the software
+       installation directory.  This is a configuration file that is
+       customized for the particular system that SST is running on.
+
+  -OUT <output file name>
+
+       Explicitly specify the output file name.  The default is to create
+       a file in the current working directory with the same generic
+       leafname as the input file.  The output file name will always end
+       with the suffix specified in the configuration file, even if
+       specified explicitly here.
+
+  -DEBUG level
+
+       Specify the desired conditional compilation debugging level. Level
+       0 specifies to ignore any optional debugging source code. Levels
+       1-n specify successively more debugging code be used. The exact
+       behaviour depends on the particular front end.  The selected debug
+       level number is made available to the front end. The default is 0.
+
+  -SHOW_UNUSED level -SHOW_UNUSED ALL
+
+       Control listing of unused symbols.  LEVEL indicates how many nested
+       files down unused symbols may be listed from.  Only files with
+       ".ins." in their name are counted.  A level of 0 prevents all
+       unused symbols from being listed.  Level 1 causes them only to be
+       listed from the top source files (not from any include files).
+       Level 2 lists unused symbols from the top source files and the
+       first level of include file, etc.  The special level ID "ALL"
+       causes unused symbols to be listed without regard to their source
+       file nesting level.  The default is 1.
+
+  -TIME
+
+       This option causes timing information to be written to standard
+       output after translation is complete.  The default is not to write
+       any timing information.
+
+  -LOCAL_INS
+
+       Cause local copies of include files to be used, when available. If
+       a file exists in the current working directory that has the same
+       name as the leafname of an include file, the local file will be
+       used instead of the include file actually specified.
+
+  -INS <include file name>
+
+       This command line option indicates that SST is being used to
+       translate the particular include file.  This file may be, but does
+       not need to be the same as the input file name.  All symbols
+       declared in the include file, and files subordinate to it, will be
+       written to the output file.  Implicit symbols, and symbols declared
+       elsewhere will not be written to the output file.  This command
+       line option is mutually exclusive with -WRITE_ALL.
+
+       WARNING:  The results are not defined if any executable code is
+       encountered in files other than the include file or its
+       subordinates.
+
+  -WRITE_ALL
+
+       All symbols, implicit and otherwise, will be written to the output
+       file.  This is intended for translating top level include files.
+       -WRITE_ALL is mutually exclusive with -INS.
+
+  -UNAME name
+
+       Set unique name string to be used when implicitly creating symbols
+       in the back end.  The default is the empty string when -INS is not
+       used.  When -INS is used, the default is the leaf name of the -INS
+       file, up to but not including the first period.
+
+  -GUI
+
+       Indicates that this module is part of a program that interacts with
+       the user thru graphics, not just the command line.  Some systems
+       (like Microsoft Windows) have different interfaces to the main
+       program routine for a GUI application than for a command line
+       application.  This switch only effects the interface and some
+       initialization of the main program routine. It is ignored for
+       target systems that make no distinction between command line and
+       GUI applications, and for all routines except the main program
+       routine.  By default, SST assumes the final program is a command
+       line, as apposed to a GUI, application.
+
+
+                       Configuration File Syntax
+
+The configuration file contains a set of commands, one per line.  "/*"
+starts an end of line comment.  Blank lines are ignored.  All tokens may
+be enclosed in quotes ("") or apostrophies ('').  This is required if the
+token is a text string and contains blanks.  Keywords are
+case-insensitive.  The file lib/config_sst within the software
+installation directory is a configuration file customized for the
+particular machine the process is running on.  It may be helpful to use
+this file as an example.  Valid commands are:
+
+  BITS_ADR n
+
+       N is the number of bits in the minimum addressable unit of main
+       memory.
+
+  SIZE_INT n name
+
+       Declares that an integer is available directly in the target
+       language that is N machine addresses in size.  There may be several
+       SIZE_INT commands to indicate more than one available integer size.
+       If so, all SIZE_INT commands must be in order from smallest to
+       largest integer sizes.  NAME is the name of this data type in the
+       target language.
+
+  SIZE_INT_MACHINE n
+
+       Declares the size of the preferred "machine" integer.  This must be
+       one of the integer sizes previously declared with a SIZE_INT
+       command.
+
+  SIZE_INT_ADR n
+
+       Declares the size of the integer needed to hold a machine address.
+       This must be one of the integer sizes previously declared with a
+       SIZE_INT command.
+
+  UNIV_POINTER name
+
+       Declare the name of the universal pointer data type in the target
+       language.
+
+  SIZE_FLOAT n name [ALIGN n]
+
+       Just like SIZE_INT, but declares the size of one available floating
+       point format.  NAME is the name of this data type in the target
+       language.  The optional ALIGN clause can be used to explicitly
+       specify the alignment rule.  The default alignment is the same as
+       the size.
+
+  SIZE_FLOAT_MACHINE n
+
+       Declares the size of the preferred "machine" floating point number.
+       This must be one of the floating point sizes previously declared
+       with a SIZE_FLOAT command.
+
+  SIZE_FLOAT_SINGLE n
+  SIZE_FLOAT_DOUBLE n
+
+       Declare the sizes of what is typically referred to as the "single"
+       and "double" precision floating point numbers on the target
+       machine.  The sizes used must have been previously declared with a
+       SIZE_FLOAT command.
+
+  SIZE_SET n
+
+       Declare an available size for SET data types.  There may be any
+       number of these commands, but they must be in order from smallest
+       to largest N.  N is a size in machine address increments.  If no
+       SIZE_SET commands are given and the target compiler has no native
+       SET data type, then there will be one SIZE_SET for every integer
+       size declared with a SIZE_INT command.
+
+  SIZE_SET_MULTIPLE n
+
+       Declare the size in machine address units that large sets should be
+       a multiple of.  If the target compiler has a native SET data type,
+       then the default will be such that the native SET data type can be
+       used.  Otherwise, this will default to the size declared in
+       SIZE_INT_MACHINE.
+
+       Set data types will be the smallest size specified with a SIZE_SET
+       command that is still big enough to have one bit for every element.
+       If the set requires more bits than available in the largest
+       SIZE_SET, then the size will be a multiple of SIZE_SET_MULTIPLE.
+
+       These commands are intended for when the modules run thru SST must
+       bind to modules compiled with a different target compiler, and the
+       two compilers would not default to the same SET data types.
+
+  SIZE_ENUMERATED_NATIVE n
+
+       Declare the size in machine addresses of the target compiler's
+       native enumerated data type.  This will default to the smallest
+       SIZE_INT declared.
+
+  SIZE_ENUMERATED_FORCE n
+
+       Declare the size to use for enumerated data types.  The native
+       enumerated data type of the target compiler will be used if it
+       matches the value for SIZE_ENUMERATED_NATIVE.  Otherwise,
+       enumerated data types will be declared as integers, and the
+       individual enumerated names as integer constants.  This may be
+       useful when linking to routines created with a compiler that has a
+       different native enumerated data type.
+
+  SIZE_BOOLEAN n name
+
+       Declare the size in machine addresses of the standard BOOLEAN or
+       LOGICAL data type of the target compiler.  Variables of this data
+       type can only take on values of TRUE or FALSE.  NAME is the name of
+       this data type in the target language.
+
+  BITS_CHAR n name
+
+       Declare the number of bits of storage allocated for one character.
+       NAME is the name of the basic character data type in the target
+       language.
+
+  ALIGN_MIN_REC n
+
+       Set minimum alignment for all record data types.  Default is 1,
+       meaning arbitrary address alignment.
+
+  ALIGN_MIN_PACKED_REC n
+
+       Set minimum aligment of packed records.  This defaults to the
+       ALIGN_MIN_REC value.
+
+  PASS_VAL_SIZE_MAX n
+
+       Declare the maximum size call argument that may be passed by value.
+       This value defaults to the size of the largest integer specified
+       with a SIZE_INT command.
+
+  OS name
+
+       Declare the operating system name.  Valid names are DOMAIN, HPUX,
+       AIX, IRIX, SOLARIS, and WIN32.
+
+  LANGUAGE name
+
+       Declare the target language name.  Currently the only valid target
+       language name is "C".
+
+  SUFFIX_FILE_NAME suffix
+
+       Declare the mandatory output file name suffix.  The output file
+       name will always end with this suffix.  If the output file name is
+       specified without this suffix, then it will be added.  Nothing will
+       be done if it already ends with this suffix.  The empty string (two
+       quotes in a row) specifies no particular suffix is required.  This
+       is also the default.
+
+  MAX_SYMBOL_LEN n
+
+       Declare the maximum allowable length of a symbol in the output
+       source code.  N is the maximum number of characters.
+
+  CONFIG string
+
+       Pass additional configuration information to the back end.  The
+       string may be interpreted uniquely for each back end.  Back end
+       selection is a function of the OS, and LANGUAGE parameters. This
+       string must be enclosed in quotes if it contains any spaces.
+
+  CASE <character case>
+
+       Set the character case handling to be used for non-global symbol
+       names.  Valid choices are:
+
+         UPPER  -  Non-global symbol names will be written in upper case,
+           regardless of their case in the input source.
+
+         LOWER  -  Non-global symbol names will be written in lower case,
+           regardless of their case in the input source.  This is the
+           default.
+
+  RESERVED name
+
+       Declare the name of a reserved symbol.  No output symbol will have
+       this name, whether it originally came from the input source code or
+       was created implicitly by the translator.  Symbols will be renamed,
+       if necessary, to avoid these names.  There may be any number of
+       these commands.  It is an error if a global symbol is encountered
+       that matches a reserved name.
+
+  SUFFIX_DATA_TYPE suffix
+
+       Declare the suffix that all data type names will end with.  The
+       default is no suffix (null string).
+
+  SUFFIX_CONSTANT suffix
+
+       Declare the suffix that all constant names will end with.  The
+       default is no suffix (null string).
+
+
+                 Differences from Apollo/Domain Pascal
+
+EXTENSIONS TO APOLLO/DOMAIN PASCAL
+
+  Most differences here are intended to help portability, and in
+  particular insulate the source code from target machine configuration
+  differences to a higher degree than native Apollo Domain Pascal.
+
+    1)   PRE-DEFINED CONSTANTS.  A set of pre-defined constants are
+         provided to allow more portable source code to be written.  No
+         error message will be issued if these symbols are re-defined
+         in the source code.  This will, however, prevent their use as
+         described here.  The constants are:
+
+           SYS_BITS_ADR_K  -  The number of bits in the mimimum size
+                addressable unit.  This is 8 for all Apollo systems,
+                since the mimimum addressable unit is an 8-bit byte.
+
+           SYS_BITS_CHAR_K  -  The number of bits used to represent one
+                incremental character in a string.  This is 8 for all
+                Apollo systems.
+
+    2)   PRE-DEFINED DATA TYPES.  A set of pre-defined data types are
+         provided to allow more portable source code to be written.  No
+         error message will be issued if these symbols are re-defined
+         in the source code.  This will, however, prevent their use as
+         described here.  Some of these data types may not exist,
+         depending on target machine configuration.  The pre-defined
+         data types are:
+
+           SYS_INT_MINn_T  -  The smallest available integer data type
+                that contains at least N bits.  Values of N range from
+                1 to the number of bits in the largest available
+                integer.
+
+           SYS_INT_CONVn_T  -  The most "convenient" available integer
+                data type that contains at least N bits.  Values of N
+                range from 1 to the number of bits in the largest
+                available integer.  Convenient is defined from the
+                point of view of the CPU.  Some integer data types can
+                be prossessed more eficiently because they map directly
+                to the available hardware.
+
+           SYS_INT_MACHINE_T  -  The integer data type that maps most
+                directly to the target machine's hardware.
+
+           SYS_INT_ADR_T  -  The integer data type that is the same
+                size as a native machine address.
+
+           SYS_INT_MAX_T  -  The largest available integer data type on
+                the target machine, regardless of how "convenient" it
+                may be.
+
+           SYS_INT_FP1_T  -  Integer data type that is the same size as
+                a "single" precision floating point number.
+
+           SYS_INT_FP2_T  -  Integer data type that is the same size as
+                a "double" precision floating point number.  NOTE: This
+                data type is not present on Apollo machines, since a
+                double precision floating point number is 8 bytes long,
+                and no 8 byte integer data type exists.
+
+           SYS_FP1_T  -  Floating point "single" precision data type.
+
+           SYS_FP2_T  -  Floating point "double" precision data type.
+                This will be the same as SYS_FP1_T when the target
+                machine only handles one kind of floating point
+                format.
+
+           SYS_FP_MACHINE_T  -  Floating point data type that is most
+                "convenient" to the target machine's hardware.
+
+           SYS_FP_MAX_T  -  The largest available floating point data
+                type on the target machine.  This is generally the same
+                as SYS_FP2_T.
+
+           Pointers to all the above data types.  The pointer data
+                types have the same name as the data types they are
+                pointing to, except they end in _P_T instead of just
+                _T.  For example, SYS_INT_MACHINE_P_T is a data type of
+                a pointer to SYS_INT_MACHINE_T.
+
+    3)   ADDITIONAL INTRINSIC FUNCTIONS.  New intrinsic functions are
+         provided to allow more portable source code to be written.  No
+         error message will be issued if these symbols are re-defined
+         in the source code.  This will, however, prevent their use as
+         documented here.  The additional intrinsic functions are:
+
+           ARCTAN2(ARG1,ARG2)  -  Returns the arctangent in radians for
+                a slope with vertical displacement of ARG1 and
+                horizontal displacement of ARG2.  It is permissable for
+                either argument to be zero, although they may not both
+                be zero simultaneously.
+
+           ALIGNOF  -  Returns the minimum alignment needed by a data
+                type or variable.  The alignment value is the number of
+                machine address increments that the starting address
+                should be a multiple of.  NOTE: This is a different
+                value from that used in the ALIGNED() data type
+                qualifier.  That value is essentially the Log2 of the
+                value returned by ALIGNOF.  An ALIGNOF value of 1
+                indicates arbitrary machine address alignment.  A value
+                of 0 indicates arbitrary bit alignment.  For example,
+                on Apollo machines ALIGNOF(INTEGER32) is 4,
+                ALIGNOF(DOUBLE) is 8, and ALIGNOF(STRING) is 1.
+
+           OFFSET  -  Returns the offset in machine addresses of a
+                field in a record with respect to the start of that
+                record.  The argument must start with a variable or
+                data type of type RECORD, and must end in one or more
+                nested field names originating in that record.  The
+                offset will be counted from the start of the outermost
+                record.
+
+                For example, consider the following declarations:
+
+                  type
+                    rec_a = record
+                      a1: sys_int_machine_t;
+                      a2, a3: char;
+                      end;
+
+                    rec_b = record
+                      b1: char;
+                      b2: rec_a;
+                      end;
+
+                  var
+                    a: rec_a;
+                    b: rec_b;
+                    a_p: ^rec_a;
+
+                The OFFSET function would take on the following values,
+                assuming a target environment like an Apollo machine:
+
+                  offset(a.a1) = 0
+
+                  offset(a.a2) = 4
+
+                  offset(b.b2.a1) = 4  -  The offset is counted from
+                       the start of the outermost nested record, which
+                       is REC_B.  Because type REC_A requires alignment
+                       of 4, three machine address increments (bytes on
+                       Apollos) of padding are inserted between fields
+                       B1 and B2.
+
+                  offset(rec_b.b2.a3) = 9  -  This is 5 bytes more than
+                       in the preceding example, 4 to skip over field
+                       A1, and 1 to skip over field A2.  Note also that
+                       the parent record is specified by a data type
+                       name, not a variable.  This allows the OFFSET
+                       function to be used on data types without the
+                       need to allocate storage associated with the
+                       data type being inquired about.
+
+                  offset(a_p^.a3) = 5  -  Note that the parent data
+                       type can be specified implicitly by
+                       dereferencing a pointer.
+
+           SETOF(dtype, ele1, ..., elen)  -  Returns a SET of a
+                specific data type.  The data type is indicated by the
+                DTYPE argument.  This may be any symbol that has a SET
+                data type attribute, such as an explicit data type or
+                variable.  The data type must be explicitly known.  The
+                returned set contains exactly the specified elements.
+                There may be any number (including none) of these
+                additional function arguments.
+
+                Simple SET expressions frequently have an ambiguous
+                data type.  For example, ['a', 'd'] could be a set of
+                CHAR, or set of 'a'..'d', to name a few.  Also, what is
+                the data type of []? Usually this is not a problem, but
+                sometimes it is important that the data type of a set
+                is known explicitly (such as when the set inversion "~"
+                operator is used).  The SETOF intrinsic function
+                provides a way of explicitly type-casting a set.
+
+           SIZE_ALIGN  -  Returns the size in machine addresses of a
+                data type or variable padded to its own alignment
+                rule.  This is also the size each element of this data
+                type would take up in an array.  SIZE_ALIGN is a
+                synonym for the native intrinsic function SIZEOF.
+                SIZEOF may have been used with different intents.
+                Three separate functions (SIZE_ALIGN, SIZE_MIN, and
+                SIZE_CHAR) are provided here to allow the different
+                intents to be declared in the source code.
+
+           SIZE_CHAR  -  Returns the number of characters that can be
+                stored in a data type or variable.  The data type must
+                be CHAR, STRING, or an array of CHAR.  This value will
+                be different from that returned by SIZE_MIN on machines
+                that do not have a one-to-one correspondence between
+                characters and the minumum addressable unit of memory.
+
+           SIZE_MIN  -  Returns the minimum size of a data type or
+                variable in machine addresses.  This is like the native
+                SIZEOF, except that SIZEOF always pads the size value
+                to its own alignment rules.
+
+           SHIFT(VAL,N)  -  Returns the result of shifting the integer
+                value VAL by N bits to the right.  N may be a negative
+                number, in which case VAL will be shifted -N bits
+                left.
+
+           Additional arguments are allowed for the intrinsic functions
+                MAX, MIN, and XOR.  Domain Pascal allows only two
+                arguments to each of these functions.
+
+    4)   OPTIONAL "BY" CLAUSE IN FOR STATEMENT.  The optional clause
+         "BY <expression>" may be inserted between the TO or DOWNTO
+         clause and the DO in a FOR statement.  The expression becomes
+         the loop increment value.  The expression is evaluated only
+         once before the loop is run the first time.  For example, the
+         following is legal:
+
+           for ii := 1 to 12 by 3 do ... ;
+
+         There will be four iterations with II having the values of 1, 4,
+         7, and 10.
+
+    5)   SET INVERSION (~) OPERATOR.  The unary "~" operator inverts
+         the value of the following set expression.  The inverse of a
+         set contains all the elements that are not present in the
+         original set.  The set inversion operator is only allowed with
+         sets that have explicitly known data types, such as variables,
+         or the value returned by the SETOF intrinsic function
+         (described above).  For example, consider the following
+         legal/illegal statements.
+
+           colors := ~colors;                {legal}
+           colors := ~(colors - [red]);      {legal}
+           colors := ~[red];                 {illegal}
+           colors := ~[];                    {illegal}
+           colors := ~setof(colors,red);     {legal, all but RED}
+           colors := ~setof(colors);         {legal, all elements exist}
+
+    6)   PARAMETER AFTER %DEBUG COMPILER DIRECTIVE.  The %DEBUG
+         compiler directive may take the form "%DEBUG n;", where N is
+         an integer greater than zero.  The line following the %DEBUG
+         directive will be compiled when N is less than or equal to the
+         debug level specified with the -DEBUG command line option.
+         When N is omitted, this becomes a regular Domain Pascal
+         compiler directive, and has the same effect as setting N to
+         1.
+
+    7)   VAL ARGUMENT PASSING KEYWORD.  The keyword VAL in a routine
+         declaration explicitly declares arguments to be passed by
+         value.  This keyword is allowed in the same place where the
+         IN, OUT, and VAR keywords are otherwise allowed.  In Domain
+         Pascal, pass by value can only be achieved under some
+         circumstances by using the VAL_PARAM routine option.  The VAL
+         keyword explicitly declares pass-by-value.
+
+    8)   CALL STATEMENT.  A CALL statement has been added to explicitly
+         declare that a procedure is to be called.  This can be useful
+         when the name of an external procedure conflicts with an
+         intrinsic symbol.  Consider the following code:
+
+           exit (0);          {error since EXIT is an intrinsic symbol}
+           call exit (0);     {OK since EXIT is recognized as routine name}
+
+    9)   ENUMERATED TYPE EXTENSIONS.  The regular Pascal enumerated
+         type declaration of
+
+           type <data type> = (name, ... name)
+
+         has been extended:
+
+           type <data type> =
+             [<data type 2>] (name [= <exp>], ... name [= <exp>])
+
+         Data type 2 explicitly sets the memory size of the enumerated
+         values.  It must be an integer, boolean, character, or
+         subrange data type.  The optional <exp> arguments explicitly
+         give the value for the associated name.  The default is 1 plus
+         the value of the previous name.  The default for the first
+         name is 0, except when data type 2 is a subrange.  In that
+         case, the default value of the first name is the lowest
+         ordinal value of the subrange.
+
+         This extensions allows creation of arbitrary symbolic
+         constants while still providing the strong type checking of
+         enumerated types.
+
+         For example:
+
+           type command_register_t = integer16 (
+             command_reset = 0,
+             command_start_dma = 8,
+             command_clear_interrupt = 16);
+
+    10)  SUCC AND PRED INTRINSIC FUNCTIONS MAY BE USED WITH POINTERS.
+         This is not allowed in Domain Pascal.  The function value will
+         be the pointer value plus (succ) or minus (pred) the size of
+         the object being pointed to.  For example, assume the data
+         type of pointer P is P_T.  The expression
+
+           succ(p)
+
+         is equivalent to:
+
+           p_t(sys_int_adr_t(p) + size_align(p^))
+
+    11)  BITSIZE <expression> ELETYPE clause in set data types.  This
+         optional clause may be added between the "set of" and the data
+         type in a set data type definition.  This causes the resulting
+         set to have at least the indicated number of bits, even if
+         there are fewer elements.  It is an error to specify fewer
+         bits than that indicated by the largest element.  Example:
+
+           type
+             color_k_t = (red, green, blue);
+             color_t = set of bitsize 32 eletype color_k_t;
+
+         This forces the resulting set to be at least 32 bits in size,
+         even though only 3 were really needed.
+
+    12)  "%INFILE_PUSH filename;" COMPILER DIRECTIVE.  Switch to a new
+         logical input file while saving the previous input state.
+         Input lines will still be read from the same input file, but
+         will be flagged as having come from the indicated file.  The
+         logical line number for the next source line is set to 1.
+         Error messages will reference the logical, instead of
+         physical, source file name and line numbers.
+
+         The compiler directives %INFILE_PUSH, %INFILE_POP, and %LNUM
+         are useful when SST is given a flattened file (%INCLUDE
+         directives removed).  They can be used to produce the same
+         file names and line numbers in error messages as would have
+         been produced by the unflattened input files.
+
+    13)  "%INFILE_POP;" COMPILER DIRECTIVE.  Restore the logical input
+         file state to right before the last %INFILE_PUSH directive.
+         The logical line number of the next line is decremented by 1.
+         This is to compensate for the %INFILE_PUSH directive, which is
+         assumed to be on a line by itself, but not from the original
+         unflattened source file.  If this default is not sufficient,
+         use the %LNUM directive immediately following the %INFILE_POP
+         directive.
+
+    14)  "%LNUM n;" COMPILER DIRECTIVE.  Set the current logical line
+         number of the next source line.  By default, logical line
+         numbers increment by 1 one each line.  Subsequent line numbers
+         will continue to increment from the new value (they don't
+         return to the old value).
+
+
+APOLLO/DOMAIN PASCAL FEATURES NOT SUPPORTED BY SST
+
+    1)   Code and data section names and the file list are not allowed
+         in a PROGRAM statement.
+
+    2)   All "type transfer" functions are not evaluated at compile
+         time, even if their arguments have know values.  The intrinsic
+         functions SUCC and PRED are also not evaluated at compile time
+         in some cases.  Expressions without known values at compile
+         time can not allowed in some cases (such as in CONST
+         statements).
+
+    3)   Set expressions are not evaluated at compile time, even when
+         all inputs have known constant values.  This prevents their
+         use in expressions that must have a known value at compile
+         time (such as in a CONST statement).
+
+    4)   The data type of all numeric expressions that do not have an
+         explicit data type defaults to either the maximum size target
+         machine integer or maximum size target machine floating point
+         number, whichever is appropriate.  Expressions have implicit
+         data types when they contain more than one term, or a term
+         that is a numeric constant.  Domain Pascal is able to adjust
+         these implicit data types sometimes to accomodate their
+         useage.  SST does not do this.
+
+         For example, assuming an Apollo target machine, the expression
+         CHAR(65) is legal in Domain Pascal, but not in SST.  SST sets
+         the data type of the expression "65" to be a 32 bit integer.
+         CHAR is a type-transfer function and therefore requires its
+         input and output data types to match in size.  However, the
+         INTEGER32 and CHAR data types do not match in size, which
+         results in an error from SST.  (In this particular example,
+         simply use the CHR instrinsic function.  It CONVERTS an
+         integer to a character, whereas the CHAR function RE-TYPES any
+         data type of the right size to be a character).
+
+    5)   FILE and TEXT data types are not supported.  The WRITE and
+         WRITELN statements are only supported without a file
+         specifier, meaning they write to standard output.  The
+         remaining intrinsic procedures that deal with FILE and TEXT
+         data types are not supported.  These are CLOSE, EOF, EOLN,
+         FIND, GET, OPEN, PAGE, PUT, REPLACE, RESET, and REWRITE.
+
+    6)   READ and READLN are not supported.
+
+    7)   The default alignment in SST is always initialized to
+         NATURAL.  Domain Pascal does this only when the -NATURAL
+         command line option is given.
+
+    8)   The full syntax for array initial values is not supported.
+         This includes repeat counts and specifying explicit element
+         numbers.  Array initial values are only supported where there
+         is exactly one expression for each array element, separated by
+         commas.
+
+    9)   The VARYING keyword is not supported in array declarations.
+
+    10)  The variable attributes VOLATILE, ATOMIC, DEVICE, ADDRESS,
+         BIT, BYTE, WORD, LONG, and QUAD are not supported.
+
+    11)  ATTRIBUTE declarations are not supported.
+
+    12)  Automatically using unsigned arithmetic for certain special
+         cases is not supported.  Domain Pascal automatically uses
+         unsigned arithmetic in some cases for MIN, MAX, DIV, and MOD.
+
+    13)  The intrinsic functions ALIGN, APPEND, CTOP, DISPOSE,
+         IN_RANGE, NEW, PACK, PTOC, SUBSTR, and UNPACK are not
+         supported.
+
+    14)  The "system programming" functions DISABLE, ENABLE, and SET_SR
+         are not supported.
+
+    15)  The compiler directives %CONFIG, %ENABLE, %ERROR, %IF, %IFDEF,
+         %SLIBRARY, %VAR, and %WARNING are not implemented.  SST will,
+         however, remove IF and CASE statements when the conditional
+         expression value is known at compile time.
+
+    16)  Only the form of WITH statement where explicit abbreviation
+         names are given is supported.  For example, the following is
+         supported:
+
+           with rec.a: a do . . . ;
+
+         Wherease the following is not supported:
+
+           with rec.a do . . . ;
+
+         This was done deliberately to enforce good programming
+         practise.  The second form is a bug waiting to happen.  (Note
+         that only the second form is part of "standard" Pascal.  The
+         first form is an Apollo extension).
+
+    17)  Negative field width specifiers in WRITE and WRITELN are not
+         supported.  These may be used in Domain Pascal to indicate
+         that a string should be written without its trailing blanks.
+
+    18)  Attribute lists preceeding routine declarations are not
+         supported.  Such an attribute list can contain the SECTION
+         keyword, and is used to declare in what binder sections parts
+         of the routine are to be put in.
+
+    19)  The routine options VARIABLE, ABNORMAL, NOSAVE, D0_RETURN,
+         A0_RETURN, and C_PARAM are not supported.
+
+    20)  ROUTINE_OPTION declarations are not supported.
+
+    21)  Sets with more elements than the number of bits in the largest
+         available machine integer are not supported.
+
+
+OTHER DIFFERENCES BETWEEN APOLLO/DOMAIN PASCAL AND SST
+
+    1)   The result of the ADDR function in Domain Pascal is of type
+         UNIV_PTR, and therefore no type checking is done (except in
+         the case of pointers to routines).  In SST the data type
+         returned by ADDR is a pointer to the data type of the
+         argument.  This was done deliberately to get more type
+         checking, since this is helpful to the majority of ADDR uses.
+         The ones that fail should probably be inspected anyway to make
+         sure they aren't bugs.  To get the equivalent of Domain
+         Pascal's ADDR, use UNIV_PTR(ADDR(...)).
+
+    2)   In Domain Pascal, the SINGLE, REAL, and DOUBLE data types are
+         defined to be 32, 32, and 64 bit floating point numbers,
+         respectively.  In SST, these are defined identically to
+         SYS_FP1_T, SYS_FP_MACHINE_T, and SYS_FP2_T, respectively.
+
+         Even though REAL usually results in the same data type as
+         either SINGLE, or DOUBLE for most target environments, REAL is
+         still treated as a separate data type.  This is so that errors
+         are caught immediately, not only after translating for a
+         particular machine.  For example on Apollo machines, SST will
+         complain about a data type mismatch if a REAL variable is
+         passed to a routine that is declared to return a SINGLE, even
+         though both are 32 bit floating point numbers of identical
+         format.
+
+    3)   The character case (upper/lower) of global symbols is not
+         altered.  Domain Pascal converts all symbols to lower case,
+         making it impossible to call external routines with upper case
+         letters in their names (like all X-windows calls, and many
+         others).

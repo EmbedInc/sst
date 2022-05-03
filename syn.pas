@@ -1,56 +1,6 @@
 {   SYN <input file name> [ options ]
 *
-*   Stripped-down version of the source to source translator (SST) that only
-*   works on syntax definition (.SYN) files for input.  Executable code is
-*   written that parses an input stream according to the syntax definition,
-*   and builds a syntax tree using the SYN library.
-*
-*   Valid command line options are:
-*
-*   -CONFIG <config file name>
-*
-*     Specify the target machine configuration file name.  This "option"
-*     is mandatory.  There is no default.
-*
-*   -OUT <output file name>
-*
-*     Explicitly specify the output file name.  The default output file will
-*     go into the current working directory with its generic name the same as
-*     the input file's generic leafname.  The output file name will always
-*     end with the suffix specified in the configuration file, even if
-*     specified explicitly here.
-*
-*   -DEBUG level
-*
-*     Specify the desired conditional compilation debugging level.  Level 0
-*     specifies to ignore any optional debugging source code.  Levels 1-n
-*     specify successively more debugging code be used.  The exact behaviour
-*     depends on the particular front ends.  The selected debug level number
-*     is made available to the front end.  The default is 0.
-*
-*   -SHOW_UNUSED level
-*   -SHOW_UNUSED ALL
-*
-*     Control listing of unused symbols.  Level indicates how many nested files
-*     down unused symbols may be listed from.  A level of 0 prevents all
-*     unused symbols from being listed.  Level 1 causes them only to be listed
-*     from the top source file (not from any include files).  Level 2
-*     lists unused symbols from the first level of include file, etc.
-*     The special level ID "ALL" causes unused symbols to be listed without
-*     regard to their source file nesting level.  The default is level set
-*     to 1 (list only the unused symbols declared in the top source file).
-*
-*   -TIME
-*
-*     This option causes timing information to be written after translation
-*     is complete.  The default is not to show any timing information.
-*
-*   -LOCAL_INS
-*
-*     Cause local copies of include files to be used, when available.
-*     If a file exists in the current working directory that has the
-*     same name as the leafname of an include file, the local file will
-*     be used instead of the include file actually specified.
+*   Version of the SST program specific to SYN input files.
 }
 program syn;
 %include 'sst2.ins.pas';
@@ -128,7 +78,7 @@ next_opt:
   string_upcase (opt);                 {make upper case for matching list}
   string_tkpick80 (                    {pick option name from list}
     opt,                               {option name}
-    '-OUT -CONFIG -DEBUG -SHOW_UNUSED -TIME -LOCAL_INS',
+    '-OUT -CONFIG -DEBUG -SHOW_UNUSED -TIME',
     pick);                             {number of picked option}
   case pick of                         {do routine for specific option}
 {
@@ -172,12 +122,6 @@ next_opt:
 }
 5: begin
   timing := true;
-  end;
-{
-*   -LOCAL_INS
-}
-6: begin
-  sst_local_ins := true;
   end;
 {
 *   Illegal command line option.
