@@ -1,6 +1,6 @@
 @echo off
 rem
-rem   D
+rem   DB
 rem
 rem   Build the SYN program with the SST R_SYN library and the SYN library in
 rem   debug mode.  The SYN program is then run in the debugger on the T.SYN file

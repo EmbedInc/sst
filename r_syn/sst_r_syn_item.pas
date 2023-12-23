@@ -58,7 +58,7 @@ begin
     end;
   if itag < 1 then begin               {invalid tag value ?}
     sys_msg_parm_int (msg_parm[1], itag);
-    syn_error_bomb (syn_p^, stat, 'sst_syn_read', 'tag_val_bad', msg_parm, 1);
+    syn_msg_pos_bomb (syn_p^, 'sst_syn_read', 'tag_val_bad', msg_parm, 1);
     end;
   syn_trav_pop (syn_p^);               {restore position to UNTAGGED_ITEM}
 
